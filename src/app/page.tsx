@@ -107,8 +107,8 @@ function SubscribeForm({
         placeholder="E-mail manzilingizni kiriting..."
         className="flex-1 border-none outline-none text-base font-medium rounded-full"
         style={{ 
-          background: 'rgba(245, 245, 255, 0.95)',
-          color: '#111827',
+          background: 'transparent',
+          color: '#fff',
           padding: '12px 20px',
           minWidth: 0 
         }}
@@ -311,8 +311,8 @@ export default function Home() {
                 placeholder="E-mail manzilingiz..."
                 className="w-full border-none outline-none text-sm font-medium rounded-xl"
                 style={{ 
-                  background: 'rgba(245, 245, 255, 0.95)',
-                  color: '#111827',
+                  background: 'transparent',
+                  color: '#fff',
                   padding: '12px 16px',
                 }}
               />
