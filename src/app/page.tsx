@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { Component as EtheralShadow } from '@/components/ui/etheral-shadow';
 
 /* ─── Logo data ───────────────────────────────────────── */
 const LOGOS = [
@@ -211,55 +212,23 @@ export default function Home() {
   return (
     <main
       className="relative flex flex-col items-center justify-center text-center text-white overflow-hidden"
-      style={{ minHeight: '100svh', background: '#201130' }}
+      style={{ minHeight: '100svh', background: '#0d0617' }}
     >
-      {/* ── Silk / Oscars background ── */}
-      {/* Blurred colour folds */}
+      {/* ── Etheral Shadow Background ── */}
+      <div className="absolute inset-0" style={{ zIndex: 1 }}>
+        <EtheralShadow
+          color="rgba(70, 1, 250, 1)"
+          animation={{ scale: 80, speed: 70 }}
+          noise={{ opacity: 0.6, scale: 1.5 }}
+          sizing="fill"
+        />
+      </div>
+      {/* Dark overlay to keep text readable */}
       <div
-        className="absolute pointer-events-none"
+        className="absolute inset-0 pointer-events-none"
         style={{
-          inset: '-10%',
-          width: '120%',
-          height: '120%',
-          background: `linear-gradient(105deg,
-            rgba(13,6,23,0.95)    0%,
-            rgba(40,20,75,0.6)   15%,
-            rgba(13,6,23,0.9)    30%,
-            rgba(70,1,250,0.2)   45%,
-            rgba(13,6,23,0.95)   60%,
-            rgba(50,25,90,0.5)   75%,
-            rgba(13,6,23,0.9)    85%,
-            rgba(135,83,251,0.25) 95%,
-            rgba(13,6,23,0.95)  100%
-          ), #0d0617`,
-          filter: 'blur(30px)',
-          zIndex: 1,
-        }}
-      />
-
-
-
-      {/* Stage lights */}
-      <div
-        className="absolute rounded-full pointer-events-none"
-        style={{
-          width: '60vw', maxWidth: 700, height: '60vw', maxHeight: 700,
-          background: 'rgba(70,1,250,0.45)',
-          top: '-20%', left: '-15%',
-          filter: 'blur(100px)',
-          mixBlendMode: 'screen',
-          zIndex: 3,
-        }}
-      />
-      <div
-        className="absolute rounded-full pointer-events-none"
-        style={{
-          width: '50vw', maxWidth: 600, height: '50vw', maxHeight: 600,
-          background: 'rgba(202,143,249,0.3)',
-          bottom: '-15%', right: '-10%',
-          filter: 'blur(100px)',
-          mixBlendMode: 'screen',
-          zIndex: 3,
+          background: 'linear-gradient(to bottom, rgba(13,6,23,0.55) 0%, rgba(13,6,23,0.3) 50%, rgba(13,6,23,0.7) 100%)',
+          zIndex: 2,
         }}
       />
 
