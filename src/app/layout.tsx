@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   title: "Tadbirkorlar Chempionati | Tez kunda",
   description: "Startapingiz, biznesingiz yoki g'oyangizni taqdim eting va 10 million dollarlik investitsiya uchun kurashing.",
   manifest: "/manifest.json",
-  icons: { icon: "/chempionshipLogo.png" },
+  icons: { icon: "/chempionatMiniLogo.png" },
 };
 
 export default function RootLayout({
