@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Coming Soon | Statute Purple</title>
+<!-- Tailwind CSS CDN with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Font: Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            statute: {
+              purple: '#4F28D9',
+              deep: '#0B012E',
+              glow: '#7B42FF',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          borderRadius: {
+            'statute': '4px',
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="background-styles">
+    /* Recreating the deep radial gradient and ambient lighting from the reference image */
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background-color: #0B012E; /* Fallback deep navy/purple */
+    }
+
+    .bg-main-gradient {
+      background: radial-gradient(circle at center, #2E0B8B 0%, #0B012E 70%, #05001A 100%);
+      position: relative;
+    }
+
+    /* Ambient glow effects to match IMAGE_3 */
+    .glow-overlay-top {
+      position: absolute;
+      top: -10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      height: 40%;
+      background: radial-gradient(ellipse at center, rgba(79, 40, 217, 0.3) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .glow-overlay-bottom {
+      position: absolute;
+      bottom: -10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      height: 40%;
+      background: radial-gradient(ellipse at center, rgba(79, 40, 217, 0.2) 0%, transparent 70%);
+      pointer-events: none;
+    }
+  </style>
+<style data-purpose="typography-and-fx">
+    /* Specific styling for the 'COMING SOON' text effect */
+    .coming-soon-text {
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      text-shadow: 0px 4px 10px rgba(0,0,0,0.3);
+      z-index: 10;
+    }
+
+    /* Stylized container shape around COMING SOON */
+    .text-frame {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      height: 160px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 80px / 40px; /* Slight squashed ellipse look */
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* Inner pill-like glow effect */
+    .text-frame::before {
+      content: "";
+      position: absolute;
+      inset: -5px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 85px / 45px;
+    }
+
+    /* Countdown Styling */
+    .countdown-unit {
+      text-transform: uppercase;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      background: rgba(123, 66, 255, 0.3);
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body class="font-sans text-white">
+<!-- BEGIN: HeroSection -->
+<main class="bg-main-gradient min-h-screen w-full flex flex-col items-center justify-center relative px-4">
+<!-- Visual Decorations -->
+<div class="glow-overlay-top"></div>
+<div class="glow-overlay-bottom"></div>
+<!-- Background Design Elements (Circles/Paths from image) -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
+<div class="border border-white rounded-full w-[500px] h-[500px]"></div>
+</div>
+<!-- BEGIN: ComingSoonMessage -->
+<section class="relative flex items-center justify-center mb-12" data-purpose="message-container">
+<!-- Decorative Frame -->
+<div class="text-frame border-white/40"></div>
+<!-- Main Text -->
+<h1 class="coming-soon-text text-6xl md:text-8xl select-none">
+        COMING SOON
+      </h1>
+</section>
+<!-- END: ComingSoonMessage -->
+<!-- BEGIN: CountdownTimer -->
+<section class="flex flex-col items-center" data-purpose="countdown-container">
+<div class="flex space-x-8 md:space-x-12 mb-8" id="countdown">
+<!-- Days -->
+<div class="flex flex-col items-center">
+<span class="text-4xl md:text-5xl font-bold tracking-tighter" id="days">03</span>
+<span class="countdown-unit">Days</span>
+</div>
+<!-- Hours -->
+<div class="flex flex-col items-center">
+<span class="text-4xl md:text-5xl font-bold tracking-tighter" id="hours">22</span>
+<span class="countdown-unit">Hours</span>
+</div>
+<!-- Minutes -->
+<div class="flex flex-col items-center">
+<span class="text-4xl md:text-5xl font-bold tracking-tighter" id="minutes">15</span>
+<span class="countdown-unit">Minutes</span>
+</div>
+<!-- Seconds -->
+<div class="flex flex-col items-center">
+<span class="text-4xl md:text-5xl font-bold tracking-tighter" id="seconds">10</span>
+<span class="countdown-unit">Seconds</span>
+</div>
+</div>
+<!-- Small Placeholder Text -->
+<p class="text-[10px] md:text-xs text-white/50 max-w-md text-center uppercase tracking-widest leading-loose">
+        LOREM IPSUM DOLOR SIT AMET, CONSECTETUR ADIPISCING ELIT, SED DO EIUSMOD TEMPOR<br/>
+        INCIDIDUNT UT LABORE ET DOLORE MAGNA ALIQUA.
+      </p>
+</section>
+<!-- END: CountdownTimer -->
+</main>
+<!-- END: HeroSection -->
+<!-- BEGIN: InteractiveLogic -->
+<script data-purpose="countdown-logic">
+    /**
+     * Simple countdown script to make the static UI dynamic.
+     * Set target date to 3 days from now to match the UI image visually.
+     */
+    const targetDate = new Date();
+    targetDate.setDate(targetDate.getDate() + 3);
+    targetDate.setHours(targetDate.getHours() + 22);
+    targetDate.setMinutes(targetDate.getMinutes() + 15);
+    targetDate.setSeconds(targetDate.getSeconds() + 10);
+
+    function updateCountdown() {
+      const now = new Date().getTime();
+      const distance = targetDate - now;
+
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      document.getElementById('days').innerText = String(days).padStart(2, '0');
+      document.getElementById('hours').innerText = String(hours).padStart(2, '0');
+      document.getElementById('minutes').innerText = String(minutes).padStart(2, '0');
+      document.getElementById('seconds').innerText = String(seconds).padStart(2, '0');
+
+      if (distance < 0) {
+        clearInterval(x);
+        document.getElementById('countdown').innerHTML = "<span class='text-2xl uppercase tracking-widest'>We are live!</span>";
+      }
+    }
+
+    const x = setInterval(updateCountdown, 1000);
+    updateCountdown();
+  </script>
+<!-- END: InteractiveLogic -->
+</body></html>
