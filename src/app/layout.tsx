@@ -24,6 +24,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Tadbirkorlar Chempionati | Tez kunda",
   description: "Startapingiz, biznesingiz yoki g'oyangizni taqdim eting va 10 million dollarlik investitsiya uchun kurashing.",
+  manifest: "/manifest.json",
+  icons: { icon: "/favicon.ico" },
 };
 
 export default function RootLayout({

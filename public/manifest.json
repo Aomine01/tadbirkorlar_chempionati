@@ -1,0 +1,16 @@
+{
+  "name": "Tadbirkorlar Chempionati",
+  "short_name": "Chempionat",
+  "description": "Startapingiz, biznesingiz yoki g'oyangizni taqdim eting va 10 million dollarlik investitsiya uchun kurashing.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#201130",
+  "theme_color": "#6D28D9",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ]
+}
