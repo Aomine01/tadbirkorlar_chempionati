@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="uz"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Yosh Tadbirkorlar Chempionati | Digital Sovereign Initiative</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "error-dim": "#d73357",
+              "surface": "#0e0e0e",
+              "secondary-container": "#622a8e",
+              "on-error-container": "#ffb2b9",
+              "background": "#0e0e0e",
+              "surface-container": "#1a1919",
+              "tertiary-fixed-dim": "#b091ff",
+              "on-surface-variant": "#adaaaa",
+              "surface-dim": "#0e0e0e",
+              "tertiary-container": "#8a56fe",
+              "on-secondary": "#450272",
+              "on-primary-fixed-variant": "#250094",
+              "inverse-on-surface": "#565555",
+              "on-secondary-fixed": "#4e127a",
+              "on-primary-fixed": "#000000",
+              "on-secondary-fixed-variant": "#6d3599",
+              "on-tertiary-fixed-variant": "#4600a8",
+              "on-tertiary-container": "#000000",
+              "surface-container-low": "#131313",
+              "primary-dim": "#6e58ff",
+              "on-primary-container": "#1d0079",
+              "inverse-surface": "#fcf9f8",
+              "error-container": "#a70138",
+              "error": "#ff6e84",
+              "surface-container-highest": "#262626",
+              "on-background": "#ffffff",
+              "inverse-primary": "#4a12fd",
+              "primary-container": "#9e93ff",
+              "surface-variant": "#262626",
+              "surface-container-lowest": "#000000",
+              "on-tertiary-fixed": "#1e0053",
+              "on-surface": "#ffffff",
+              "secondary-fixed-dim": "#deb3ff",
+              "outline": "#767575",
+              "primary-fixed-dim": "#9083ff",
+              "secondary": "#cd92fd",
+              "on-primary": "#27009a",
+              "primary": "#aca3ff",
+              "on-tertiary": "#280068",
+              "surface-bright": "#2c2c2c",
+              "tertiary-fixed": "#bca2ff",
+              "tertiary-dim": "#8550f9",
+              "primary-fixed": "#9e93ff",
+              "surface-tint": "#aca3ff",
+              "surface-container-high": "#201f1f",
+              "outline-variant": "#484847",
+              "on-secondary-container": "#e6c3ff",
+              "secondary-fixed": "#e7c5ff",
+              "tertiary": "#ab8aff",
+              "on-error": "#490013",
+              "secondary-dim": "#bf85ee"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass-nav { backdrop-filter: blur(20px); }
+        .hero-gradient {
+            background: radial-gradient(circle at 50% 50%, #1e0053 0%, #0e0e0e 70%);
+        }
+        .neon-glow {
+            box-shadow: 0 0 40px rgba(70, 1, 250, 0.3);
+        }
+        .tonal-transition { transition: background-color 0.5s ease; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface overflow-x-hidden">
+<!-- Top Navigation -->
+<nav class="fixed top-4 left-1/2 -translate-x-1/2 w-[95%] max-w-7xl rounded-full px-6 py-3 bg-neutral-950/80 backdrop-blur-xl flex justify-between items-center z-50 shadow-[0_20px_40px_rgba(70,1,250,0.05)]">
+<div class="text-xl font-black text-white tracking-tighter uppercase">Yosh Tadbirkorlar</div>
+<div class="hidden md:flex gap-8 items-center">
+<a class="text-white font-bold border-b-2 border-indigo-500 pb-1" href="#">Home</a>
+<a class="text-neutral-400 font-medium hover:text-white transition-colors" href="#">Champions</a>
+<a class="text-neutral-400 font-medium hover:text-white transition-colors" href="#">Rules</a>
+<a class="text-neutral-400 font-medium hover:text-white transition-colors" href="#">Partners</a>
+<a class="text-neutral-400 font-medium hover:text-white transition-colors" href="#">FAQ</a>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-white cursor-pointer hover:bg-white/10 p-2 rounded-full transition-all duration-300">language</span>
+<button class="bg-indigo-600 text-white px-6 py-2 rounded-full font-bold text-sm hover:scale-95 active:scale-90 transition-transform">Register Now</button>
+</div>
+</nav>
+<!-- Hero Section -->
+<header class="relative min-h-screen flex flex-col items-center justify-center text-center px-4 hero-gradient">
+<div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBLSh_6gseFJLQEKwRcGDiMM914qzEVUzDnkgeja-I0kGyT_17x-ZLFHbleVcMBCHwYB_q6ldT2iGu9G875vUozoTPjlihB4RT-AJMAqEwu1KDQG0ZNFaf4bx-qjBWjSmnrWUaTPy9ghZTgzOpEKyI3ka8lUJW8HQs1nzhu9Oy43nylovqFBIeI2HN3znMUzX31IjO88xdUJUmfj3nfbwkoRFOkIvb8X0Ars-tFzmqPva_u-q4E_CAi5dPTPtUv490lBUjcP4u8zSI');"></div>
+<div class="relative z-10 max-w-5xl">
+<div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold uppercase tracking-widest mb-8">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+</span>
+                2024 Season Now Open
+            </div>
+<h1 class="text-6xl md:text-8xl font-black tracking-tighter text-white mb-6 leading-[0.9] uppercase">
+                YOSH TADBIRKORLAR <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">CHEMPIONATI</span>
+</h1>
+<p class="text-lg md:text-xl text-neutral-400 max-w-2xl mx-auto mb-10 font-body leading-relaxed">
+                The ultimate arena for Uzbekistan's brightest minds. Ignite your vision, scale your impact, and lead the new economy.
+            </p>
+<div class="flex flex-col md:flex-row gap-4 justify-center items-center">
+<button class="px-10 py-5 bg-indigo-600 text-white rounded-full font-bold text-lg hover:scale-105 transition-transform neon-glow">REGISTER NOW</button>
+<button class="px-10 py-5 bg-white/5 border border-white/10 text-white rounded-full font-bold text-lg hover:bg-white/10 transition-all">View Rules</button>
+</div>
+</div>
+<!-- Scroll Indicator -->
+<div class="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce">
+<span class="material-symbols-outlined text-neutral-500 text-3xl">keyboard_double_arrow_down</span>
+</div>
+</header>
+<!-- Transition to White Body -->
+<main class="bg-white text-neutral-900 rounded-t-[40px] relative z-20 -mt-10 overflow-hidden">
+<!-- Strategic Pillars -->
+<section class="max-w-7xl mx-auto px-8 py-24">
+<div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+<div class="max-w-xl">
+<h2 class="text-4xl md:text-5xl font-black tracking-tight text-neutral-950 mb-4 uppercase">Strategic Pillars</h2>
+<p class="text-neutral-600 text-lg">Choose your track and compete among the best in three specialized categories designed for every stage of entrepreneurship.</p>
+</div>
+<div class="hidden md:block h-px flex-1 bg-neutral-100 mx-12 mb-6"></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Track 1 -->
+<div class="group p-8 rounded-[32px] bg-neutral-50 hover:bg-indigo-600 transition-all duration-500">
+<div class="w-16 h-16 rounded-2xl bg-indigo-100 flex items-center justify-center mb-8 group-hover:bg-white/20 transition-colors">
+<span class="material-symbols-outlined text-indigo-600 text-3xl group-hover:text-white" data-icon="lightbulb">lightbulb</span>
+</div>
+<h3 class="text-2xl font-bold mb-4 group-hover:text-white transition-colors">Idea</h3>
+<p class="text-neutral-600 mb-8 group-hover:text-white/80 transition-colors">For early-stage concepts and visionary solutions that address local challenges with global potential.</p>
+<a class="inline-flex items-center gap-2 font-bold text-indigo-600 group-hover:text-white transition-colors" href="#">
+                        Learn Track <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+<!-- Track 2 -->
+<div class="group p-8 rounded-[32px] bg-neutral-50 hover:bg-indigo-600 transition-all duration-500">
+<div class="w-16 h-16 rounded-2xl bg-indigo-100 flex items-center justify-center mb-8 group-hover:bg-white/20 transition-colors">
+<span class="material-symbols-outlined text-indigo-600 text-3xl group-hover:text-white" data-icon="rocket_launch">rocket_launch</span>
+</div>
+<h3 class="text-2xl font-bold mb-4 group-hover:text-white transition-colors">IT-Startup</h3>
+<p class="text-neutral-600 mb-8 group-hover:text-white/80 transition-colors">Scalable digital products, software platforms, and high-tech ventures ready for market acceleration.</p>
+<a class="inline-flex items-center gap-2 font-bold text-indigo-600 group-hover:text-white transition-colors" href="#">
+                        Learn Track <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+<!-- Track 3 -->
+<div class="group p-8 rounded-[32px] bg-neutral-50 hover:bg-indigo-600 transition-all duration-500">
+<div class="w-16 h-16 rounded-2xl bg-indigo-100 flex items-center justify-center mb-8 group-hover:bg-white/20 transition-colors">
+<span class="material-symbols-outlined text-indigo-600 text-3xl group-hover:text-white" data-icon="storefront">storefront</span>
+</div>
+<h3 class="text-2xl font-bold mb-4 group-hover:text-white transition-colors">Traditional Business</h3>
+<p class="text-neutral-600 mb-8 group-hover:text-white/80 transition-colors">Modernizing manufacturing, services, and trade with innovative operational excellence.</p>
+<a class="inline-flex items-center gap-2 font-bold text-indigo-600 group-hover:text-white transition-colors" href="#">
+                        Learn Track <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</div>
+</section>
+<!-- Mission Control V3.0 (Dashboard Section) -->
+<section class="bg-neutral-50 py-24">
+<div class="max-w-7xl mx-auto px-8">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+<div>
+<div class="inline-block px-4 py-1 bg-indigo-600 text-white text-xs font-bold rounded-full mb-6">SYSTEM STATUS: OPTIMAL</div>
+<h2 class="text-4xl md:text-5xl font-black tracking-tight text-neutral-900 mb-6 uppercase leading-tight">Mission Control V3.0</h2>
+<p class="text-neutral-600 text-lg mb-8 leading-relaxed">Our proprietary evaluation engine ensures absolute transparency. Powered by high-precision algorithms, we track every milestone with surgical accuracy to identify the true nation-builders.</p>
+<div class="grid grid-cols-2 gap-6">
+<div class="p-6 bg-white rounded-2xl shadow-sm">
+<p class="text-neutral-500 text-sm font-medium mb-1">Fairness Coefficient</p>
+<div class="text-3xl font-black text-indigo-600">99.98%</div>
+</div>
+<div class="p-6 bg-white rounded-2xl shadow-sm">
+<p class="text-neutral-500 text-sm font-medium mb-1">Scoring Latency</p>
+<div class="text-3xl font-black text-indigo-600">0.02ms</div>
+</div>
+</div>
+</div>
+<div class="relative bg-neutral-900 rounded-[32px] p-8 overflow-hidden shadow-2xl">
+<div class="flex justify-between items-center mb-10">
+<div class="flex gap-2">
+<div class="w-3 h-3 rounded-full bg-red-500/50"></div>
+<div class="w-3 h-3 rounded-full bg-yellow-500/50"></div>
+<div class="w-3 h-3 rounded-full bg-green-500/50"></div>
+</div>
+<div class="text-indigo-400 text-xs font-mono">LIVE_DATA_STREAM_SCORING</div>
+</div>
+<!-- Mock Graph Area -->
+<div class="h-64 flex items-end gap-2 mb-8">
+<div class="flex-1 bg-indigo-600/20 rounded-t-lg h-[40%]"></div>
+<div class="flex-1 bg-indigo-600/30 rounded-t-lg h-[60%]"></div>
+<div class="flex-1 bg-indigo-600/50 rounded-t-lg h-[45%]"></div>
+<div class="flex-1 bg-indigo-600/80 rounded-t-lg h-[85%]"></div>
+<div class="flex-1 bg-indigo-600 rounded-t-lg h-[100%] relative">
+<div class="absolute -top-12 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-2 py-1 rounded text-[10px] font-bold">PEAK</div>
+</div>
+<div class="flex-1 bg-indigo-600/60 rounded-t-lg h-[70%]"></div>
+<div class="flex-1 bg-indigo-600/40 rounded-t-lg h-[55%]"></div>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between items-center p-3 bg-white/5 rounded-xl">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-indigo-500"></div>
+<span class="text-white text-sm font-mono tracking-tight">Node_Alpha_Processing</span>
+</div>
+<span class="text-indigo-400 font-mono text-xs">ONLINE</span>
+</div>
+<div class="flex justify-between items-center p-3 bg-white/5 rounded-xl">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-indigo-500"></div>
+<span class="text-white text-sm font-mono tracking-tight">Regional_Sync_Latency</span>
+</div>
+<span class="text-indigo-400 font-mono text-xs">14ms</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Nationwide Movement -->
+<section class="py-24 max-w-7xl mx-auto px-8">
+<div class="text-center mb-16">
+<h2 class="text-4xl md:text-5xl font-black tracking-tight text-neutral-950 mb-4 uppercase">Nationwide Movement</h2>
+<p class="text-neutral-600 text-lg max-w-2xl mx-auto">From the streets of Tashkent to the valleys of Fergana, we are building a unified ecosystem of innovation.</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+<div class="lg:col-span-7 relative">
+<div class="aspect-video bg-neutral-50 rounded-[40px] flex items-center justify-center overflow-hidden border border-neutral-100">
+<img alt="Map of Uzbekistan" class="w-full h-full object-cover opacity-80 mix-blend-multiply" data-alt="Abstract stylized digital map of Uzbekistan with 12 regions glowing in neon purple against a clean white background with grid lines" data-location="Uzbekistan" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8g8fB63tpEVolv-Z3b9cgeWIyb2V6xV_7e_-Tn4gJPxEbntkpI0pzJO3XxiaW1OIzL82C9gykTLevLgNm_tyMZYeZayGl8CbZPZjxzarhfYNaJBpzgr4Huf7_5YB2qElPxJPtUKqNDqqwcTiMCa2gh9DnCCVsHb_B0UAtTHKxnxHkuhv9AxkGlZ6sfXH_5c-WYDGgziM1xnTLJhlcSyzqHnSmq2N1fTXGXhzdjGPlFl44GMZcDTa6ARPcLnxbbs6XGsRdCyBkY4E"/>
+</div>
+<!-- Stats Overlays -->
+<div class="absolute top-8 left-8 p-4 bg-white/80 backdrop-blur shadow-xl rounded-2xl border border-white/20">
+<div class="text-2xl font-black text-indigo-600">12</div>
+<div class="text-[10px] font-bold text-neutral-500 uppercase">Regions Active</div>
+</div>
+</div>
+<div class="lg:col-span-5 space-y-8">
+<div class="grid grid-cols-2 gap-4">
+<div class="p-6 bg-neutral-50 rounded-3xl">
+<div class="text-4xl font-black text-neutral-900 mb-1">200+</div>
+<div class="text-sm font-bold text-neutral-500 uppercase tracking-wider">Districts</div>
+</div>
+<div class="p-6 bg-neutral-50 rounded-3xl">
+<div class="text-4xl font-black text-neutral-900 mb-1">50k+</div>
+<div class="text-sm font-bold text-neutral-500 uppercase tracking-wider">Applicants</div>
+</div>
+</div>
+<div class="p-8 bg-indigo-600 rounded-[32px] text-white">
+<h4 class="text-xl font-bold mb-2">UZB Global Rank</h4>
+<p class="text-white/80 text-sm mb-6">Rising +12 positions in the Global Innovation Index since the championship's inception.</p>
+<button class="w-full py-4 bg-white text-indigo-600 rounded-full font-bold hover:bg-neutral-100 transition-colors">Find Your Local Hub</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Strategic Partners -->
+<section class="py-20 border-t border-neutral-100">
+<div class="max-w-7xl mx-auto px-8">
+<p class="text-center text-xs font-bold text-neutral-400 uppercase tracking-[0.2em] mb-12">Empowered by Global Leaders</p>
+<div class="flex flex-wrap justify-center items-center gap-12 md:gap-24 grayscale opacity-50 hover:grayscale-0 transition-all duration-700">
+<div class="h-10 md:h-12 flex items-center justify-center font-headline font-extrabold text-2xl text-neutral-900">Yoshlar Venchurs</div>
+<div class="h-10 md:h-12 flex items-center justify-center font-headline font-extrabold text-2xl text-neutral-900">Yoshlar Ishlar Agentligi</div>
+<div class="h-10 md:h-12 flex items-center justify-center font-headline font-extrabold text-2xl text-neutral-900">UZUM</div>
+</div>
+</div>
+</section>
+<!-- Final CTA: Ready to Become a Champion -->
+<section class="max-w-7xl mx-auto px-8 pb-24">
+<div class="relative w-full rounded-[48px] bg-indigo-600 p-12 md:p-24 overflow-hidden text-center">
+<div class="absolute inset-0 bg-gradient-to-br from-indigo-500 to-indigo-800 opacity-50"></div>
+<div class="relative z-10">
+<h2 class="text-4xl md:text-7xl font-black tracking-tight text-white mb-8 uppercase leading-none">Ready to Become <br/>a Champion?</h2>
+<p class="text-white/80 text-lg md:text-xl max-w-2xl mx-auto mb-12 leading-relaxed">Join the movement that is redefining the future of Uzbekistan. Your journey from vision to legacy starts today.</p>
+<div class="flex flex-col md:flex-row gap-6 justify-center">
+<button class="px-12 py-6 bg-white text-indigo-600 rounded-full font-black text-lg hover:scale-105 transition-transform shadow-2xl">APPLY FOR 2024 BATCH</button>
+<button class="px-12 py-6 bg-indigo-500/30 border border-white/20 text-white rounded-full font-black text-lg hover:bg-indigo-500/50 transition-all">Download Guide</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-white border-t border-neutral-100">
+<div class="max-w-7xl mx-auto px-8 py-12 flex flex-col md:flex-row justify-between items-center gap-6 font-manrope text-sm text-neutral-600">
+<div class="font-plus-jakarta-sans font-extrabold text-neutral-900 text-lg">Yosh Tadbirkorlar Chempionati</div>
+<div class="flex gap-8">
+<a class="text-neutral-500 hover:text-indigo-600 transition-colors hover:underline decoration-2 underline-offset-4" href="#">Privacy Policy</a>
+<a class="text-neutral-500 hover:text-indigo-600 transition-colors hover:underline decoration-2 underline-offset-4" href="#">Terms of Service</a>
+<a class="text-neutral-500 hover:text-indigo-600 transition-colors hover:underline decoration-2 underline-offset-4" href="#">Contact Support</a>
+<a class="text-neutral-500 hover:text-indigo-600 transition-colors hover:underline decoration-2 underline-offset-4" href="#">Press Kit</a>
+</div>
+<div class="opacity-80">© 2024 Yosh Tadbirkorlar Chempionati. Digital Sovereign Initiative.</div>
+</div>
+</footer>
+</body></html>

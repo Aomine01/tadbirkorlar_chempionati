@@ -47,42 +47,28 @@ function mapRange(
     return toLow + percentage * (toHigh - toLow);
 }
 
-const useInstanceId = (): string => {
-    const id = useId();
-    const cleanId = id.replace(/:/g, "");
-    const instanceId = `shadowoverlay-${cleanId}`;
-    return instanceId;
-};
-
 export function Component({
     sizing = 'fill',
-    color = 'rgba(70, 1, 250, 1)',
+    color = 'rgba(128, 128, 128, 1)',
     animation,
     noise,
     style,
     className
 }: ShadowOverlayProps) {
-    const id = useInstanceId();
+    const [id, setId] = useState<string>('');
+    useEffect(() => {
+        setId(`shadowoverlay-${Math.random().toString(36).substr(2, 9)}`);
+    }, []);
+
     const animationEnabled = animation && animation.scale > 0;
     const feColorMatrixRef = useRef<SVGFEColorMatrixElement>(null);
     const hueRotateMotionValue = useMotionValue(180);
     const hueRotateAnimation = useRef<AnimationPlaybackControls | null>(null);
 
-    // Detect mobile to skip heavy SVG filter animation
-    const [isMobile, setIsMobile] = useState(false);
-    useEffect(() => {
-        const check = () => setIsMobile(window.innerWidth < 768);
-        check();
-        window.addEventListener('resize', check);
-        return () => window.removeEventListener('resize', check);
-    }, []);
-
     const displacementScale = animation ? mapRange(animation.scale, 1, 100, 20, 100) : 0;
     const animationDuration = animation ? mapRange(animation.speed, 1, 100, 1000, 50) : 1;
 
-    // Heavy SVG filter animation — desktop only
     useEffect(() => {
-        if (isMobile) return;
         if (feColorMatrixRef.current && animationEnabled) {
             if (hueRotateAnimation.current) {
                 hueRotateAnimation.current.stop();
@@ -108,64 +94,17 @@ export function Component({
                 }
             };
         }
-    }, [animationEnabled, animationDuration, hueRotateMotionValue, isMobile]);
+    }, [animationEnabled, animationDuration, hueRotateMotionValue, id]);
 
-    // ── Mobile version: lightweight CSS gradient, no SVG filters ──
-    if (isMobile) {
-        return (
-            <div
-                className={className}
-                style={{
-                    overflow: "hidden",
-                    position: "relative",
-                    width: "100%",
-                    height: "100%",
-                    ...style
-                }}
-            >
-                {/* Static radial glow — zero GPU cost */}
-                <div
-                    style={{
-                        position: "absolute",
-                        inset: 0,
-                        background: `
-                            radial-gradient(ellipse 80% 60% at 50% 40%, ${color} 0%, transparent 70%),
-                            radial-gradient(ellipse 50% 40% at 30% 70%, rgba(70,1,250,0.4) 0%, transparent 60%)
-                        `,
-                        animation: 'mobilePulse 6s ease-in-out infinite',
-                    }}
-                />
-                {/* Subtle CSS-only pulse animation */}
-                <style>{`
-                    @keyframes mobilePulse {
-                        0%, 100% { opacity: 0.7; transform: scale(1); }
-                        50% { opacity: 1; transform: scale(1.05); }
-                    }
-                `}</style>
+    if (!id) return null;
 
-                {noise && noise.opacity > 0 && (
-                    <div
-                        style={{
-                            position: "absolute",
-                            inset: 0,
-                            backgroundImage: `url("https://framerusercontent.com/images/g0QcWrxr87K0ufOxIUFBakwYA8.png")`,
-                            backgroundSize: noise.scale * 200,
-                            backgroundRepeat: "repeat",
-                            opacity: noise.opacity / 2
-                        }}
-                    />
-                )}
-            </div>
-        );
-    }
-
-    // ── Desktop version: full SVG filter animation ──
     return (
         <div
             className={className}
             style={{
                 overflow: "hidden",
-                position: "relative",
+                position: "absolute",
+                inset: 0,
                 width: "100%",
                 height: "100%",
                 ...style
@@ -175,16 +114,18 @@ export function Component({
                 style={{
                     position: "absolute",
                     inset: -displacementScale,
-                    filter: animationEnabled ? `url(#${id}) blur(4px)` : "none"
+                    filter: animationEnabled ? `url(#${id})` : "none",
+                    willChange: "filter",
+                    transform: "translateZ(0)"
                 }}
             >
                 {animationEnabled && (
-                    <svg style={{ position: "absolute" }}>
+                    <svg style={{ position: "absolute", width: 0, height: 0 }}>
                         <defs>
-                            <filter id={id}>
+                            <filter id={id} colorInterpolationFilters="sRGB">
                                 <feTurbulence
                                     result="undulation"
-                                    numOctaves="2"
+                                    numOctaves="1"
                                     baseFrequency={`${mapRange(animation.scale, 0, 100, 0.001, 0.0005)},${mapRange(animation.scale, 0, 100, 0.004, 0.002)}`}
                                     seed="0"
                                     type="turbulence"

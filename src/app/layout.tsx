@@ -1,32 +1,29 @@
 import type { Metadata } from "next";
-import { Agdasima, Poppins, Geist_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, Manrope } from "next/font/google";
 import "./globals.css";
 
-const agdasima = Agdasima({
-  variable: "--font-agdasima",
+const plusJakartaSans = Plus_Jakarta_Sans({
+  variable: "--font-plus-jakarta-sans",
   subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
 });
 
-const poppins = Poppins({
-  variable: "--font-poppins",
+const manrope = Manrope({
+  variable: "--font-manrope",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "900"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "Tadbirkorlar Chempionati | Tez kunda",
+  title: "Yosh Tadbirkorlar Chempionati | Digital Sovereign Initiative",
   description: "Startapingiz, biznesingiz yoki g'oyangizni taqdim eting va 10 million dollarlik investitsiya uchun kurashing.",
   manifest: "/manifest.json",
   icons: { icon: "/chempionatMiniLogo.png" },
 };
+
+import { LanguageProvider } from "@/context/LanguageContext";
 
 export default function RootLayout({
   children,
@@ -36,9 +33,16 @@ export default function RootLayout({
   return (
     <html
       lang="uz"
-      className={`${agdasima.variable} ${poppins.variable} ${geistMono.variable} antialiased`}
+      className={`${plusJakartaSans.variable} ${manrope.variable} antialiased dark`}
     >
-      <body>{children}</body>
+      <head>
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+      </head>
+      <body className="font-body bg-surface text-on-surface overflow-x-hidden m-0 p-0 h-full">
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
+      </body>
     </html>
   );
 }
