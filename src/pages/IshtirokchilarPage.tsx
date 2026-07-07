@@ -62,6 +62,9 @@ const LOCAL_PARTICIPANTS: ExtendedApplication[] = [
       "/users/Abbasov Abdullo/Frame 1597883741.png"
     ],
     phone: "+998 99 371 13 37",
+    product_image_urls: [],
+    rejection_comment: null,
+    is_deleted: false,
     status: "approved",
     created_at: "2026-07-07T12:00:00Z",
     updated_at: "2026-07-07T12:00:00Z"
