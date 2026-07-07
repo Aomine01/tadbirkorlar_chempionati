@@ -1,0 +1,15 @@
+Viloyat: TOSHKENT SHAHRI
+Location:  TOSHKENT SHAHRI
+Name: Odinaxon Po‘latova
+age:37
+phone: +998 77 449 02 22
+Industry name: Organic Living
+About business: "Organic Living" brendi ostida ekologik tozalash vositalari ishlab chiqaradi. Korxona ishlab chiqarish quvvatini oshirish, yangi ekologik mahsulotlarni yaratish hamda aylanma iqtisodiyot tamoyillarini rivojlantirish ustida faoliyat yuritmoqda.
+Maqsad:O‘zbekiston bo‘ylab refill (qayta to‘ldirish) tizimini kengaytirish.
+Yangi ekologik mahsulotlar ishlab chiqarishni rivojlantirish.
+Eksport salohiyatini oshirish.
+Strategik hamkorlik va moliyaviy qo‘llab-quvvatlashni yo‘lga qo‘yish.
+Potential impact:O‘zbekiston bo‘ylab ekologik mahsulotlardan foydalanishni ommalashtirish.
+Plastik chiqindilar hajmini kamaytirish va aylanma iqtisodiyotni rivojlantirish.
+Yashil iqtisodiyot rivojiga hissa qo‘shish.
+Mahalliy ekologik brendning eksport salohiyatini oshirish.

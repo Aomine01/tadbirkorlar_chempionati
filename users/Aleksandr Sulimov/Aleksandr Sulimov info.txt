@@ -1,0 +1,15 @@
+Viloyat: SAMARQAND VILOYATI
+Location:  Samarqand shahri
+Name: Aleksandr Sulimov
+age:22
+phone: +998 94 572 22 52
+Industry name: BurgerCha
+About business: BurgerCha — mini-burgerlarga ixtisoslashgan zamonaviy fastfud brendi. Loyiha bugungi kunda ikkita mobil savdo nuqtasi va o’zining tayyorlov oshxonasi bilan faoliyat yuritmoqda. Mini-burger formati mijozlarga bir buyurtmada bir nechta ta’mni sinab ko’rish imkonini beradi va zamonaviy street food konsepsiyasini rivojlantiradi.
+Maqsad:Samarqanddagi tayyorlov oshxonasining ishlab chiqarish quvvatini modernizatsiya qilish va kengaytirish. Burgerlardan tashqari mini-pizza va katta kartoshka taomlarini yo’lga qo’ymoqchi
+Keytering xizmatlarini hamda tez tayyorlanadigan mahsulotlar ishlab chiqarishni yo’lga qo’yish.
+O’zbekiston hududlarida yangi mobil savdo nuqtalarini ochish.
+BurgerCha brendi ostida birinchi statsionar kafeni tashkil etish.
+Potential impact:Zamonaviy street food madaniyatini rivojlantirish.
+Yangi ish o’rinlarini yaratish.
+BurgerCha tarmog’ini respublika bo’ylab kengaytirish.
+Keytering va tayyor mahsulotlar bozorini rivojlantirish.

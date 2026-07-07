@@ -1,0 +1,17 @@
+name: Majidov Baxodir
+age: 35 
+Brend name: Affinaj korxonasi
+phone number: +998 97 422 16 12
+location:Toshkent shahri
+industry: Affinaj korxonasi va gemologiya
+
+about business:Affinaj korxonasi — tarkibida qimmatbaho metallar (oltin, kumush, platina va boshqalar) boʻlgan xomashyo va chiqindilarni qayta ishlab, ulardan eng yuqori darajadagi (99.9% va undan yuqori) toza metallarni ajratib oluvchi sanoat korxonasi.
+Shu bilan birga qimmatbaho toshlarni ajratib olish va ularga ishlov berish bilan shug’ullanadi.
+
+maqsad:Mamlakatdagi xomashyo va chiqindilarni qayta ishlab 100% oltin, kumush va boshqa metallarni affinaj qilinadi
+Respublika boʻylab sanoat rudasi, kon konsentratlari yoki yaroqsiz zargarlik buyumlari kabi xomashyolarni qabul qiladi va qayta ishlaydi.
+Sof metallarni xalqaro standartlarga javob beradigan oʻlchovli quymalarga yoki granulalarga keltirish.
+
+potential tasri:
+Zargarlik sohasida zamonaviy va ekologik toza innovatsion korxonani tashkil etish
+Yangi ish oʻrinlarini yaratish

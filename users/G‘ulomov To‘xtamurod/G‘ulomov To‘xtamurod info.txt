@@ -1,0 +1,15 @@
+Viloyat: TOSHKENT SHAHRI
+Location:  TOSHKENT SHAHRI
+Name: G‘ulomov To‘xtamurod
+age: 24
+phone: +998 90 394 40 04
+Industry name: Shifu School
+About business: "Shifu School" brendi ostida faoliyat yurituvchi, xitoy tilini o‘qitishga ixtisoslashgan o‘quv markazi. Markaz O‘zbekistondagi ushbu yo‘nalishdagi yetakchi ta’lim muassasalaridan biri hisoblanadi.
+Maqsad:Filiallar sonini ko‘paytirish.
+Yoshlar uchun xitoy tilini o‘rganish imkoniyatlarini kengaytirish.
+Xalqaro standartlarga mos ta’lim dasturlarini yanada rivojlantirish.
+Yangi ish o‘rinlarini yaratish hamda ta’lim xizmatlari qamrovini kengaytirish.
+Potential impact: Yoshlarning xitoy tilini o‘rganish imkoniyatlarini kengaytirish.
+Xalqaro ta’lim va mehnat bozoriga raqobatbardosh mutaxassislarni tayyorlash.
+Ta’lim sohasida yangi ish o‘rinlarini yaratish.
+O‘zbekiston va Xitoy o‘rtasidagi ta’lim hamda biznes aloqalarini rivojlantirish.

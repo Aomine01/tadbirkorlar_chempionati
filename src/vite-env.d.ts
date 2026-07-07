@@ -1,0 +1,28 @@
+/// <reference types="vite/client" />
+
+interface ImportMetaEnv {
+  readonly DEV: boolean;
+  readonly PROD: boolean;
+  readonly SSR: boolean;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+
+declare module "*.riv" {
+  const src: string;
+  export default src;
+}
+
+declare module "*.svg" {
+  import * as React from "react";
+  export const ReactComponent: React.FunctionComponent<
+    React.SVGProps<SVGSVGElement> & { title?: string }
+  >;
+  const src: string;
+  export default src;
+}
+
+declare module "*.css";
+declare module "swiper/css";

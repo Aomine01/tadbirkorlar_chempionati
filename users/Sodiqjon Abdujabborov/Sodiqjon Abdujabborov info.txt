@@ -1,0 +1,16 @@
+Viloyat: JIZZAX VILOYATI
+Location:  Jizzax shahri
+Name: Sodiqjon Abdujabborov
+age:18
+phone: +998 88 704 55 88
+Industry name: N/A
+About business: Zamonaviy agro texnikalar, jumladan masofadan boshqariladigan, avtopilot tizimiga ega hamda elektr va gibrid dvigatelli traktorlar va agregatlarni mahalliy sharoitda ishlab chiqarish loyihasi. Asosiy maqsad — sifatli va arzon agro texnikalarni fermerlarga taqdim etish.
+Maqsad:Mahalliy ishlab chiqarish asosida zamonaviy agro texnikalarni yo’lga qo’yish.
+Masofadan boshqariladigan va avtopilot tizimiga ega gibrid traktorlarni ishlab chiqarish.
+Elektr va gibrid dvigatelli qishloq xo’jaligi texnikalarini yaratish.
+Mayda va yirik urug’lar uchun zamonaviy seyalka hamda boshqa agregatlarni ishlab chiqarish.
+Fermerlar uchun arzon narxlarda innovatsion agro texnikalarni bozorga taqdim etish.
+Potential impact:Zamonaviy agro texnikalar mahalliy ishlab chiqariladi.
+Fermerlar uchun texnika xarajatlari kamayadi.
+Import o’rnini bosuvchi mahsulotlar yaratiladi.
+Yangi ish o’rinlari tashkil etiladi.

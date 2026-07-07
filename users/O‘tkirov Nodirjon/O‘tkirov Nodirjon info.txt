@@ -1,0 +1,15 @@
+Viloyat: TOSHKENT SHAHRI
+Location:  TOSHKENT SHAHRI
+Name: O‘tkirov Nodirjon
+age:28
+phone: +998 97 407 74 41
+Industry name: Mentalaba
+About business: “Mentalaba” platformasi talabalarga xorijiy oliy ta’lim muassasalariga o‘qishga kirish jarayonida maslahat berish, hujjatlarni tayyorlash hamda ta’lim yo‘nalishlarini tanlash bo‘yicha professional xizmatlarni taqdim etadi. Platforma yoshlarning xalqaro ta’lim imkoniyatlaridan foydalanishini osonlashtirish, qabul jarayonlarini raqamlashtirish va zamonaviy ta’lim xizmatlarini rivojlantirishga qaratilgan.
+Maqsad:Platforma faoliyatini kengaytirish.
+Xizmatlar qamrovini oshirish va ko‘proq yoshlarni qamrab olish.
+Xorijiy oliy ta’lim muassasalariga kirishni istovchi talabalar uchun sifatli maslahat xizmatlarini rivojlantirish.
+Xalqaro ta’lim bozorida raqobatbardosh mahalliy platformani shakllantirish.
+Potential impact:Yoshlarning xalqaro ta’lim imkoniyatlaridan foydalanish ko‘lamini kengaytirish.
+O‘zbekistonning intellektual salohiyatini rivojlantirishga hissa qo‘shish.
+Ta’lim xizmatlarini raqamlashtirish va qulaylashtirish.
+Xalqaro ta’lim sohasida mahalliy platformaning raqobatbardoshligini oshirish.

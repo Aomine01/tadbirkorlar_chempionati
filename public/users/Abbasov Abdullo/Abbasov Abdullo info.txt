@@ -1,0 +1,16 @@
+Viloyat: SAMARQAND VILOYATI
+Location:  Samarqand shahri
+Name: Abbasov Abdullo
+age:33
+phone: +998 99 371 13 37
+Industry name: BERT AGRO
+About business: Qishloq xo'jaligida foydalaniladigan yerlar uchun oziqaviy va nitratlardan xoli organik-mineral o'g'it ishlab chiqarish bilan shug'ullanadi. Korxona ekologik toza va samarali mahsulot ishlab chiqarishga ixtisoslashgan.
+Maqsad:Organik-mineral o'g'it ishlab chiqarish hajmini kengaytirish.
+Ishlab chiqarish quvvatini oshirish va zamonaviy uskunalar bilan jihozlash.
+Mahsulot sifatini yanada yaxshilash hamda bozor talabini qondirish.
+Yiliga 5 000 tonna tayyor mahsulot ishlab chiqarish quvvatiga erishish.
+Korxona faoliyatini kengaytirib, yangi hamkorlar va mijozlar sonini oshirish.
+Potential impact:Ekologik toza organik-mineral o'g'itlar ishlab chiqarish rivojlantiriladi.
+Qishloq xo'jaligi hosildorligi va tuproq unumdorligi oshiriladi.
+Mahalliy ishlab chiqarish quvvatlari kengaytiriladi.
+Yangi ish o'rinlari yaratiladi.

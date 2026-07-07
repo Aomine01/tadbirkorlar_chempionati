@@ -1,0 +1,16 @@
+Viloyat: QASHQADARYO VILOYATI
+Location:  Qashqadaryo viloyati, Qarshi tumani
+Name: Boliboyev Mashrab
+age:31
+phone: +998 94 572 22 52
+Industry name: Devor_Print
+About business: Devor_Print korxonasi har qanday vertikal tekis yuzaga zamonaviy printer texnologiyasi yordamida istalgan dizayndagi yuqori sifatli tasvirlarni tushirish xizmatini ko’rsatadi. Loyihalar turar joy, ofis, ta’lim muassasalari va boshqa obyektlar uchun amalga oshiriladi.
+Maqsad:Devor printer texnologiyasi orqali yuqori sifatli tasvirlarni keng miqyosda joriy etish.
+Maktab, bog’cha va boshqa ta’lim muassasalarini zamonaviy vizual materiallar bilan bezatish.
+Davlat tashkilotlari va ijtimoiy loyihalarda devor printer xizmatlarini keng qo’llash.
+Buyurtmalar hajmini oshirish uchun zamonaviy uskunalar va ishlab chiqarish quvvatini rivojlantirish.
+Ta’lim va davlat tashkilotlari loyihalarini sifatli vizual dizayn bilan qo’llab-quvvatlash.
+Potential impact:Ta’lim muassasalari uchun zamonaviy va sifatli vizual muhit yaratiladi.
+Davlat va ijtimoiy obyektlarning estetik ko’rinishi yaxshilanadi.
+Mahalliy devor printer texnologiyasi ommalashadi.
+Yangi buyurtmalar va ish o’rinlari yaratiladi.

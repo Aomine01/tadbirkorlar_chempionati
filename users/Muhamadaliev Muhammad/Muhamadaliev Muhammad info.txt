@@ -1,0 +1,15 @@
+Viloyat: TOSHKENT SHAHRI
+Location:  TOSHKENT SHAHRI
+Name: Muhamadaliev Muhammad
+age:33
+phone: +998 97 748 22 22
+Industry name: clickTV
+About business: clickTV onlayn kinoteatri asoschisi. Platforma milliy kontentni rivojlantirish, o‘zbek tilining nufuzini oshirish hamda yoshlar orasida milliy qadriyatlarni targ‘ib qilishga qaratilgan. Hozirda platformada 2 milliondan ortiq ro‘yxatdan o‘tgan foydalanuvchi va 450 ming oylik faol foydalanuvchi mavjud.
+Maqsad:Platforma auditoriyasini yanada kengaytirish.
+Milliy kontent ishlab chiqarish hajmini oshirish va yangi media loyihalarni rivojlantirish.
+Xizmat qamrovini kengaytirish hamda foydalanuvchilar uchun zamonaviy raqamli imkoniyatlarni yaratish.
+O‘zbekistonning yetakchi milliy media platformasi sifatida rivojlanishni davom ettirish.
+Potential impact:Milliy media va kino sanoatini rivojlantirish.
+O‘zbek tilidagi sifatli raqamli kontent ulushini oshirish.
+Mahalliy ijodkorlar va media mutaxassislari uchun yangi imkoniyatlar yaratish.
+O‘zbekistonning raqamli media ekotizimini rivojlantirish va millionlab foydalanuvchilarga milliy kontentni yetkazib berish.

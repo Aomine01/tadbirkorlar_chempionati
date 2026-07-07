@@ -1,0 +1,15 @@
+Viloyat: SAMARQAND VILOYATI
+Location:  Samarqand shahri
+Name: Afsona Narzikulova
+age:17
+phone: +998 90 606 69 43
+Industry name: DIY
+About business: DIY brendi ostida o‘z qo‘li bilan to‘qish uchun mo‘ljallangan tayyor to‘plamlarni ishlab chiqish ustida ishlamoqda. Hozirda mahsulot prototiplari tayyor bo‘lib, ishlab chiqarishni yo‘lga qo‘yish va bozorga chiqarish rejalashtirilgan.
+Maqsad:7 turdagi DIY to‘qish to‘plamini ishlab chiqarishni yo‘lga qo‘yish.
+Har bir to‘plamni to‘qish uchun zarur barcha asbob-uskunalar va batafsil qo‘llanma bilan ta’minlash.
+“Bek va Lola” brendi bilan hamkorlik asosida mahsulotlarni bozorga chiqarish.
+DIY mahsulotlarini respublika bo‘ylab ommalashtirish va savdo tarmog‘ini kengaytirish.
+Bitta to‘plamni o‘rtacha 100 ming so‘m narxda sotuvga chiqarish va ishlab chiqarish hajmini oshirish.
+Potential impact:O‘zbekiston bozoriga yangi turdagi DIY mahsulotlarini olib kirish.
+Hunarmandchilik va ijodiy mashg‘ulotlarni ommalashtirish.
+Xotin-qizlar uchun qo‘shimcha daromad va bandlik imkoniyatlarini yaratish.

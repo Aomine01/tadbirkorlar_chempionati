@@ -1,0 +1,16 @@
+Viloyat: FARG‘ONA VILOYATI
+Location:  Farg‘ona viloyati, Farg‘ona shahri
+Name: Dilshod Shodiyev
+age: 33
+phone: +998 90 581 03 18
+Industry name: Amarant Step
+About business: Amarant Step MCHJ mahalliylashtirilgan dorivor o‘simliklar asosida bolalar va sportchilar uchun innovatsion bo‘tqa ishlab chiqarish bilan shug‘ullanadi. Mahsulot sog‘lom ovqatlanishni targ‘ib qilish, yuqori sifatli mahalliy xomashyodan foydalanish hamda zamonaviy oziq-ovqat mahsulotlarini yaratishga qaratilgan.
+Maqsad:Mahsulot tarkibida mahalliy xomashyo ulushini 90 foizdan yuqori darajaga yetkazish.
+Zamonaviy ishlab chiqarish liniyasini yo‘lga qo‘yish.
+Laboratoriya nazorat tizimini tashkil etish.
+Milliy brendni rivojlantirish va ichki bozorni kengaytirish.
+Eksport yo‘nalishlarini rivojlantirish.
+Potential impact:Sog‘lom ovqatlanish madaniyati rivojlantiriladi.
+Mahalliy xomashyodan samarali foydalanish ta'minlanadi.
+Import o‘rnini bosuvchi mahsulotlar ishlab chiqariladi.
+Milliy oziq-ovqat brendi va eksport salohiyati oshiriladi.

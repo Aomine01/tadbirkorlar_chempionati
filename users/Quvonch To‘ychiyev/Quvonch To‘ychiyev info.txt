@@ -1,0 +1,15 @@
+Viloyat: Toshkent shahri
+Location:  Toshkent shahri
+Name: Quvonch To‘ychiyev
+age: 27
+phone: +998 99 589 11 11
+Industry name: "Sinax"
+About business: "Sinax" MChJ eshik va romlarni ishlab chiqarish, o‘rnatish hamda montaj xizmatlarini ko‘rsatish bilan shug‘ullanadi. 10 yildan beri bozorda bo'lib, hozirda 20dan ortiq ishchilari bor
+Maqsad:Ishlab chiqarish quvvatini oshirish.
+Respublika bo‘ylab yangi filiallar ochish.
+Butun O‘zbekiston hududida faoliyatni yo‘lga qo‘yish.
+Yangi ish o‘rinlarini yaratish va xizmatlar qamrovini kengaytirish.
+Potential impact: Mahalliy qurilish materiallari ishlab chiqarishini rivojlantirish.
+Respublika bo‘ylab yangi filiallar va ish o‘rinlarini yaratish.
+Sifatli mahalliy mahsulotlar ulushini oshirish.
+Qurilish va ta’mirlash sohasida zamonaviy xizmatlar qamrovini kengaytirish.

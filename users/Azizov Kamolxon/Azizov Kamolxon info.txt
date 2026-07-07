@@ -1,0 +1,16 @@
+Viloyat: NAMANGAN VILOYATI
+Location:  Namangan shahri
+Name: Azizov Kamolxon
+age:24
+phone: +998 87 450 50 04
+Industry name: Uychi Parranda
+About business: "Uychi Parranda" brendi asoschisi. Parrandachilik sohasida faoliyat yuritib, 200 dan ortiq ish o‘rni yaratgan. Korxonaning yillik aylanmasi 206 milliard so‘mni, eksport hajmi esa 8 million AQSH dollarini tashkil etadi.
+Maqsad:Korxona faoliyatini yanada kengaytirish.
+Tovuq go‘shtidan yarim tayyor mahsulotlar ishlab chiqarishni yo‘lga qo‘yish.
+Ishlab chiqarish jarayonlarini to‘liq tizimlashtirish.
+Zamonaviy texnologiyalarni joriy etish.
+Eksport salohiyatini yanada oshirish.
+Potential impact:Parrandachilik sohasida zamonaviy tajribalar keng joriy etiladi.
+Eksport hajmi oshiriladi.
+Xalqaro bozorlarda raqobatbardoshlik kuchaytiriladi.
+Mahalliy ishlab chiqarish yanada rivojlantiriladi.
