@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Calendar, ArrowRight, X, Phone } from "lucide-react";
+import { ArrowRight, X } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import type { Application } from "../types/database";
 import logo from "../assets/logos/white full.png";
 import HeroImage from "../assets/img/hero-image.png";
-import CustomSelect from "../components/CustomSelect";
 import largeCardMen from "../assets/img/largecardmen.png";
 import largeCardFemale from "../assets/img/largcardfemale.png";
 
@@ -78,10 +77,6 @@ const ParticipantCard = ({
   app: ExtendedApplication;
   onClick: () => void;
 }) => {
-  // Parse description preview
-  const rawDescription = app.business_description || "";
-  const cleanDescriptionPreview = rawDescription.replace(/\[Gender:\s*(male|female)\]/i, "").trim();
-
   return (
     <article
       onClick={onClick}
@@ -415,7 +410,6 @@ const ParticipantDetailModal = ({
 const IshtirokchilarPage = () => {
   const [applications, setApplications] = useState<ExtendedApplication[]>([]);
   const [loading, setLoading] = useState(true);
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [regionFilter, setRegionFilter] = useState<string>("all");
   const [selectedApp, setSelectedApp] = useState<ExtendedApplication | null>(null);
 
@@ -424,6 +418,7 @@ const IshtirokchilarPage = () => {
       .from("applications")
       .select("*")
       .eq("status", "approved")
+      .eq("is_deleted", false)          // exclude soft-deleted applications
       .order("created_at", { ascending: false })
       .then(({ data }) => {
         const dbApps = data ?? [];
@@ -433,10 +428,14 @@ const IshtirokchilarPage = () => {
       });
   }, []);
 
-  const uniqueRegions = Array.from(new Set(applications.map((a) => a.region)));
+  // Unique regions with participant counts for the viloyat filter
+  const regionCounts = applications.reduce<Record<string, number>>((acc, a) => {
+    acc[a.region] = (acc[a.region] ?? 0) + 1;
+    return acc;
+  }, {});
+  const uniqueRegions = Object.entries(regionCounts).sort((a, b) => b[1] - a[1]).map(([r]) => r);
 
   const filtered = applications.filter((a) => {
-    if (categoryFilter !== "all" && a.category !== categoryFilter) return false;
     if (regionFilter !== "all" && a.region !== regionFilter) return false;
     return true;
   });
@@ -496,50 +495,51 @@ const IshtirokchilarPage = () => {
             Chempionatga qabul qilingan ishtirokchilar — kelajakning yosh tadbirkorlari
           </p>
 
-          {/* Filters */}
+          {/* Viloyat filter */}
           {!loading && applications.length > 0 && (
-            <div className="flex flex-wrap items-center gap-3 mt-8">
-              <span className="text-xs text-white/30 mr-1" style={{ fontFamily: "var(--font-button)" }}>
-                Filter:
-              </span>
-              {/* Category pills */}
-              {[
-                { value: "all", label: "Barchasi" },
-                { value: "ideas", label: "G'oya" },
-                { value: "startup", label: "Startap" },
-                { value: "business", label: "Biznes" },
-              ].map((opt) => (
+            <div className="mt-8">
+              <div className="flex flex-wrap items-center gap-2">
+                {/* All button */}
                 <button
-                  key={opt.value}
-                  onClick={() => setCategoryFilter(opt.value)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
-                    categoryFilter === opt.value
+                  onClick={() => setRegionFilter("all")}
+                  className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                    regionFilter === "all"
                       ? "bg-[#00A8FF]/20 border border-[#00A8FF]/30 text-[#00A8FF]"
                       : "border border-white/10 text-white/40 hover:text-white hover:border-white/20"
                   }`}
                 >
-                  {opt.label}
+                  Barchasi
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                    regionFilter === "all" ? "bg-[#00A8FF]/20 text-[#00A8FF]" : "bg-white/8 text-white/30"
+                  }`}>
+                    {applications.length}
+                  </span>
                 </button>
-              ))}
 
-              {uniqueRegions.length > 1 && (
-                <>
-                  <div className="w-px h-4 bg-white/10" />
-                  <CustomSelect
-                    value={regionFilter}
-                    onChange={setRegionFilter}
-                    options={[
-                      { value: "all", label: "Barcha viloyatlar" },
-                      ...uniqueRegions.map((r) => ({ value: r, label: r }))
-                    ]}
-                    size="sm"
-                  />
-                </>
-              )}
+                {/* One pill per viloyat, sorted by participant count */}
+                {uniqueRegions.map((region) => (
+                  <button
+                    key={region}
+                    onClick={() => setRegionFilter(regionFilter === region ? "all" : region)}
+                    className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                      regionFilter === region
+                        ? "bg-[#00A8FF]/20 border border-[#00A8FF]/30 text-[#00A8FF]"
+                        : "border border-white/10 text-white/40 hover:text-white hover:border-white/20"
+                    }`}
+                  >
+                    {region}
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                      regionFilter === region ? "bg-[#00A8FF]/20 text-[#00A8FF]" : "bg-white/8 text-white/30"
+                    }`}>
+                      {regionCounts[region]}
+                    </span>
+                  </button>
+                ))}
 
-              <span className="ml-auto text-xs text-white/20" style={{ fontFamily: "var(--font-button)" }}>
-                {filtered.length} ta ishtirokchi
-              </span>
+                <span className="ml-auto text-xs text-white/20" style={{ fontFamily: "var(--font-button)" }}>
+                  {filtered.length} ta ishtirokchi
+                </span>
+              </div>
             </div>
           )}
         </div>

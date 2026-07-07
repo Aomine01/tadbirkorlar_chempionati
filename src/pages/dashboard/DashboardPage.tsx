@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, CheckCircle2, Clock, XCircle, FileText, LogOut } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, XCircle, FileText, LogOut, Trash2 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
 import type { Application } from "../../types/database";
@@ -117,10 +117,12 @@ const Timeline = ({ status }: { status: TimelineStatus }) => {
 /* ─── Page ─────────────────────────────────────────── */
 
 const DashboardPage = () => {
-  const { profile, user, signOut } = useAuth();
+  const { profile, user, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [application, setApplication] = useState<Application | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => { refreshProfile(); }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -128,9 +130,11 @@ const DashboardPage = () => {
       .from("applications")
       .select("*")
       .eq("user_id", user.id)
-      .maybeSingle()
+      // fetch ALL apps for user (incl. soft-deleted) so we can show the right state
+      .order("created_at", { ascending: false })
+      .limit(1)
       .then(({ data }) => {
-        setApplication(data);
+        setApplication(data?.[0] ?? null);
         setLoading(false);
       });
   }, [user]);
@@ -140,7 +144,7 @@ const DashboardPage = () => {
     navigate("/");
   };
 
-  const statusCfg = application
+  const statusCfg = application && !application.is_deleted
     ? STATUS_CONFIG[application.status]
     : null;
 
@@ -173,6 +177,14 @@ const DashboardPage = () => {
             </span>
           </Link>
           <div className="flex items-center gap-3">
+            {profile?.role === "admin" && (
+              <Link
+                to="/admin"
+                className="text-xs text-[#00A8FF] hover:text-white border border-[#00A8FF]/30 hover:border-white/20 rounded-lg px-3 py-1.5 transition-all"
+              >
+                Admin panel
+              </Link>
+            )}
             <span className="text-xs text-white/30" style={{ fontFamily: "var(--font-button)" }}>
               {profile?.full_name}
             </span>
@@ -210,8 +222,35 @@ const DashboardPage = () => {
           <div className="flex items-center justify-center py-24">
             <div className="w-8 h-8 border-2 border-white/20 border-t-[#00A8FF] rounded-full animate-spin" />
           </div>
+        ) : application?.is_deleted ? (
+          /* ── Application was deleted by admin ── */
+          <div className="rounded-2xl border border-red-500/15 bg-red-500/5 p-8 sm:p-12 flex flex-col items-center text-center gap-6">
+            <div
+              className="w-20 h-20 rounded-2xl flex items-center justify-center border border-red-500/20"
+              style={{ background: "rgba(239,68,68,0.08)" }}
+            >
+              <Trash2 size={36} className="text-red-400" />
+            </div>
+            <div>
+              <h2
+                className="text-2xl sm:text-3xl font-bold mb-2"
+                style={{ fontFamily: "var(--font-zuume)" }}
+              >
+                ARIZANGIZ O'CHIRILDI
+              </h2>
+              <p className="text-sm text-white/50 max-w-sm">
+                Administrator tomonidan arizangiz o'chirildi. Xatolik bo'lgan bo'lsa yoki qayta ko'rib chiqmoqchi bo'lsangiz, yangi ariza topshirishingiz mumkin.
+              </p>
+            </div>
+            <Link
+              to="/dashboard/apply"
+              className="inline-flex items-center gap-2 bg-[#00A8FF] hover:bg-[#0090dd] text-white font-semibold rounded-xl px-8 py-4 text-sm transition-all duration-200"
+            >
+              Qayta ariza topshirish <ArrowRight size={16} />
+            </Link>
+          </div>
         ) : !application ? (
-          /* ── No application ── */
+          /* ── No application yet ── */
           <div className="rounded-2xl border border-white/8 bg-white/3 p-8 sm:p-12 flex flex-col items-center text-center gap-6">
             <div
               className="w-20 h-20 rounded-2xl flex items-center justify-center border border-white/10"
@@ -246,7 +285,7 @@ const DashboardPage = () => {
               const StatusIcon = cfg.icon;
               return (
                 <div className={`rounded-2xl border p-6 sm:p-8 ${cfg.bg} ${cfg.border}`}>
-                  <div className="flex items-start justify-between gap-4 mb-8">
+                  <div className="flex items-start justify-between gap-4 mb-6">
                     <div>
                       <p className="text-xs text-white/40 mb-1 uppercase tracking-widest" style={{ fontFamily: "var(--font-button)" }}>
                         Ariza holati
@@ -262,6 +301,16 @@ const DashboardPage = () => {
                       {new Date(application.created_at).toLocaleDateString("uz-UZ")}
                     </span>
                   </div>
+
+                  {/* Rejection comment — shown only when rejected with a reason */}
+                  {application.status === "rejected" && application.rejection_comment && (
+                    <div className="mb-6 rounded-xl border border-red-500/20 bg-black/20 px-4 py-3">
+                      <p className="text-[10px] text-red-400/70 uppercase tracking-widest mb-1.5" style={{ fontFamily: "var(--font-button)" }}>
+                        Rad etish sababi
+                      </p>
+                      <p className="text-sm text-red-300 leading-relaxed">{application.rejection_comment}</p>
+                    </div>
+                  )}
 
                   <Timeline status={application.status} />
                 </div>
@@ -320,20 +369,46 @@ const DashboardPage = () => {
             </div>
 
             {/* Images */}
-            {(application.avatar_url || application.product_image_url) && (
-              <div className="grid sm:grid-cols-2 gap-4">
-                {application.avatar_url && (
-                  <div className="rounded-xl border border-white/8 overflow-hidden aspect-video bg-white/3">
-                    <img src={application.avatar_url} alt="Fotosurat" className="w-full h-full object-cover" />
-                  </div>
-                )}
-                {application.product_image_url && (
-                  <div className="rounded-xl border border-white/8 overflow-hidden aspect-video bg-white/3">
-                    <img src={application.product_image_url} alt="Mahsulot rasmi" className="w-full h-full object-cover" />
-                  </div>
-                )}
+            {application.avatar_url && (
+              <div>
+                <p className="text-[10px] text-white/30 uppercase tracking-widest mb-2" style={{ fontFamily: "var(--font-button)" }}>Shaxsiy fotosurat</p>
+                <div className="rounded-xl border border-white/8 overflow-hidden aspect-video bg-white/3">
+                  <img src={application.avatar_url} alt="Fotosurat" className="w-full h-full object-cover" />
+                </div>
               </div>
             )}
+
+            {/* Product images — new array or legacy single */}
+            {(() => {
+              // Supabase text[] can return as JSON string or actual array
+              const rawUrls = application.product_image_urls;
+              const parsedUrls: string[] = Array.isArray(rawUrls)
+                ? rawUrls
+                : typeof rawUrls === "string" && rawUrls.length > 2
+                ? (() => { try { return JSON.parse(rawUrls); } catch { return []; } })()
+                : [];
+
+              const productImages: string[] =
+                parsedUrls.length > 0
+                  ? parsedUrls
+                  : application.product_image_url ? [application.product_image_url] : [];
+
+              if (productImages.length === 0) return null;
+              return (
+                <div>
+                  <p className="text-[10px] text-white/30 uppercase tracking-widest mb-2" style={{ fontFamily: "var(--font-button)" }}>
+                    Mahsulot rasmlari ({productImages.length} ta)
+                  </p>
+                  <div className={`grid gap-3 ${productImages.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+                    {productImages.map((url, i) => (
+                      <div key={i} className="rounded-xl border border-white/8 overflow-hidden aspect-video bg-white/3">
+                        <img src={url} alt={`Mahsulot ${i + 1}`} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
 
             <p className="text-center text-xs text-white/20" style={{ fontFamily: "var(--font-button)" }}>
               Ariza topshirilgandan so'ng o'zgartirib bo'lmaydi. Savollar uchun telegram: @ytch_uz

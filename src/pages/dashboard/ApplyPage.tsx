@@ -78,10 +78,6 @@ const formatPhone = (raw: string): string => {
   return out;
 };
 
-const stripPhone = (formatted: string): string => {
-  return "+998" + formatted.replace(/\D/g, "").slice(3);
-};
-
 /* ─── Shared Input ─────────────────────────────────── */
 
 const InputField = ({
@@ -166,9 +162,9 @@ const DynamicList = ({
   );
 };
 
-/* ─── File Upload ──────────────────────────────────── */
+/* ─── Avatar Upload (single, required) ────────────── */
 
-const ImageUpload = ({
+const AvatarUpload = ({
   label,
   preview,
   onFile,
@@ -219,13 +215,86 @@ const ImageUpload = ({
         ) : (
           <div className="h-full flex flex-col items-center justify-center gap-2 text-white/30">
             <Upload size={24} />
-            <span className="text-xs">Rasm yuklash (max {MAX_FILE_MB}MB)</span>
+            <span className="text-xs">Fotosurat yuklash (max {MAX_FILE_MB}MB)</span>
             <span className="text-[10px]">JPEG, PNG, WebP</span>
           </div>
         )}
       </div>
       <input ref={ref} type="file" accept={ALLOWED_TYPES.join(",")} onChange={handle} className="hidden" />
       {error && <p className="mt-1.5 text-xs text-red-400">{error}</p>}
+    </div>
+  );
+};
+
+/* ─── Multi Product Image Upload (up to 4) ─────────── */
+
+const MAX_PRODUCT_IMAGES = 4;
+
+const MultiImageUpload = ({
+  label,
+  previews,
+  onAdd,
+  onRemove,
+}: {
+  label: string;
+  previews: string[];
+  onAdd: (file: File) => void;
+  onRemove: (index: number) => void;
+}) => {
+  const ref = useRef<HTMLInputElement>(null);
+  const canAdd = previews.length < MAX_PRODUCT_IMAGES;
+
+  const handle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      alert("Faqat JPEG, PNG yoki WebP formatdagi rasmlar qabul qilinadi");
+      return;
+    }
+    if (file.size > MAX_FILE_MB * 1024 * 1024) {
+      alert(`Fayl hajmi ${MAX_FILE_MB}MB dan oshmasligi kerak`);
+      return;
+    }
+    onAdd(file);
+    // reset input so same file can be re-selected
+    e.target.value = "";
+  };
+
+  return (
+    <div>
+      <label className="block text-xs font-medium text-white/50 mb-2 uppercase tracking-widest">
+        {label}
+        <span className="text-white/25 ml-2 normal-case font-normal">(ixtiyoriy, max {MAX_PRODUCT_IMAGES} ta rasm)</span>
+      </label>
+
+      <div className="grid grid-cols-2 gap-3">
+        {previews.map((src, i) => (
+          <div key={i} className="relative aspect-video rounded-xl overflow-hidden border border-white/10 group">
+            <img src={src} alt={`Mahsulot ${i + 1}`} className="w-full h-full object-cover" />
+            <button
+              type="button"
+              onClick={() => onRemove(i)}
+              className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full bg-black/70 text-white/70 hover:text-red-400 hover:bg-black/90 transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
+            >
+              <Trash2 size={13} />
+            </button>
+            <div className="absolute bottom-1.5 left-2 text-[10px] text-white/40">{i + 1}/{MAX_PRODUCT_IMAGES}</div>
+          </div>
+        ))}
+
+        {canAdd && (
+          <div
+            onClick={() => ref.current?.click()}
+            className="aspect-video rounded-xl border-2 border-dashed border-white/10 hover:border-[#00A8FF]/40 cursor-pointer flex flex-col items-center justify-center gap-2 text-white/30 hover:text-white/50 transition-all"
+          >
+            <Plus size={22} />
+            <span className="text-xs">Rasm qo'shish</span>
+            <span className="text-[10px]">{previews.length}/{MAX_PRODUCT_IMAGES}</span>
+          </div>
+        )}
+      </div>
+
+      <input ref={ref} type="file" accept={ALLOWED_TYPES.join(",")} onChange={handle} className="hidden" />
     </div>
   );
 };
@@ -265,11 +334,12 @@ interface FormData {
   // Step 3
   goals: string[];
   potential_impact: string[];
-  // Step 4
+  // Step 4 — avatar (required, 1 photo of the person)
   avatarFile: File | null;
-  productFile: File | null;
   avatarPreview: string | null;
-  productPreview: string | null;
+  // Step 4 — product images (optional, up to 4)
+  productFiles: File[];
+  productPreviews: string[];
 }
 
 const STEP_TITLES = [
@@ -304,18 +374,19 @@ const ApplyPage = () => {
     goals: [""],
     potential_impact: [""],
     avatarFile: null,
-    productFile: null,
     avatarPreview: null,
-    productPreview: null,
+    productFiles: [],
+    productPreviews: [],
   });
 
-  // Check for duplicate applications
+  // Check for duplicate applications — exclude soft-deleted so user can reapply after deletion
   useEffect(() => {
     if (!user) return;
     supabase
       .from("applications")
       .select("id")
       .eq("user_id", user.id)
+      .eq("is_deleted", false)        // only block if there's an active (non-deleted) application
       .maybeSingle()
       .then(({ data }) => {
         if (data) setAlreadyApplied(true);
@@ -385,14 +456,28 @@ const ApplyPage = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleFileSelect = (field: "avatar" | "product", file: File) => {
+  const handleAvatarSelect = (file: File) => {
     const url = URL.createObjectURL(file);
-    if (field === "avatar") {
-      setFormData((p) => ({ ...p, avatarFile: file, avatarPreview: url }));
-      setStep4Errors((e) => ({ ...e, avatar: undefined }));
-    } else {
-      setFormData((p) => ({ ...p, productFile: file, productPreview: url }));
-    }
+    setFormData((p) => ({ ...p, avatarFile: file, avatarPreview: url }));
+    setStep4Errors((e) => ({ ...e, avatar: undefined }));
+  };
+
+  const handleProductAdd = (file: File) => {
+    if (formData.productFiles.length >= 4) return;
+    const url = URL.createObjectURL(file);
+    setFormData((p) => ({
+      ...p,
+      productFiles: [...p.productFiles, file],
+      productPreviews: [...p.productPreviews, url],
+    }));
+  };
+
+  const handleProductRemove = (index: number) => {
+    setFormData((p) => ({
+      ...p,
+      productFiles: p.productFiles.filter((_, i) => i !== index),
+      productPreviews: p.productPreviews.filter((_, i) => i !== index),
+    }));
   };
 
   /* Final submit */
@@ -415,7 +500,7 @@ const ApplyPage = () => {
       };
 
       /* Upload avatar */
-      const avatarCompressed = await compress(formData.avatarFile);
+      const avatarCompressed = await compress(formData.avatarFile!);
       const avatarPath = `${user.id}/avatar-${Date.now()}.${avatarCompressed.name.split(".").pop()}`;
       const { error: avatarErr } = await supabase.storage
         .from("participant-media")
@@ -426,11 +511,11 @@ const ApplyPage = () => {
         .from("participant-media")
         .getPublicUrl(avatarPath);
 
-      /* Upload product image (optional) */
-      let productUrl: string | null = null;
-      if (formData.productFile) {
-        const productCompressed = await compress(formData.productFile);
-        const productPath = `${user.id}/product-${Date.now()}.${productCompressed.name.split(".").pop()}`;
+      /* Upload product images (optional, up to 4) */
+      const productUrls: string[] = [];
+      for (let i = 0; i < formData.productFiles.length; i++) {
+        const productCompressed = await compress(formData.productFiles[i]);
+        const productPath = `${user.id}/product-${Date.now()}-${i}.${productCompressed.name.split(".").pop()}`;
         const { error: productErr } = await supabase.storage
           .from("participant-media")
           .upload(productPath, productCompressed, { upsert: false });
@@ -438,7 +523,7 @@ const ApplyPage = () => {
           const { data: productData } = supabase.storage
             .from("participant-media")
             .getPublicUrl(productPath);
-          productUrl = productData.publicUrl;
+          productUrls.push(productData.publicUrl);
         }
       }
 
@@ -454,7 +539,8 @@ const ApplyPage = () => {
         goals: formData.goals.filter((g) => g.trim()),
         potential_impact: formData.potential_impact.filter((g) => g.trim()),
         avatar_url: avatarData.publicUrl,
-        product_image_url: productUrl,
+        product_image_url: productUrls[0] ?? null,   // keep legacy column
+        product_image_urls: productUrls,              // new array column
         status: "submitted",
         gender: formData.gender,
       });
@@ -702,19 +788,41 @@ const ApplyPage = () => {
 
         {/* ── Step 4: Media ── */}
         {step === 3 && (
-          <div className="flex flex-col gap-6">
-            <ImageUpload
-              label="Shaxsiy fotosurat (majburiy)"
-              preview={formData.avatarPreview}
-              onFile={(f) => handleFileSelect("avatar", f)}
-              required
-              error={step4Errors.avatar}
-            />
-            <ImageUpload
-              label="Mahsulot / Biznes rasmi (ixtiyoriy)"
-              preview={formData.productPreview}
-              onFile={(f) => handleFileSelect("product", f)}
-            />
+          <div className="flex flex-col gap-8">
+            {/* Person photo — clearly labelled, separate from product */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-6 h-6 rounded-full bg-[#00A8FF]/15 border border-[#00A8FF]/30 flex items-center justify-center text-[10px] font-bold text-[#00A8FF]">1</div>
+                <p className="text-sm font-semibold text-white/80">Shaxsiy fotosurat</p>
+                <span className="text-[10px] text-white/30">(majburiy — o'zingizning rasmingiz)</span>
+              </div>
+              <AvatarUpload
+                label="Fotosurat"
+                preview={formData.avatarPreview}
+                onFile={handleAvatarSelect}
+                required
+                error={step4Errors.avatar}
+              />
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-white/8" />
+
+            {/* Product images — up to 4 */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-6 h-6 rounded-full bg-white/5 border border-white/15 flex items-center justify-center text-[10px] font-bold text-white/50">2</div>
+                <p className="text-sm font-semibold text-white/80">Mahsulot / Biznes rasmlari</p>
+                <span className="text-[10px] text-white/30">(ixtiyoriy — mahsulot yoki biznesingiz rasmi)</span>
+              </div>
+              <MultiImageUpload
+                label="Mahsulot rasmlari"
+                previews={formData.productPreviews}
+                onAdd={handleProductAdd}
+                onRemove={handleProductRemove}
+              />
+            </div>
+
             {globalError && (
               <div className="px-4 py-3 rounded-xl border border-red-500/20 bg-red-500/5 text-sm text-red-400">
                 {globalError}

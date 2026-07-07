@@ -46,8 +46,11 @@ export type Database = {
           potential_impact: string[];
           avatar_url: string | null;
           product_image_url: string | null;
+          product_image_urls: string[];
           status: "submitted" | "under_review" | "approved" | "rejected";
           gender: "male" | "female";
+          rejection_comment: string | null;
+          is_deleted: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -64,8 +67,11 @@ export type Database = {
           potential_impact: string[];
           avatar_url?: string | null;
           product_image_url?: string | null;
+          product_image_urls?: string[];
           status?: "submitted" | "under_review" | "approved" | "rejected";
           gender?: "male" | "female";
+          rejection_comment?: string | null;
+          is_deleted?: boolean;
         };
         Update: {
           id?: string;
@@ -80,8 +86,11 @@ export type Database = {
           potential_impact?: string[];
           avatar_url?: string | null;
           product_image_url?: string | null;
+          product_image_urls?: string[];
           status?: "submitted" | "under_review" | "approved" | "rejected";
           gender?: "male" | "female";
+          rejection_comment?: string | null;
+          is_deleted?: boolean;
           created_at?: string;
           updated_at?: string;
         };
