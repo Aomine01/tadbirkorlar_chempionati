@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, X } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import { useAuth } from "../contexts/AuthContext";
 import type { Application } from "../types/database";
 import logo from "../assets/logos/white full.png";
 import HeroImage from "../assets/img/hero-image.png";
@@ -26,50 +27,8 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 /* ─── Local Premium Participants (Mock/Static Data) ─── */
-
-const LOCAL_PARTICIPANTS: ExtendedApplication[] = [
-  {
-    id: "abbasov-abdullo",
-    user_id: "local-user-1",
-    category: "business",
-    age: 33,
-    region: "SAMARQAND VILOYATI",
-    location: "Samarqand shahri",
-    brand_name: "BERT AGRO",
-    full_name: "Abbasov Abdullo",
-    legal_name: "BERT AGRO LLC",
-    gender: "male",
-    business_description: "Qishloq xo'jaligida foydalaniladigan yerlar uchun oziqaviy va nitratlardan xoli organik-mineral o'g'it ishlab chiqarish bilan shug'ullanadi. Korxona ekologik toza va samarali mahsulot ishlab chiqarishga ixtisoslashgan. [Gender: male]",
-    goals: [
-      "Organik-mineral o'g'it ishlab chiqarish hajmini kengaytirish.",
-      "Ishlab chiqarish quvvatini oshirish va zamonaviy uskunalar bilan jihozlash.",
-      "Mahsulot sifatini yanada yaxshilash hamda bozor talabini qondirish.",
-      "Yiliga 5 000 tonna tayyor mahsulot ishlab chiqarish quvvatiga erishish.",
-      "Korxona faoliyatini kengaytirib, yangi hamkorlar va mijozlar sonini oshirish."
-    ],
-    potential_impact: [
-      "Ekologik toza organik-mineral o'g'itlar ishlab chiqarish rivojlantiriladi.",
-      "Qishloq xo'jaligi hosildorligi va tuproq unumdorligi oshiriladi.",
-      "Mahalliy ishlab chiqarish quvvatlari kengaytiriladi.",
-      "Yangi ish o'rinlari yaratiladi."
-    ],
-    avatar_url: "/users/Abbasov Abdullo/Abbasov Abdullo.png",
-    product_image_url: "/users/Abbasov Abdullo/Abbasov Abdullo.png",
-    gallery: [
-      "/users/Abbasov Abdullo/Frame 1597883717.png",
-      "/users/Abbasov Abdullo/Frame 1597883722.png",
-      "/users/Abbasov Abdullo/Frame 1597883723.png",
-      "/users/Abbasov Abdullo/Frame 1597883741.png"
-    ],
-    phone: "+998 99 371 13 37",
-    product_image_urls: [],
-    rejection_comment: null,
-    is_deleted: false,
-    status: "approved",
-    created_at: "2026-07-07T12:00:00Z",
-    updated_at: "2026-07-07T12:00:00Z"
-  }
-];
+// All participants are migrated to Supabase database now.
+const LOCAL_PARTICIPANTS: ExtendedApplication[] = [];
 
 /* ─── Compact Participant Card ─────────────────────── */
 
@@ -80,10 +39,20 @@ const ParticipantCard = ({
   app: ExtendedApplication;
   onClick: () => void;
 }) => {
+  // Determine gender for card accent coloring
+  const gender = app.gender || "male";
+  
+  // Theme styling based on gender
+  const isFemale = gender === "female";
+  const hoverBorderColor = isFemale ? "hover:border-[#FF5B84]/40" : "hover:border-[#00A8FF]/40";
+  const accentTextColor = isFemale ? "text-[#FF5B84]" : "text-[#00A8FF]";
+  const actionStripHover = isFemale ? "group-hover:text-[#FF5B84]" : "group-hover:text-[#00A8FF]";
+  const gradientStart = isFemale ? "from-[#FF5B84]/15" : "from-[#00A8FF]/15";
+
   return (
     <article
       onClick={onClick}
-      className="group relative rounded-xl overflow-hidden border border-white/5 transition-all duration-300 hover:border-[#00A8FF]/40 hover:-translate-y-0.5 bg-[#0a0a0c]/80 backdrop-blur-sm cursor-pointer shadow-md flex flex-col justify-between"
+      className={`group relative rounded-xl overflow-hidden border border-white/5 transition-[transform,border-color] duration-300 ${hoverBorderColor} hover:-translate-y-0.5 bg-[#0a0a0c]/95 sm:bg-[#0a0a0c]/80 sm:backdrop-blur-sm cursor-pointer shadow-md flex flex-col justify-between`}
     >
       <div>
         {/* Aspect 3/4 Portrait Photo */}
@@ -92,17 +61,18 @@ const ParticipantCard = ({
             <img
               src={app.product_image_url}
               alt={app.full_name || app.brand_name}
+              loading="lazy"
               className="absolute inset-0 w-full h-full object-cover opacity-85 group-hover:opacity-100 transition-opacity duration-300 scale-100 group-hover:scale-103 transition-transform duration-500"
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-[#00A8FF]/10 to-transparent" />
+            <div className={`absolute inset-0 bg-gradient-to-br ${gradientStart} to-transparent`} />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
 
           {/* Badges */}
           <div className="absolute top-2 left-2 right-2 flex justify-between items-center z-10">
             <span
-              className="inline-block px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider backdrop-blur-md bg-black/60 border border-white/10 text-[#00A8FF]"
+              className={`inline-block px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider backdrop-blur-md bg-black/60 border border-white/10 ${accentTextColor}`}
               style={{ fontFamily: "var(--font-button)" }}
             >
               {CATEGORY_LABELS[app.category] ?? app.category}
@@ -111,29 +81,29 @@ const ParticipantCard = ({
         </div>
 
         {/* Text Area */}
-        <div className="p-3">
+        <div className="p-2.5 sm:p-3">
           {/* Region */}
-          <div className="text-[9px] uppercase tracking-wider text-white/40 mb-1" style={{ fontFamily: "var(--font-button)" }}>
+          <div className="text-[8px] sm:text-[9px] uppercase tracking-wider text-white/40 mb-1" style={{ fontFamily: "var(--font-button)" }}>
             {app.region}
           </div>
           {/* Founder Name */}
           <h2
-            className="text-xl font-bold text-white leading-tight uppercase truncate"
+            className="text-base sm:text-xl font-bold text-white leading-tight uppercase truncate"
             style={{ fontFamily: "var(--font-zuume)" }}
           >
             {app.full_name || app.brand_name}
           </h2>
           {/* Brand/Business Name Subtitle */}
-          <div className="text-xs text-[#00A8FF] font-medium truncate mt-0.5" style={{ fontFamily: "var(--font-button)" }}>
+          <div className={`text-[10px] sm:text-xs ${accentTextColor} font-medium truncate mt-0.5`} style={{ fontFamily: "var(--font-button)" }}>
             {app.brand_name}
           </div>
         </div>
       </div>
 
       {/* Action Strip */}
-      <div className="px-3 pb-3 pt-1 border-t border-white/5 flex items-center justify-between text-[10px] font-semibold text-white/40 group-hover:text-[#00A8FF] transition-colors duration-200" style={{ fontFamily: "var(--font-button)" }}>
+      <div className={`px-2.5 sm:px-3 py-2 sm:py-2.5 border-t border-white/5 flex items-center justify-between text-[9px] sm:text-[10px] font-semibold text-white/40 ${actionStripHover} transition-colors duration-200`} style={{ fontFamily: "var(--font-button)" }}>
         <span>Ko'proq ma'lumot</span>
-        <ArrowRight size={10} className="transform translate-x-0 group-hover:translate-x-0.5 transition-transform" />
+        <ArrowRight size={10} className="transform translate-x-0 group-hover:translate-x-0.5 transition-transform shrink-0" />
       </div>
     </article>
   );
@@ -148,6 +118,7 @@ const ParticipantDetailModal = ({
   app: ExtendedApplication | null;
   onClose: () => void;
 }) => {
+  const { user } = useAuth();
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [activeGalleryIdx, setActiveGalleryIdx] = useState(0);
 
@@ -172,27 +143,35 @@ const ParticipantDetailModal = ({
 
   const galleryImages = app.gallery || [];
 
-  // Parse gender (supports both native db column and fallback tag)
+  // Parse gender
   const rawDescription = app.business_description || "";
-  const genderMatch = rawDescription.match(/\[Gender:\s*(male|female)\]/i);
-  const gender = app.gender || (genderMatch ? genderMatch[1].toLowerCase() as "male" | "female" : "male");
-  const cleanDescription = rawDescription.replace(/\[Gender:\s*(male|female)\]/i, "").trim();
+  const gender = app.gender || "male";
+  const cleanDescription = rawDescription
+    .replace(/\[Founder:\s*[^\]]+\]/i, "")
+    .replace(/\[Gender:\s*(male|female)\]/i, "")
+    .replace(/\[Phone:\s*[^\]]+\]/i, "")
+    .trim();
 
   const bgImage = gender === "female" ? largeCardFemale : largeCardMen;
+  const isFemale = gender === "female";
+  const accentTextColor = isFemale ? "text-[#FF5B84]" : "text-[#00A8FF]";
+  const accentBorderColor = isFemale ? "hover:border-[#FF5B84]/20" : "hover:border-[#00A8FF]/20";
+  const activeThumbnailBorder = isFemale ? "border-[#FF5B84] ring-[#FF5B84]/20" : "border-[#00A8FF] ring-[#00A8FF]/20";
+  const numberBadgeBg = isFemale ? "bg-[#FF5B84]/10 text-[#FF5B84]" : "bg-[#00A8FF]/10 text-[#00A8FF]";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 animate-fade-in" data-lenis-prevent>
-      {/* Backdrop */}
+      {/* Backdrop - optimized blur for weak devices */}
       <div
-        className="absolute inset-0 bg-black/95 backdrop-blur-md transition-opacity duration-300"
+        className="absolute inset-0 bg-black/95 sm:bg-black/85 sm:backdrop-blur-md transition-opacity duration-300"
         onClick={onClose}
       />
 
       {/* Modal Card with Gender Background */}
       <div
-        className="relative w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 p-6 sm:p-8 md:p-10 shadow-2xl z-10 no-scrollbar animate-modal-in flex flex-col gap-6"
+        className="relative w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 p-4 sm:p-8 md:p-10 shadow-2xl z-10 no-scrollbar animate-modal-in flex flex-col gap-4 sm:gap-6"
         style={{
-          backgroundImage: `linear-gradient(to bottom, rgba(3, 3, 5, 0.45) 0%, rgba(3, 3, 5, 0.6) 100%), url(${bgImage})`,
+          backgroundImage: `linear-gradient(to bottom, rgba(3, 3, 5, 0.55) 0%, rgba(3, 3, 5, 0.75) 100%), url(${bgImage})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
@@ -205,16 +184,17 @@ const ParticipantDetailModal = ({
           <X size={18} />
         </button>
 
-        {/* ── Grid Layout matching the reference card sheet ── */}
+        {/* ── Grid Layout ── */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
           
           {/* Left Column: Portrait image + info boxes */}
           <div className="md:col-span-4 flex flex-col gap-5">
             {/* Portrait Image (Aspect 3/4) */}
-            <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-white/10 bg-zinc-950">
+            <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-white/10 bg-zinc-950 w-full max-w-[280px] mx-auto md:max-w-none">
               <img
                 src={app.product_image_url || ""}
                 alt={app.full_name || app.brand_name}
+                loading="lazy"
                 className="w-full h-full object-cover"
               />
             </div>
@@ -236,11 +216,20 @@ const ParticipantDetailModal = ({
                 </span>
               </div>
               {app.phone && (
-                <div className="flex justify-between items-center pb-2 border-b border-white/5">
-                  <span className="text-white/40">Telefon:</span>
-                  <a href={`tel:${app.phone}`} className="font-semibold text-[#00A8FF] hover:underline">
-                    {app.phone}
-                  </a>
+                <div className="flex justify-between items-center pb-2 border-b border-white/5 w-full">
+                  <span className="text-white/40 shrink-0">Telefon:</span>
+                  {user ? (
+                    <a href={`tel:${app.phone}`} className={`font-semibold ${accentTextColor} hover:underline truncate ml-4`}>
+                      {app.phone}
+                    </a>
+                  ) : (
+                    <Link
+                      to="/auth/login"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 text-white/70 hover:text-white transition-all text-[10px] font-medium ml-4 shrink-0"
+                    >
+                      Ko'rish uchun kirish
+                    </Link>
+                  )}
                 </div>
               )}
               <div className="flex justify-between items-center">
@@ -267,7 +256,7 @@ const ParticipantDetailModal = ({
             )}
           </div>
 
-          {/* Right Column: giant name, brand name, biz overview, goals, and frames gallery */}
+          {/* Right Column: details */}
           <div className="md:col-span-8 flex flex-col gap-6">
             
             {/* Header Identity Block */}
@@ -276,19 +265,19 @@ const ParticipantDetailModal = ({
                 {app.region}
               </div>
               <h2
-                className="text-4xl sm:text-6xl font-black text-white leading-none uppercase tracking-tight"
+                className="text-3xl sm:text-5xl md:text-6xl font-black text-white leading-tight uppercase tracking-tight"
                 style={{ fontFamily: "var(--font-zuume)" }}
               >
                 {app.full_name || app.brand_name}
               </h2>
-              <div className="text-xl font-bold text-[#00A8FF] uppercase mt-1" style={{ fontFamily: "var(--font-button)" }}>
+              <div className={`text-lg sm:text-xl font-bold ${accentTextColor} uppercase mt-1`} style={{ fontFamily: "var(--font-button)" }}>
                 {app.brand_name}
               </div>
             </div>
 
             {/* Biznes Haqida */}
-            <div className="rounded-2xl border border-white/10 bg-zinc-950/60 backdrop-blur-md p-5 hover:border-[#00A8FF]/20 transition-all duration-300">
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#00A8FF] mb-3" style={{ fontFamily: "var(--font-button)" }}>
+            <div className={`rounded-2xl border border-white/10 bg-zinc-950/60 backdrop-blur-md p-5 ${accentBorderColor} transition-all duration-300`}>
+              <h3 className={`text-[10px] font-bold uppercase tracking-[0.15em] ${accentTextColor} mb-3`} style={{ fontFamily: "var(--font-button)" }}>
                 Biznes Haqida
               </h3>
               <p className="text-xs sm:text-sm text-white/85 leading-relaxed">
@@ -298,14 +287,14 @@ const ParticipantDetailModal = ({
 
             {/* Goals */}
             {app.goals && app.goals.length > 0 && (
-              <div className="rounded-2xl border border-white/10 bg-zinc-950/60 backdrop-blur-md p-5 hover:border-[#00A8FF]/20 transition-all duration-300">
-                <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#00A8FF] mb-3" style={{ fontFamily: "var(--font-button)" }}>
+              <div className={`rounded-2xl border border-white/10 bg-zinc-950/60 backdrop-blur-md p-5 ${accentBorderColor} transition-all duration-300`}>
+                <h3 className={`text-[10px] font-bold uppercase tracking-[0.15em] ${accentTextColor} mb-3`} style={{ fontFamily: "var(--font-button)" }}>
                   Maqsadlari
                 </h3>
                 <ul className="flex flex-col gap-3">
                   {app.goals.map((goal, idx) => (
                     <li key={idx} className="flex gap-2.5 text-xs sm:text-sm text-white/70 leading-relaxed items-start">
-                      <span className="flex items-center justify-center w-5 h-5 rounded bg-[#00A8FF]/10 text-[#00A8FF] text-[10px] font-bold shrink-0 mt-0.5">
+                      <span className={`flex items-center justify-center w-5 h-5 rounded ${numberBadgeBg} text-[10px] font-bold shrink-0 mt-0.5`}>
                         {idx + 1}
                       </span>
                       <span>{goal}</span>
@@ -318,7 +307,7 @@ const ParticipantDetailModal = ({
             {/* Presentation frames / Featured Showcase Gallery */}
             {galleryImages.length > 0 && (
               <div className="flex flex-col gap-4 mt-2">
-                <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#00A8FF]" style={{ fontFamily: "var(--font-button)" }}>
+                <h3 className={`text-[10px] font-bold uppercase tracking-[0.15em] ${accentTextColor}`} style={{ fontFamily: "var(--font-button)" }}>
                   Loyihadan Lavhalar (Taqdimot Sahifalari)
                 </h3>
                 
@@ -330,6 +319,7 @@ const ParticipantDetailModal = ({
                   <img
                     src={galleryImages[activeGalleryIdx]}
                     alt={`Showcase frame ${activeGalleryIdx + 1}`}
+                    loading="lazy"
                     className="w-full h-full object-contain"
                   />
                   <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
@@ -347,13 +337,14 @@ const ParticipantDetailModal = ({
                       onClick={() => setActiveGalleryIdx(i)}
                       className={`relative aspect-video rounded-xl overflow-hidden border transition-all duration-300 cursor-pointer shadow-sm group ${
                         activeGalleryIdx === i
-                          ? "border-[#00A8FF] ring-2 ring-[#00A8FF]/20 scale-102"
+                          ? `${activeThumbnailBorder} ring-2 scale-102`
                           : "border-white/10 bg-zinc-950/40 hover:border-white/20 hover:scale-102"
                       }`}
                     >
                       <img
                         src={img}
                         alt={`Thumbnail ${i + 1}`}
+                        loading="lazy"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       {activeGalleryIdx !== i && (
@@ -415,21 +406,62 @@ const IshtirokchilarPage = () => {
   const [loading, setLoading] = useState(true);
   const [regionFilter, setRegionFilter] = useState<string>("all");
   const [selectedApp, setSelectedApp] = useState<ExtendedApplication | null>(null);
+  
+  // Weak device optimization: pagination count
+  const [visibleCount, setVisibleCount] = useState(12);
 
   useEffect(() => {
     supabase
       .from("applications")
-      .select("*")
+      .select("*, profiles(full_name, phone_number)")
       .eq("status", "approved")
       .eq("is_deleted", false)          // exclude soft-deleted applications
       .order("created_at", { ascending: false })
       .then(({ data }) => {
-        const dbApps = data ?? [];
+        const dbApps = (data ?? []).map((app: any) => {
+          // Parse product_image_urls if stored as a JSON string
+          let gallery: string[] = [];
+          if (app.product_image_urls) {
+            if (Array.isArray(app.product_image_urls)) {
+              gallery = app.product_image_urls;
+            } else if (typeof app.product_image_urls === "string") {
+              try {
+                gallery = JSON.parse(app.product_image_urls);
+              } catch {
+                gallery = [app.product_image_urls];
+              }
+            }
+          }
+
+          // Parse embedded metadata from description (works around RLS profiles query restriction)
+          const rawDescription = app.business_description || "";
+          const founderMatch = rawDescription.match(/\[Founder:\s*([^\]]+)\]/i);
+          const genderMatch = rawDescription.match(/\[Gender:\s*(male|female)\]/i);
+          const phoneMatch = rawDescription.match(/\[Phone:\s*([^\]]+)\]/i);
+
+          const full_name = founderMatch ? founderMatch[1].trim() : (app.profiles?.full_name || app.brand_name);
+          const gender = genderMatch ? (genderMatch[1].toLowerCase() as "male" | "female") : (app.gender || "male");
+          const phone = phoneMatch ? phoneMatch[1].trim() : (app.profiles?.phone_number || app.phone || "");
+
+          return {
+            ...app,
+            full_name,
+            gender,
+            phone,
+            gallery
+          };
+        });
+        
         // Combine static premium local participants with Supabase database applications
         setApplications([...LOCAL_PARTICIPANTS, ...dbApps]);
         setLoading(false);
       });
   }, []);
+
+  // Reset pagination when region filter changes
+  useEffect(() => {
+    setVisibleCount(12);
+  }, [regionFilter]);
 
   // Unique regions with participant counts for the viloyat filter
   const regionCounts = applications.reduce<Record<string, number>>((acc, a) => {
@@ -442,6 +474,9 @@ const IshtirokchilarPage = () => {
     if (regionFilter !== "all" && a.region !== regionFilter) return false;
     return true;
   });
+
+  // Paginated/Sliced subset to display
+  const displayed = filtered.slice(0, visibleCount);
 
   return (
     <div
@@ -500,8 +535,8 @@ const IshtirokchilarPage = () => {
 
           {/* Viloyat filter */}
           {!loading && applications.length > 0 && (
-            <div className="mt-8">
-              <div className="flex flex-wrap items-center gap-2">
+            <div className="mt-6 md:mt-8">
+              <div className="flex overflow-x-auto pb-3 gap-2 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 sm:pb-0 sm:flex-wrap items-center">
                 {/* All button */}
                 <button
                   onClick={() => setRegionFilter("all")}
@@ -563,15 +598,31 @@ const IshtirokchilarPage = () => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {filtered.map((app) => (
-                <ParticipantCard
-                  key={app.id}
-                  app={app}
-                  onClick={() => setSelectedApp(app)}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4">
+                {displayed.map((app) => (
+                  <ParticipantCard
+                    key={app.id}
+                    app={app}
+                    onClick={() => setSelectedApp(app)}
+                  />
+                ))}
+              </div>
+
+              {/* Load More Button */}
+              {filtered.length > visibleCount && (
+                <div className="flex justify-center mt-12 mb-8">
+                  <button
+                    onClick={() => setVisibleCount((prev) => prev + 12)}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-semibold uppercase tracking-wider border border-white/10 hover:border-[#00A8FF]/40 text-white/70 hover:text-white bg-[#0a0a0c]/85 hover:bg-[#0a0a0c] backdrop-blur-md transition-all duration-300 hover:scale-102 cursor-pointer shadow-lg"
+                    style={{ fontFamily: "var(--font-button)" }}
+                  >
+                    <span>Ko'proq yuklash</span>
+                    <ArrowRight size={12} className="rotate-90 text-[#00A8FF] animate-bounce" />
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -596,4 +647,3 @@ const IshtirokchilarPage = () => {
 };
 
 export default IshtirokchilarPage;
-
