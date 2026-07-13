@@ -91,16 +91,16 @@ const Hero = ({ onApply }: HeroProps) => {
       {/* Navbar */}
       <Navbar onApply={onApply} />
 
-      <Container className="pt-24">
+      <Container className="relative z-10 min-h-screen flex flex-col justify-center items-center pt-28 pb-24 px-4 text-center">
         {/* Hero content */}
         <Animate
           type="scale-fade"
           delay={50}
           duration={2}
-          className="relative z-10 flex flex-col items-center justify-center h-full px-4 text-center"
+          className="w-full flex flex-col items-center justify-center"
         >
           {/* Title line 1 - white gradient */}
-          <h1 className="text-5xl sm:text-7xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-none">
+          <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-none">
             <span
               style={{
                 background: "linear-gradient(90deg, #FFFFFF 0%, #DAE7FC 100%)",
@@ -133,7 +133,7 @@ const Hero = ({ onApply }: HeroProps) => {
             className="mt-10 mb-12 sm:mb-20"
           >
             <h1
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold"
               style={{
                 background: "linear-gradient(90deg, #FFFFFF 0%, #DAE7FC 100%)",
                 WebkitBackgroundClip: "text",
@@ -145,7 +145,7 @@ const Hero = ({ onApply }: HeroProps) => {
             </h1>
             <p className="text-white text-sm md:text-base mt-3 max-w-md mx-auto leading-relaxed">
               Startapingiz, biznesingiz yoki g'oyangizni taqdim eting{" "}
-              <br className="hidden sm:visible" />
+              <br className="hidden sm:inline" />
               va investitsiya uchun kurashing
             </p>
           </Animate>
