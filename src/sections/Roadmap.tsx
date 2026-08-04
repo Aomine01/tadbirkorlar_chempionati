@@ -1,34 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import Container from "../components/Container";
+import { useTheme } from "../contexts/ThemeContext";
+import { useLanguage } from "../contexts/LanguageContext";
 import { ExportIcon, FlagIcon, MedalStarIcon, StatusUpIcon } from "../assets";
-
-const steps = [
-  {
-    icon: ExportIcon,
-    title: "Ro'yxatdan o'tish",
-    date: "27-aprel - 31-may",
-  },
-  {
-    icon: StatusUpIcon,
-    title: "1-Bosqich va natijalar",
-    date: "1-iyun - 10-iyun",
-  },
-  {
-    icon: StatusUpIcon,
-    title: "2-Bosqich va natijalar",
-    date: "10-iyun - 10-iyul",
-  },
-  {
-    icon: FlagIcon,
-    title: "Final bosqichi",
-    date: "15-iyul - 30-iyul",
-  },
-  {
-    icon: MedalStarIcon,
-    title: "Taqdirlash marosimi",
-    date: "20-avgust",
-  },
-];
 
 const Roadmap = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -36,6 +10,18 @@ const Roadmap = () => {
   const lineRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef(0);
   const [progress, setProgress] = useState(0);
+  const { theme } = useTheme();
+  const { t } = useLanguage();
+
+  const isLight = theme === "light";
+
+  const steps = [
+    { icon: ExportIcon, titleKey: "roadmap.step1.title" as const, subtextKey: "roadmap.step1.subtext" as const },
+    { icon: StatusUpIcon, titleKey: "roadmap.step2.title" as const, subtextKey: "roadmap.step2.subtext" as const },
+    { icon: StatusUpIcon, titleKey: "roadmap.step3.title" as const, subtextKey: "roadmap.step3.subtext" as const },
+    { icon: FlagIcon, titleKey: "roadmap.step4.title" as const, subtextKey: "roadmap.step4.subtext" as const },
+    { icon: MedalStarIcon, titleKey: "roadmap.step5.title" as const, subtextKey: "roadmap.step5.subtext" as const },
+  ];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -73,7 +59,7 @@ const Roadmap = () => {
   };
 
   return (
-    <section ref={sectionRef} id="roadmap" className="relative py-20 sm:py-28">
+    <section ref={sectionRef} id="roadmap" className="relative py-20 sm:py-28 transition-colors duration-300">
       <Container>
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
           {/* Left - Sticky header */}
@@ -85,24 +71,12 @@ const Roadmap = () => {
                 fontFamily: "var(--font-button)",
               }}
             >
-              Yo'l xaritasi
+              {t("roadmap.label")}
             </span>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
-              CHEMPIONAT YO'L XARITASI
+            <h2 className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight ${isLight ? "text-slate-900" : "text-white"}`}>
+              {t("roadmap.heading")}
             </h2>
           </div>
-
-          {/* <div className="hidden lg:block relative w-1 shrink-0">
-            <div className="absolute inset-0 bg-white/10 rounded-full" />
-            <div
-              ref={lineRef}
-              className="absolute top-0 left-0 w-full h-full rounded-full origin-top will-change-transform"
-              style={{
-                background: "linear-gradient(to bottom, #00a8ff, #0066cc)",
-                transform: "scaleY(0)",
-              }}
-            />
-          </div> */}
 
           {/* Right - Steps */}
           <div
@@ -111,17 +85,18 @@ const Roadmap = () => {
           >
             {steps.map((step, i) => {
               const sp = getStepProgress(i);
-              const words = step.title.split(" ");
-
+              const title = t(step.titleKey);
+              const words = title.split(" ");
               const Icon = step.icon;
 
               return (
-                <div key={i}>
+                <div key={i} className="group">
                   {/* Icon + Title */}
                   <div className="flex items-center gap-3 mb-2">
                     <Icon
-                      className="w-5 h-5 sm:w-6 sm:h-6 shrink-0"
-                      style={{ opacity: 0.15 + sp * 0.85 }}
+                      className={`w-5 h-5 sm:w-6 sm:h-6 shrink-0 transition-colors ${
+                        sp > 0.1 ? "text-[#00A8FF]" : isLight ? "text-slate-400" : "text-white/30"
+                      }`}
                     />
                     <h3 className="text-2xl sm:text-3xl uppercase md:text-4xl font-bold leading-tight">
                       {words.map((word, wi) => {
@@ -135,11 +110,15 @@ const Roadmap = () => {
                                   (sp - wi / words.length) / (1 / words.length),
                                 ),
                               );
+                        
+                        const alpha = 0.35 + wordProgress * 0.65;
                         return (
                           <span
                             key={wi}
                             style={{
-                              color: `rgba(255, 255, 255, ${0.15 + wordProgress * 0.85})`,
+                              color: isLight
+                                ? `rgba(15, 23, 42, ${alpha})`
+                                : `rgba(255, 255, 255, ${alpha})`,
                             }}
                           >
                             {word}
@@ -150,18 +129,17 @@ const Roadmap = () => {
                     </h3>
                   </div>
 
-                  {/* Date */}
-                  <p
-                    className="text-sm ml-8 sm:ml-10 transition-all duration-300"
+                  {/* Subtext Badge */}
+                  <div className="ml-8 sm:ml-9 mt-1 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium tracking-wide border transition-all duration-300"
                     style={{
-                      color:
-                        sp > 0.3
-                          ? "rgba(255,255,255,0.5)"
-                          : "rgba(255,255,255,0.15)",
+                      backgroundColor: isLight ? "rgba(0, 168, 255, 0.08)" : "rgba(0, 168, 255, 0.12)",
+                      borderColor: "rgba(0, 168, 255, 0.25)",
+                      color: "#00A8FF",
                     }}
                   >
-                    {step.date}
-                  </p>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#00A8FF]" />
+                    <span>{t(step.subtextKey)}</span>
+                  </div>
                 </div>
               );
             })}

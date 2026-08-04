@@ -3,11 +3,14 @@ import { Link } from "react-router-dom";
 import { ArrowRight, X } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import type { Application } from "../types/database";
 import logo from "../assets/logos/white full.png";
 import HeroImage from "../assets/img/hero-image.png";
 import largeCardMen from "../assets/img/largecardmen.png";
 import largeCardFemale from "../assets/img/largcardfemale.png";
+import miniMaleLight from "../assets/imglight/minimalelight.png";
+import miniFemaleLight from "../assets/imglight/minifemalelight.png";
 
 /* ─── Extended Application Interface ────────────────── */
 
@@ -152,7 +155,11 @@ const ParticipantDetailModal = ({
     .replace(/\[Phone:\s*[^\]]+\]/i, "")
     .trim();
 
-  const bgImage = gender === "female" ? largeCardFemale : largeCardMen;
+  const { theme } = useTheme();
+  const isLight = theme === "light";
+  const bgImage = isLight
+    ? gender === "female" ? miniFemaleLight : miniMaleLight
+    : gender === "female" ? largeCardFemale : largeCardMen;
   const isFemale = gender === "female";
   const accentTextColor = isFemale ? "text-[#FF5B84]" : "text-[#00A8FF]";
   const accentBorderColor = isFemale ? "hover:border-[#FF5B84]/20" : "hover:border-[#00A8FF]/20";

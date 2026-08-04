@@ -1,68 +1,45 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import Container from "../components/Container";
+import { useTheme } from "../contexts/ThemeContext";
+import { useLanguage } from "../contexts/LanguageContext";
+import type { TranslationKey } from "../lib/translations";
 
-const faqs = [
-  {
-    question: "Bu qarzmi? Nimani evaziga pul beriladi?",
-    answer:
-      "Qarz emas. Investitsiya sizning ustav kapitalingizga kiritiladigan ulush. Shakli loyihaga qarab farqlanadi — to'g'ridan-to'g'ri ulushdorlik, konvertatsiya qilinadigan moliyalashtirish yoki grant elementi mavjud aralash moliyalashtirish.",
-  },
-  {
-    question: "Investitsiyani nimaga ishlatish mumkin va mumkin emas?",
-    answer:
-      "Mumkin: uskunalar, dasturiy ta'minot, MVP, marketing, sertifikatlash, eksportga tayyorgarlik, mutaxassislar, aylanma mablag'lar. Mumkin emas: avvalgi qarzlar, dividendlar, shaxsiy xarajatlar, taqiqlangan faoliyat.",
-  },
-  {
-    question: "G'olib bo'lgach nima bo'ladi?",
-    answer:
-      "Investitsiya shartnomasi tuziladi, mablag' bir martalik yoki transhlar asosida ajratiladi. Har chorakda hisobot topshirasiz, loyihangiz KPI lar orqali monitoring qilinadi.",
-  },
-  {
-    question: "KPI ga erisha olmasam nima bo'ladi?",
-    answer:
-      "Keyingi transh to'xtatilishi, investitsiya shartlari qayta ko'rib chiqilishi yoki shartnoma bekor qilinishi mumkin. Jiddiy buzilishlarda mablag'lar qonunchilik asosida undiriladi.",
-  },
-  {
-    question: "G'oyam maxfiymi?",
-    answer:
-      "Ha. Taqdim etilgan biznes-reja, moliyaviy model va tijorat sirlari uchinchi shaxslarga oshkor etilmaydi.",
-  },
-  {
-    question: "Hali tadbirkorlik subyektim ro'yxatdan o'tmagan, ishtirok etsam bo'ladimi?",
-    answer:
-      "Ha, fuqarolik sifatida ariza berish mumkin — g'olib bo'lgach tadbirkorlik subyekti tashkil etish sharti bilan.",
-  },
-  {
-    question: "Loyihalar qanday mezonlar asosida baholanadi?",
-    answer:
-      "Biznes modelning asoslanganligi, bozor salohiyati, moliyaviy barqarorlik, jamoa malakasi, innovatsionlik darajasi, texnologik tayyorgarlik, ish o'rinlari yaratish imkoniyati, eksport salohiyati va qo'shimcha xususiy investitsiya jalb qilish imkoniyati. Baholash ikki bosqichda — hujjatlar asosida va pitch taqdimotda amalga oshiriladi.",
-  },
-  {
-    question: "Apellyatsiya qanday beriladi?",
-    answer:
-      "Natijalar e'lon qilingan kundan e'tiboran 3 ish kuni ichida yozma yoki elektron shaklda Jamg'armaga apellyatsiya kiritish mumkin. Jamg'arma 10 kun ichida ko'rib chiqib javob beradi.",
-  },
-  {
-    question: "Bir nechta odam jamoa sifatida ariza bera oladimi?",
-    answer:
-      "Ha. Jamoa sifatida yuridik shaxs orqali ariza berish mumkin — biroq ustav kapitalining kamida 50% 30 yoshgacha bo'lgan tadbirkorga tegishli bo'lishi shart.",
-  },
+const faqKeys: { q: TranslationKey; a: TranslationKey }[] = [
+  { q: "faq.q1", a: "faq.a1" },
+  { q: "faq.q2", a: "faq.a2" },
+  { q: "faq.q3", a: "faq.a3" },
+  { q: "faq.q4", a: "faq.a4" },
+  { q: "faq.q5", a: "faq.a5" },
+  { q: "faq.q6", a: "faq.a6" },
+  { q: "faq.q7", a: "faq.a7" },
+  { q: "faq.q8", a: "faq.a8" },
+  { q: "faq.q9", a: "faq.a9" },
+  { q: "faq.q10", a: "faq.a10" },
+  { q: "faq.q11", a: "faq.a11" },
 ];
 
 const FAQItem = ({
-  faq,
+  question,
+  answer,
   isOpen,
   onToggle,
+  isLight,
 }: {
-  faq: (typeof faqs)[0];
+  question: string;
+  answer: string;
   isOpen: boolean;
   onToggle: () => void;
+  isLight: boolean;
 }) => (
   <div
-    className="border-b border-[#252528] transition-colors"
+    className={`border-b transition-colors ${
+      isLight ? "border-slate-200" : "border-[#252528]"
+    }`}
     style={{
-      background: isOpen ? "rgba(255,255,255,0.03)" : "transparent",
+      background: isOpen
+        ? isLight ? "rgba(0,168,255,0.04)" : "rgba(255,255,255,0.03)"
+        : "transparent",
     }}
   >
     <button
@@ -71,15 +48,19 @@ const FAQItem = ({
     >
       <div className="flex items-center gap-3">
         <span
-          className="text-sm sm:text-base font-medium"
+          className={`text-sm sm:text-base font-medium ${
+            isLight ? "text-slate-900" : "text-white"
+          }`}
           style={{ fontFamily: "var(--font-body)" }}
         >
-          {faq.question}
+          {question}
         </span>
       </div>
       <ChevronDown
         size={18}
-        className="shrink-0 ml-4 text-white/50 transition-transform duration-300"
+        className={`shrink-0 ml-4 transition-transform duration-300 ${
+          isLight ? "text-slate-500" : "text-white/50"
+        }`}
         style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}
       />
     </button>
@@ -91,10 +72,12 @@ const FAQItem = ({
       }}
     >
       <p
-        className="px-5 sm:px-6 pb-5 text-white/60 text-xs sm:text-sm leading-relaxed"
+        className={`px-5 sm:px-6 pb-5 text-xs sm:text-sm leading-relaxed whitespace-pre-line ${
+          isLight ? "text-slate-600 font-medium" : "text-white/60"
+        }`}
         style={{ fontFamily: "var(--font-button)" }}
       >
-        {faq.answer}
+        {answer}
       </p>
     </div>
   </div>
@@ -102,9 +85,12 @@ const FAQItem = ({
 
 const FAQ = () => {
   const [openIndex, setOpenIndex] = useState(0);
+  const { theme } = useTheme();
+  const { t } = useLanguage();
+  const isLight = theme === "light";
 
   return (
-    <section id="faq" className="relative py-20 sm:py-28">
+    <section id="faq" className="relative py-20 sm:py-28 transition-colors duration-300">
       <Container size="md">
         {/* Header */}
         <div className="mb-10 sm:mb-14">
@@ -115,21 +101,25 @@ const FAQ = () => {
               fontFamily: "var(--font-button)",
             }}
           >
-            FAQ
+            {t("faq.label")}
           </span>
-          <h2 className="text-2xl uppercase sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
-            Ko'p beriladigan savollar
+          <h2 className={`text-2xl uppercase sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight ${isLight ? "text-slate-900" : "text-white"}`}>
+            {t("faq.heading")}
           </h2>
         </div>
 
         {/* FAQ List */}
-        <div className="rounded-2xl overflow-hidden bg-[#0a0a0a]">
-          {faqs.map((faq, i) => (
+        <div className={`rounded-2xl overflow-hidden border transition-colors duration-300 ${
+          isLight ? "bg-white border-slate-200 shadow-md shadow-slate-200/50" : "bg-[#0a0a0a] border-white/5"
+        }`}>
+          {faqKeys.map(({ q, a }, i) => (
             <FAQItem
               key={i}
-              faq={faq}
+              question={t(q)}
+              answer={t(a)}
               isOpen={openIndex === i}
               onToggle={() => setOpenIndex(openIndex === i ? -1 : i)}
+              isLight={isLight}
             />
           ))}
         </div>

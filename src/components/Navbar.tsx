@@ -1,18 +1,13 @@
 import { useEffect, useState, useCallback } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Sun, Moon } from "lucide-react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import Container from "./Container";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
+import { useLanguage } from "../contexts/LanguageContext";
 
-import logo from "../assets/logos/white full.png";
-
-const navLinks = [
-  { label: "Bosh sahifa", href: "#home" },
-  { label: "Chempionat", href: "#about" },
-  { label: "Bosqichlar", href: "#roadmap" },
-  { label: "Ekspertlar", href: "#experts" },
-  { label: "FAQ", href: "#faq" },
-];
+import logoWhite from "../assets/logos/white full.png";
+import logoBlue from "../assets/logos/blue-full.png";
 
 interface NavbarProps {
   onApply?: () => void;
@@ -24,8 +19,19 @@ const Navbar = ({ onApply: _onApply }: NavbarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, profile } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const { lang, setLang, t } = useLanguage();
 
   const isHomePage = location.pathname === "/";
+  const isLight = theme === "light";
+
+  const navLinks = [
+    { label: t("nav.home"), href: "#home" },
+    { label: t("nav.about"), href: "#about" },
+    { label: t("nav.roadmap"), href: "#roadmap" },
+    { label: t("nav.experts"), href: "#experts" },
+    { label: t("nav.faq"), href: "#faq" },
+  ];
 
   useEffect(() => {
     if (!isHomePage) return;
@@ -48,7 +54,8 @@ const Navbar = ({ onApply: _onApply }: NavbarProps) => {
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [isHomePage]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isHomePage, lang]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -103,7 +110,13 @@ const Navbar = ({ onApply: _onApply }: NavbarProps) => {
   return (
     <div className="fixed top-0 md:top-4 left-0 w-full z-50 px-0 md:px-4">
       <Container size="xl">
-        <div className="bg-[#111111]/90 backdrop-blur-md border-b md:border border-white/10 md:rounded-[12px] px-4 py-3 flex items-center justify-between shadow-lg">
+        <div
+          className={`backdrop-blur-md border-b md:border md:rounded-[12px] px-4 py-3 flex items-center justify-between shadow-lg transition-colors duration-300 ${
+            isLight
+              ? "bg-white/85 border-slate-200/80 text-slate-900 shadow-slate-200/50"
+              : "bg-[#111111]/90 border-white/10 text-white"
+          }`}
+        >
           {/* Logo */}
           <Link
             to="/"
@@ -114,74 +127,183 @@ const Navbar = ({ onApply: _onApply }: NavbarProps) => {
               }
             }}
           >
-            <img src={logo} alt="Logo" className="h-7 w-auto object-contain" />
+            <img
+              src={isLight ? logoBlue : logoWhite}
+              alt="Logo"
+              className="h-7 w-auto object-contain"
+            />
           </Link>
 
           {/* Desktop links */}
           <nav className="hidden lg:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                onClick={(e) => scrollTo(e, link.href)}
-                className={`px-3 lg:px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap ${
-                  isHomePage && activeSection === link.href
-                    ? "bg-white/10 text-white"
-                    : "text-white/80 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                {link.label}
-              </a>
-            ))}
+            {navLinks.map((link) => {
+              const isActive = isHomePage && activeSection === link.href;
+              return (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={(e) => scrollTo(e, link.href)}
+                  className={`px-3 lg:px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap ${
+                    isActive
+                      ? isLight
+                        ? "bg-slate-200/80 text-slate-900 font-semibold"
+                        : "bg-white/10 text-white font-semibold"
+                      : isLight
+                      ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                      : "text-white/80 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  {link.label}
+                </a>
+              );
+            })}
             {/* Public participants page */}
             <Link
               to="/ishtirokchilar"
               className={`px-3 lg:px-4 py-2 text-sm font-medium transition-all duration-200 whitespace-nowrap rounded-lg ${
                 location.pathname === "/ishtirokchilar"
-                  ? "bg-white/10 text-white font-semibold"
-                  : "text-[#00A8FF] hover:text-white hover:bg-white/5"
+                  ? isLight
+                    ? "bg-slate-200/80 text-slate-900 font-semibold"
+                    : "bg-white/10 text-white font-semibold"
+                  : "text-[#00A8FF] hover:text-[#0088cc] hover:bg-blue-500/10"
               }`}
             >
-              Ishtirokchilar
+              {t("nav.participants")}
             </Link>
           </nav>
 
-          {/* Desktop CTA */}
+          {/* Desktop Right CTA + Theme Toggle + Lang Segmented Toggle */}
           <div className="hidden lg:flex items-center gap-2">
+            {/* Language Segmented Toggle Switcher */}
+            <div
+              className={`p-1 rounded-xl border flex items-center gap-0.5 transition-all ${
+                isLight
+                  ? "bg-slate-100/90 border-slate-200/80"
+                  : "bg-white/5 border-white/10"
+              }`}
+            >
+              {(["uz", "ru", "en"] as const).map((l) => {
+                const active = lang === l;
+                return (
+                  <button
+                    key={l}
+                    onClick={() => setLang(l)}
+                    aria-label={`Switch to ${l.toUpperCase()}`}
+                    className={`px-2.5 py-1 text-xs font-bold tracking-wide rounded-lg transition-all cursor-pointer uppercase ${
+                      active
+                        ? "bg-[#00A8FF] text-white shadow-sm shadow-blue-500/30"
+                        : isLight
+                        ? "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+                        : "text-white/60 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    {l}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Theme Switcher Button */}
+            <button
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              title={isLight ? t("theme.toDark") : t("theme.toLight")}
+              className={`p-2 rounded-lg border transition-all cursor-pointer ${
+                isLight
+                  ? "bg-slate-100 border-slate-200 text-amber-600 hover:bg-slate-200"
+                  : "bg-white/5 border-white/10 text-amber-400 hover:bg-white/10"
+              }`}
+            >
+              {isLight ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
+
             {user ? (
               <>
                 {profile?.role === "admin" && (
                   <Link
                     to="/admin"
-                    className="px-4 py-2 text-sm font-medium text-[#00A8FF] hover:bg-white/5 rounded-lg transition-all duration-200 whitespace-nowrap"
+                    className="px-4 py-2 text-sm font-medium text-[#00A8FF] hover:bg-blue-500/10 rounded-lg transition-all duration-200 whitespace-nowrap"
                   >
-                    Admin Panel
+                    {t("nav.adminPanel")}
                   </Link>
                 )}
                 <Link
                   to="/dashboard"
-                  className="px-4 py-2 text-sm font-medium text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200 whitespace-nowrap"
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap ${
+                    isLight
+                      ? "text-slate-700 hover:text-slate-900 hover:bg-slate-100"
+                      : "text-white/80 hover:text-white hover:bg-white/5"
+                  }`}
                 >
-                  Dashboard
+                  {t("nav.dashboard")}
                 </Link>
               </>
             ) : (
               <button
                 onClick={handleApply}
-                className="px-5 py-2 text-sm font-medium rounded-lg transition-all cursor-pointer duration-200 bg-white/5 hover:bg-white/10 border border-white/10 text-white whitespace-nowrap"
+                className={`px-5 py-2 text-sm font-medium rounded-lg transition-all cursor-pointer duration-200 border whitespace-nowrap ${
+                  isLight
+                    ? "bg-[#00A8FF] text-white border-[#00A8FF] hover:bg-[#0088cc] shadow-md shadow-blue-500/20"
+                    : "bg-white/5 hover:bg-white/10 border-white/10 text-white"
+                }`}
               >
-                Ariza topshirish
+                {t("nav.apply")}
               </button>
             )}
           </div>
 
-          {/* Mobile hamburger */}
-          <button
-            className="lg:hidden gap-2 flex items-center justify-center px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white hover:bg-white/10 transition-all cursor-pointer"
-            onClick={() => setMobileOpen(!mobileOpen)}
-          >
-            {mobileOpen ? <X size={18} /> : <Menu size={18} />} Menu
-          </button>
+          {/* Mobile buttons: Lang Toggle + Theme Toggle + Hamburger */}
+          <div className="lg:hidden flex items-center gap-1.5">
+            {/* Mobile Language Segmented Toggle */}
+            <div
+              className={`p-0.5 rounded-lg border flex items-center gap-0.5 transition-all ${
+                isLight
+                  ? "bg-slate-100/90 border-slate-200/80"
+                  : "bg-white/5 border-white/10"
+              }`}
+            >
+              {(["uz", "ru", "en"] as const).map((l) => {
+                const active = lang === l;
+                return (
+                  <button
+                    key={l}
+                    onClick={() => setLang(l)}
+                    aria-label={`Switch to ${l.toUpperCase()}`}
+                    className={`px-1.5 py-1 text-[11px] font-bold tracking-wide rounded-md transition-all cursor-pointer uppercase ${
+                      active
+                        ? "bg-[#00A8FF] text-white shadow-sm"
+                        : isLight
+                        ? "text-slate-600 hover:text-slate-900"
+                        : "text-white/60 hover:text-white"
+                    }`}
+                  >
+                    {l}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              className={`p-2 rounded-lg border transition-all cursor-pointer ${
+                isLight
+                  ? "bg-slate-100 border-slate-200 text-amber-600"
+                  : "bg-white/5 border-white/10 text-amber-400"
+              }`}
+            >
+              {isLight ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
+            <button
+              className={`gap-2 flex items-center justify-center px-3 py-2 border rounded-lg transition-all cursor-pointer ${
+                isLight
+                  ? "bg-slate-100 border-slate-200 text-slate-900 hover:bg-slate-200"
+                  : "bg-white/5 border-white/10 text-white hover:bg-white/10"
+              }`}
+              onClick={() => setMobileOpen(!mobileOpen)}
+            >
+              {mobileOpen ? <X size={18} /> : <Menu size={18} />} Menu
+            </button>
+          </div>
         </div>
       </Container>
 
@@ -192,15 +314,25 @@ const Navbar = ({ onApply: _onApply }: NavbarProps) => {
         }`}
       >
         <Container>
-          <div className="mt-2 bg-[#111111]/95 backdrop-blur-md border border-white/10 rounded-xl p-2 shadow-xl">
+          <div
+            className={`mt-2 backdrop-blur-md border rounded-xl p-2 shadow-xl ${
+              isLight
+                ? "bg-white/95 border-slate-200 text-slate-900"
+                : "bg-[#111111]/95 border-white/10 text-white"
+            }`}
+          >
             {navLinks.map((link) => (
               <a
-                key={link.label}
+                key={link.href}
                 href={link.href}
                 onClick={(e) => scrollTo(e, link.href)}
                 className={`block px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
                   isHomePage && activeSection === link.href
-                    ? "bg-white/10 text-white"
+                    ? isLight
+                      ? "bg-slate-200 text-slate-900 font-semibold"
+                      : "bg-white/10 text-white"
+                    : isLight
+                    ? "text-slate-700 hover:bg-slate-100"
                     : "text-white/80 hover:text-white hover:bg-white/5"
                 }`}
               >
@@ -212,11 +344,13 @@ const Navbar = ({ onApply: _onApply }: NavbarProps) => {
               onClick={() => setMobileOpen(false)}
               className={`block px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
                 location.pathname === "/ishtirokchilar"
-                  ? "bg-white/10 text-white font-semibold"
-                  : "text-[#00A8FF] hover:bg-white/5"
+                  ? isLight
+                    ? "bg-slate-200 text-slate-900 font-semibold"
+                    : "bg-white/10 text-white font-semibold"
+                  : "text-[#00A8FF] hover:bg-blue-500/10"
               }`}
             >
-              Ishtirokchilar
+              {t("nav.participants")}
             </Link>
             {user ? (
               <>
@@ -224,25 +358,33 @@ const Navbar = ({ onApply: _onApply }: NavbarProps) => {
                   <Link
                     to="/admin"
                     onClick={() => setMobileOpen(false)}
-                    className="block px-4 py-3 text-sm font-medium rounded-lg text-[#00A8FF] hover:bg-white/5 transition-all duration-200"
+                    className="block px-4 py-3 text-sm font-medium rounded-lg text-[#00A8FF] hover:bg-blue-500/10 transition-all duration-200"
                   >
-                    Admin Panel
+                    {t("nav.adminPanel")}
                   </Link>
                 )}
                 <Link
                   to="/dashboard"
                   onClick={() => setMobileOpen(false)}
-                  className="block px-4 py-3 text-sm font-medium rounded-lg text-white/80 hover:bg-white/5 transition-all duration-200"
+                  className={`block px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                    isLight
+                      ? "text-slate-700 hover:bg-slate-100"
+                      : "text-white/80 hover:bg-white/5"
+                  }`}
                 >
-                  Dashboard
+                  {t("nav.dashboard")}
                 </Link>
               </>
             ) : (
               <button
                 onClick={handleApply}
-                className="w-full mt-2 px-4 py-3 text-sm font-medium rounded-lg transition-all cursor-pointer duration-200 bg-white/5 hover:bg-white/10 text-white"
+                className={`w-full mt-2 px-4 py-3 text-sm font-medium rounded-lg transition-all cursor-pointer duration-200 ${
+                  isLight
+                    ? "bg-[#00A8FF] text-white hover:bg-[#0088cc]"
+                    : "bg-white/5 hover:bg-white/10 text-white"
+                }`}
               >
-                Ariza topshirish
+                {t("nav.apply")}
               </button>
             )}
           </div>

@@ -4,6 +4,8 @@ import Lenis from "lenis";
 import "./index.css";
 import App from "./App.tsx";
 import { AuthProvider } from "./contexts/AuthContext.tsx";
+import { ThemeProvider } from "./contexts/ThemeContext.tsx";
+import { LanguageProvider } from "./contexts/LanguageContext.tsx";
 
 // Smooth scroll (only on landing page; disabled inside portals via data-lenis-prevent)
 const lenis = new Lenis({
@@ -20,8 +22,12 @@ requestAnimationFrame(raf);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <AuthProvider>
-      <App />
-    </AuthProvider>
+    <ThemeProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </LanguageProvider>
+    </ThemeProvider>
   </StrictMode>
 );

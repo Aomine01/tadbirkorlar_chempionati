@@ -1,103 +1,87 @@
 import { useNavigate } from "react-router-dom";
 import Container from "../components/Container";
-import logoFull from "../assets/logos/white full.png";
-
-const socials = [
-  {
-    name: "Telegram",
-    href: "https://t.me/+UfcZ4T-OmPs1NDEy",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M21.198 2.433a2.242 2.242 0 00-1.022.215l-16.5 6.498c-1.356.527-1.347 1.467-.243 1.812l4.232 1.322 1.64 5.04c.196.604.757.83 1.27.53l2.35-1.517 4.604 3.394c.848.468 1.458.228 1.668-.786l3.01-14.18c.291-1.175-.45-1.708-1.009-1.328zM9.5 15.5l-.4 3.9-1.5-4.6 9-5.4-7.1 6.1z" />
-      </svg>
-    ),
-  },
-  {
-    name: "Instagram",
-    href: "https://www.instagram.com/ytch.uz/",
-    icon: (
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-        <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" />
-        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-      </svg>
-    ),
-  },
-  {
-    name: "LinkedIn",
-    href: "https://www.linkedin.com/company/yosh-tadbirkorlar-chempionati/",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z" />
-        <circle cx="4" cy="4" r="2" />
-      </svg>
-    ),
-  },
-];
+import logoWhite from "../assets/logos/white full.png";
+import logoBlue from "../assets/logos/blue-full.png";
+import { useTheme } from "../contexts/ThemeContext";
+import { useLanguage } from "../contexts/LanguageContext";
+import type { TranslationKey } from "../lib/translations";
 
 const Footer = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const { t } = useLanguage();
+  const isLight = theme === "light";
+
+  const navLinks: { labelKey: TranslationKey; href: string }[] = [
+    { labelKey: "nav.home", href: "#home" },
+    { labelKey: "nav.about", href: "#about" },
+    { labelKey: "nav.roadmap", href: "#roadmap" },
+    { labelKey: "nav.experts", href: "#experts" },
+    { labelKey: "nav.faq", href: "#faq" },
+  ];
+
+  const applyLinks: { labelKey: TranslationKey; key: string }[] = [
+    { labelKey: "footer.startup", key: "startup" },
+    { labelKey: "footer.ideas", key: "ideas" },
+    { labelKey: "footer.business", key: "business" },
+  ];
 
   return (
-    <footer style={{ background: "#11121A" }}>
+    <footer
+      className="transition-colors duration-300 border-t"
+      style={{
+        background: isLight ? "#f1f5f9" : "#11121A",
+        borderColor: isLight ? "rgba(226, 232, 240, 0.8)" : "rgba(255, 255, 255, 0.05)",
+      }}
+    >
       <Container>
         <div className="py-12 sm:py-16 flex flex-col sm:flex-row items-start justify-between gap-10">
-          {/* Logo + socials */}
+          {/* Logo + Admin Telegram link */}
           <div>
             <img
-              src={logoFull}
+              src={isLight ? logoBlue : logoWhite}
               alt="Yosh Tadbirkorlar Chempionati"
               className="h-10 w-auto object-contain mb-4"
             />
-            <div className="flex items-center gap-3">
-              {socials.map((social) => (
-                <a
-                  key={social.name}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={social.name}
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-white transition-all duration-300 hover:opacity-80"
-                  style={{ background: "rgba(255,255,255,0.1)" }}
-                >
-                  {social.icon}
-                </a>
-              ))}
-            </div>
+            <p className={`text-xs sm:text-sm mb-3 ${isLight ? "text-slate-600" : "text-white/60"}`}>
+              {t("footer.contact")}
+            </p>
+            <a
+              href="https://t.me/ytrj_admin"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Telegram Admin (@ytrj_admin)"
+              aria-label="Telegram Admin"
+              className="inline-flex items-center justify-center w-11 h-11 rounded-2xl text-white transition-all duration-300 shadow-md hover:scale-105 hover:shadow-lg cursor-pointer"
+              style={{ background: "linear-gradient(135deg, #00A8FF 0%, #0077FF 100%)" }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21.198 2.433a2.242 2.242 0 00-1.022.215l-16.5 6.498c-1.356.527-1.347 1.467-.243 1.812l4.232 1.322 1.64 5.04c.196.604.757.83 1.27.53l2.35-1.517 4.604 3.394c.848.468 1.458.228 1.668-.786l3.01-14.18c.291-1.175-.45-1.708-1.009-1.328zM9.5 15.5l-.4 3.9-1.5-4.6 9-5.4-7.1 6.1z" />
+              </svg>
+            </a>
           </div>
 
           {/* Nav section */}
           <div>
             <h4
-              className="text-sm font-bold uppercase mb-4 text-white/50 tracking-widest"
+              className={`text-sm font-bold uppercase mb-4 tracking-widest ${
+                isLight ? "text-slate-500" : "text-white/50"
+              }`}
               style={{ fontFamily: "var(--font-button)" }}
             >
-              Bo'limlar
+              {t("footer.sections")}
             </h4>
             <ul className="flex flex-col gap-3">
-              {[
-                { label: "Bosh sahifa", href: "#home" },
-                { label: "Chempionat", href: "#about" },
-                { label: "Bosqichlar", href: "#roadmap" },
-                { label: "Ekspertlar", href: "#experts" },
-                { label: "FAQ", href: "#faq" },
-              ].map(({ label, href }) => (
+              {navLinks.map(({ labelKey, href }) => (
                 <li key={href}>
                   <a
                     href={href}
-                    className="text-sm text-white/60 hover:text-white transition-colors duration-200"
+                    className={`text-sm transition-colors duration-200 ${
+                      isLight ? "text-slate-700 hover:text-slate-950 font-medium" : "text-white/60 hover:text-white"
+                    }`}
                     style={{ fontFamily: "var(--font-button)" }}
                   >
-                    {label}
+                    {t(labelKey)}
                   </a>
                 </li>
               ))}
@@ -107,24 +91,24 @@ const Footer = () => {
           {/* Ariza section */}
           <div>
             <h4
-              className="text-sm font-bold uppercase mb-4 text-white/50 tracking-widest"
+              className={`text-sm font-bold uppercase mb-4 tracking-widest ${
+                isLight ? "text-slate-500" : "text-white/50"
+              }`}
               style={{ fontFamily: "var(--font-button)" }}
             >
-              Ariza
+              {t("footer.apply")}
             </h4>
             <ul className="flex flex-col gap-3">
-              {[
-                { label: "Startap uchun", key: "startup" },
-                { label: "G'oya uchun", key: "ideas" },
-                { label: "Biznes uchun", key: "business" },
-              ].map(({ label, key }) => (
+              {applyLinks.map(({ labelKey, key }) => (
                 <li key={key}>
                   <button
                     onClick={() => navigate(`/forms/${key}`)}
-                    className="text-sm text-white/60 hover:text-white transition-colors duration-200 cursor-pointer"
+                    className={`text-sm transition-colors duration-200 cursor-pointer ${
+                      isLight ? "text-slate-700 hover:text-slate-950 font-medium" : "text-white/60 hover:text-white"
+                    }`}
                     style={{ fontFamily: "var(--font-button)" }}
                   >
-                    {label}
+                    {t(labelKey)}
                   </button>
                 </li>
               ))}
@@ -133,12 +117,12 @@ const Footer = () => {
 
           {/* Copyright */}
           <p
-            className="text-sm text-white/50 sm:self-end"
+            className={`text-sm sm:self-end ${isLight ? "text-slate-500" : "text-white/50"}`}
             style={{ fontFamily: "var(--font-button)" }}
           >
-            © {new Date().getFullYear()} Powered by{" "}
-            <a href="#" className="text-[#00A8FF] hover:underline">
-              Yoshlar ishlari agentligi
+            © {new Date().getFullYear()} {t("footer.copyright")}{" "}
+            <a href="#" className="text-[#00A8FF] hover:underline font-semibold">
+              {t("footer.poweredby")}
             </a>
           </p>
         </div>
