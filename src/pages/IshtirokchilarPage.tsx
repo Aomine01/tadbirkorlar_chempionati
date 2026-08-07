@@ -12,6 +12,26 @@ import largeCardFemale from "../assets/img/largcardfemale.png";
 import miniMaleLight from "../assets/imglight/minimalelight.png";
 import miniFemaleLight from "../assets/imglight/minifemalelight.png";
 
+/* ─── Supabase Image Transform Helper ──────────────────── */
+// Uses Supabase Storage image transforms to serve optimally-sized WebP images.
+// Falls back to the original URL for non-Supabase URLs.
+function imgUrl(
+  url: string | null | undefined,
+  opts: { width?: number; height?: number; quality?: number; format?: string } = {}
+): string {
+  if (!url) return "";
+  // Only apply transforms to Supabase Storage URLs
+  if (!url.includes("/storage/v1/object/public/")) return url;
+  const { width, height, quality = 75, format = "webp" } = opts;
+  const params = new URLSearchParams();
+  if (width) params.set("width", String(width));
+  if (height) params.set("height", String(height));
+  params.set("quality", String(quality));
+  params.set("format", format);
+  // Supabase image transform endpoint
+  return url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/") + "?" + params.toString();
+}
+
 /* ─── Extended Application Interface ────────────────── */
 
 interface ExtendedApplication extends Application {
@@ -62,9 +82,10 @@ const ParticipantCard = ({
         <div className="relative aspect-[3/4] overflow-hidden bg-zinc-950">
           {app.product_image_url ? (
             <img
-              src={app.product_image_url}
+              src={imgUrl(app.product_image_url, { width: 400, quality: 75 })}
               alt={app.full_name || app.brand_name}
               loading="lazy"
+              decoding="async"
               className="absolute inset-0 w-full h-full object-cover opacity-85 group-hover:opacity-100 transition-opacity duration-300 scale-100 group-hover:scale-103 transition-transform duration-500"
             />
           ) : (
@@ -199,9 +220,11 @@ const ParticipantDetailModal = ({
             {/* Portrait Image (Aspect 3/4) */}
             <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-white/10 bg-zinc-950 w-full max-w-[280px] mx-auto md:max-w-none">
               <img
-                src={app.product_image_url || ""}
+                src={imgUrl(app.product_image_url, { width: 600, quality: 85 })}
                 alt={app.full_name || app.brand_name}
-                loading="lazy"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
                 className="w-full h-full object-cover"
               />
             </div>
@@ -324,9 +347,11 @@ const ParticipantDetailModal = ({
                   className="relative aspect-video w-full rounded-2xl overflow-hidden border border-white/15 bg-zinc-950/80 shadow-lg cursor-pointer group hover:border-[#00A8FF]/30 transition-colors duration-300"
                 >
                   <img
-                    src={galleryImages[activeGalleryIdx]}
+                    src={imgUrl(galleryImages[activeGalleryIdx], { width: 1200, quality: 85 })}
                     alt={`Showcase frame ${activeGalleryIdx + 1}`}
-                    loading="lazy"
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority="high"
                     className="w-full h-full object-contain"
                   />
                   <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
@@ -349,9 +374,10 @@ const ParticipantDetailModal = ({
                       }`}
                     >
                       <img
-                        src={img}
+                        src={imgUrl(img, { width: 300, quality: 70 })}
                         alt={`Thumbnail ${i + 1}`}
                         loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       {activeGalleryIdx !== i && (
@@ -378,8 +404,9 @@ const ParticipantDetailModal = ({
             <X size={22} />
           </button>
           <img
-            src={activeImage}
+            src={imgUrl(activeImage, { width: 1600, quality: 90 })}
             alt="Presentation slide expanded"
+            decoding="async"
             className="relative max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl border border-white/10"
           />
         </div>

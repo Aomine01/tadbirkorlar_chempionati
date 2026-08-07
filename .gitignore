@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Upload scripts & reports
+upload_*.js
+upload_*.mjs
+upload_*.json
+diagnose.mjs
+
