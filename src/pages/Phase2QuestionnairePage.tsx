@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -6,7 +6,6 @@ import {
   Building2,
   Rocket,
   Shield,
-  Upload,
   AlertCircle,
   Plus,
   Trash2,
@@ -16,7 +15,6 @@ import {
   Lock,
   ChevronRight,
   Award,
-  FileCheck,
   FileSpreadsheet,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
@@ -133,8 +131,9 @@ export default function Phase2QuestionnairePage() {
   const [currentDebts, setCurrentDebts] = useState("");
   const [assetsAndCollateral, setAssetsAndCollateral] = useState("");
   const [exportPlans, setExportPlans] = useState("");
-  const [financialReportType, setFinancialReportType] = useState<"buxgalter_tasdiqlagan" | "ichki" | "boshqa">("buxgalter_tasdiqlagan");
-  const [financialReportCustom, setFinancialReportCustom] = useState("");
+  const [monthlyNetProfit, setMonthlyNetProfit] = useState("");
+  const [monthlyExpenses, setMonthlyExpenses] = useState("");
+  const [averageMargin, setAverageMargin] = useState("");
 
   // ── Step 3B Form Data: Startup / Innovation (Section B) ─────────
   const [productStage, setProductStage] = useState("MVP");
@@ -145,9 +144,7 @@ export default function Phase2QuestionnairePage() {
   const [targetMarketSize, setTargetMarketSize] = useState("");
   const [competitiveAdvantage, setCompetitiveAdvantage] = useState("");
 
-  // ── Step 4 Form Data: Document Uploads ──────────────────────────
   const [uploadedDocs, setUploadedDocs] = useState<UploadedDoc[]>([]);
-  const [uploading, setUploading] = useState(false);
 
   // ── Step 5 Form Data: NDA & Declarations ────────────────────────
   const [truthfulnessDeclared, setTruthfulnessDeclared] = useState(false);
@@ -184,8 +181,9 @@ export default function Phase2QuestionnairePage() {
         if (d.currentDebts) setCurrentDebts(d.currentDebts);
         if (d.assetsAndCollateral) setAssetsAndCollateral(d.assetsAndCollateral);
         if (d.exportPlans) setExportPlans(d.exportPlans);
-        if (d.financialReportType) setFinancialReportType(d.financialReportType);
-        if (d.financialReportCustom) setFinancialReportCustom(d.financialReportCustom);
+        if (d.monthlyNetProfit) setMonthlyNetProfit(d.monthlyNetProfit);
+        if (d.monthlyExpenses) setMonthlyExpenses(d.monthlyExpenses);
+        if (d.averageMargin) setAverageMargin(d.averageMargin);
         if (d.productStage) setProductStage(d.productStage);
         if (d.productStageCustom) setProductStageCustom(d.productStageCustom);
         if (d.businessModel) setBusinessModel(d.businessModel);
@@ -228,8 +226,9 @@ export default function Phase2QuestionnairePage() {
       currentDebts,
       assetsAndCollateral,
       exportPlans,
-      financialReportType,
-      financialReportCustom,
+      monthlyNetProfit,
+      monthlyExpenses,
+      averageMargin,
       productStage,
       productStageCustom,
       businessModel,
@@ -266,8 +265,9 @@ export default function Phase2QuestionnairePage() {
     currentDebts,
     assetsAndCollateral,
     exportPlans,
-    financialReportType,
-    financialReportCustom,
+    monthlyNetProfit,
+    monthlyExpenses,
+    averageMargin,
     productStage,
     productStageCustom,
     businessModel,
@@ -303,60 +303,23 @@ export default function Phase2QuestionnairePage() {
     loadApplicantData();
   }, [user]);
 
-  // Formatted Currency Calculations
-  const parsedRequestedAmount = useMemo(() => {
-    const val = parseInt(requestedAmount.replace(/\D/g, "") || "0");
-    return Math.min(val, 1000000000); // capped at 1 billion UZS
-  }, [requestedAmount]);
-
-
-
-
-
-  // Handle File Upload to Supabase Storage
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, docType: string) => {
-    const files = e.target.files;
-    if (!files || files.length === 0 || !user) return;
-
-    setUploading(true);
-    setErrorMsg("");
-
-    try {
-      const file = files[0];
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${user.id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-
-      const { data: uploadData, error: uploadErr } = await supabase.storage
-        .from("phase2_documents")
-        .upload(fileName, file);
-
-      if (uploadErr) {
-        console.error("Storage upload error:", uploadErr);
-        setErrorMsg("Faylni yuklashda xatolik. Supabase Storage sozlanganligini tekshiring.");
-        setUploading(false);
-        return;
-      }
-
-      const { data: publicUrlData } = supabase.storage
-        .from("phase2_documents")
-        .getPublicUrl(uploadData.path);
-
-      const newDoc: UploadedDoc = {
-        file_name: file.name,
-        file_url: publicUrlData.publicUrl,
-        file_size: file.size,
-        doc_type: docType,
-        uploaded_at: new Date().toISOString(),
-      };
-
-      setUploadedDocs((prev) => [...prev, newDoc]);
-    } catch (err) {
-      console.error("File upload exception:", err);
-      setErrorMsg("Fayl yuklashda kutilmagan xatolik.");
-    } finally {
-      setUploading(false);
-    }
+  // Helper: Format number string with spaces (e.g., 180000000 -> 180 000 000)
+  const formatNumberWithSpaces = (val: string): string => {
+    const raw = val.replace(/\D/g, "");
+    if (!raw) return "";
+    return Number(raw).toLocaleString("ru-RU").replace(/\u00A0/g, " ");
   };
+
+  const handleMoneyInput = (setter: (val: string) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatNumberWithSpaces(e.target.value);
+    setter(formatted);
+  };
+
+
+
+
+
+
 
   // Handle Submit
   const handleSubmitPhase2 = async () => {
@@ -378,18 +341,19 @@ export default function Phase2QuestionnairePage() {
 
     try {
       const finalLegalStructure = legalStructure === "Boshqa" ? `Boshqa: ${legalStructureCustom}` : legalStructure;
-      const finalReportType = financialReportType === "boshqa" ? `Boshqa: ${financialReportCustom}` : financialReportType;
       const finalProductStage = productStage === "Boshqa" ? `Boshqa: ${productStageCustom}` : productStage;
-
+      const parsedRequestedAmount = parseInt(requestedAmount.replace(/\D/g, "") || "0");
       const sectionAData = {
         revenue_12m_dynamics: rev12mDynamics,
         expected_revenue_12m: expectedRev12m,
+        monthly_net_profit: monthlyNetProfit,
+        monthly_expenses: monthlyExpenses,
+        average_margin: averageMargin,
         current_key_metrics: currentKeyMetrics,
         expected_key_metrics_12m: expectedKeyMetrics12m,
         current_debts_and_payments: currentDebts,
         assets_and_collateral: assetsAndCollateral,
         export_plans: exportPlans,
-        financial_report_type: finalReportType,
       };
 
       const sectionBData = {
@@ -519,7 +483,7 @@ export default function Phase2QuestionnairePage() {
               </div>
 
               <span className="text-xs font-semibold text-slate-400">
-                Bosqich {currentStep} / 5
+                Bosqich {currentStep} / 4
               </span>
             </div>
 
@@ -540,17 +504,16 @@ export default function Phase2QuestionnairePage() {
             <div className="w-full h-2.5 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden relative shadow-inner">
               <div
                 className="h-full bg-gradient-to-r from-[#00A8FF] via-blue-500 to-emerald-400 transition-all duration-500 rounded-full shadow-lg shadow-[#00A8FF]/50"
-                style={{ width: `${(currentStep / 5) * 100}%` }}
+                style={{ width: `${(currentStep / 4) * 100}%` }}
               />
             </div>
 
-            <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
               {[
                 { step: 1, label: "Toifa" },
                 { step: 2, label: "Ma'lumotlar" },
                 { step: 3, label: "Moliya" },
-                { step: 4, label: "Hujjatlar" },
-                { step: 5, label: "NDA va Tasdiq" },
+                { step: 4, label: "NDA va Tasdiq" },
               ].map((s) => {
                 const isCompleted = currentStep > s.step;
                 const isCurrent = currentStep === s.step;
@@ -853,30 +816,52 @@ export default function Phase2QuestionnairePage() {
                 <span>3-Bo'lim — Moliyaviy Ko'rsatkichlar va Investitsiya Tahlili</span>
               </h3>
 
-              <div className="flex flex-col gap-1.5">
-                <label className={`text-xs font-semibold ${isLight ? "text-slate-700" : "text-white/80"}`}>
-                  Moliyaviy hisobot yuritish tartibi *
-                </label>
-                <select
-                  value={financialReportType}
-                  onChange={(e) => setFinancialReportType(e.target.value as any)}
-                  className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none cursor-pointer ${
-                    isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-[#0a0c10] border-white/10 text-white"
-                  }`}
-                >
-                  <option value="buxgalter_tasdiqlagan">Buxgalter / Audit tomonidan tasdiqlangan</option>
-                  <option value="ichki">Ichki tuzilgan hisobot</option>
-                  <option value="boshqa">Boshqa</option>
-                </select>
-                {financialReportType === "boshqa" && (
+              {/* Monthly Financial Stats (Profit, Expenses, Margin) */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className={`text-xs font-semibold ${isLight ? "text-slate-700" : "text-white/80"}`}>
+                    Sof foyda oylik (UZS) *
+                  </label>
                   <input
                     type="text"
-                    value={financialReportCustom}
-                    onChange={(e) => setFinancialReportCustom(e.target.value)}
-                    placeholder="Tartibni yozing..."
-                    className={`w-full mt-1 px-4 py-2 rounded-xl border text-xs outline-none ${isLight ? "bg-slate-100 border-slate-300 text-slate-800" : "bg-white/8 border-white/20 text-white"}`}
+                    value={monthlyNetProfit}
+                    onChange={handleMoneyInput(setMonthlyNetProfit)}
+                    placeholder="Masalan: 25 000 000"
+                    className={`w-full px-4 py-2.5 rounded-xl border text-xs font-mono outline-none ${
+                      isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-white/5 border-white/10 text-white"
+                    }`}
                   />
-                )}
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className={`text-xs font-semibold ${isLight ? "text-slate-700" : "text-white/80"}`}>
+                    Harajatlar oylik (UZS) *
+                  </label>
+                  <input
+                    type="text"
+                    value={monthlyExpenses}
+                    onChange={handleMoneyInput(setMonthlyExpenses)}
+                    placeholder="Masalan: 15 000 000"
+                    className={`w-full px-4 py-2.5 rounded-xl border text-xs font-mono outline-none ${
+                      isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-white/5 border-white/10 text-white"
+                    }`}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className={`text-xs font-semibold ${isLight ? "text-slate-700" : "text-white/80"}`}>
+                    O'rtacha marja (%) *
+                  </label>
+                  <input
+                    type="text"
+                    value={averageMargin}
+                    onChange={(e) => setAverageMargin(e.target.value)}
+                    placeholder="Masalan: 25%"
+                    className={`w-full px-4 py-2.5 rounded-xl border text-xs font-mono outline-none ${
+                      isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-white/5 border-white/10 text-white"
+                    }`}
+                  />
+                </div>
               </div>
 
               {category === "business" ? (
@@ -888,9 +873,9 @@ export default function Phase2QuestionnairePage() {
                     <input
                       type="text"
                       value={rev12mDynamics}
-                      onChange={(e) => setRev12mDynamics(e.target.value)}
-                      placeholder="Masalan: 450,000,000 UZS"
-                      className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none ${
+                      onChange={handleMoneyInput(setRev12mDynamics)}
+                      placeholder="Masalan: 450 000 000"
+                      className={`w-full px-4 py-2.5 rounded-xl border text-xs font-mono outline-none ${
                         isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-white/5 border-white/10 text-white"
                       }`}
                     />
@@ -898,14 +883,14 @@ export default function Phase2QuestionnairePage() {
 
                   <div className="flex flex-col gap-1.5">
                     <label className={`text-xs font-semibold ${isLight ? "text-slate-700" : "text-white/80"}`}>
-                      Kelgusi 12 oy kutilayotgan tushum (UZS) *
+                      Investitsiya olgandan keyin kutilayotgan yillik tushum (UZS) *
                     </label>
                     <input
                       type="text"
                       value={expectedRev12m}
-                      onChange={(e) => setExpectedRev12m(e.target.value)}
-                      placeholder="Masalan: 1,200,000,000 UZS"
-                      className={`w-full px-4 py-2.5 rounded-xl border text-xs outline-none ${
+                      onChange={handleMoneyInput(setExpectedRev12m)}
+                      placeholder="Masalan: 1 200 000 000"
+                      className={`w-full px-4 py-2.5 rounded-xl border text-xs font-mono outline-none ${
                         isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-white/5 border-white/10 text-white"
                       }`}
                     />
@@ -930,7 +915,7 @@ export default function Phase2QuestionnairePage() {
 
                   <div className="flex flex-col gap-1.5">
                     <label className={`text-xs font-semibold ${isLight ? "text-slate-700" : "text-white/80"}`}>
-                      12 oy o'tgach kutilayotgan traksiya *
+                      Investitsiya olgandan keyin kutilayotgan yillik tushum *
                     </label>
                     <input
                       type="text"
@@ -952,8 +937,8 @@ export default function Phase2QuestionnairePage() {
                 <input
                   type="text"
                   value={requestedAmount}
-                  onChange={(e) => setRequestedAmount(e.target.value)}
-                  placeholder="300000000"
+                  onChange={handleMoneyInput(setRequestedAmount)}
+                  placeholder="300 000 000"
                   className={`w-full px-4 py-2.5 rounded-xl border text-xs font-mono font-bold outline-none ${
                     isLight ? "bg-slate-50 border-slate-200 text-[#00A8FF]" : "bg-white/5 border-white/10 text-[#00A8FF]"
                   }`}
@@ -1009,7 +994,7 @@ export default function Phase2QuestionnairePage() {
                         type="text"
                         value={item.amount}
                         onChange={(e) => {
-                          const val = e.target.value;
+                          const val = formatNumberWithSpaces(e.target.value);
                           setAllocations((prev) =>
                             prev.map((it, i) => (i === idx ? { ...it, amount: val } : it))
                           );
@@ -1065,7 +1050,7 @@ export default function Phase2QuestionnairePage() {
                   }`}
                   style={{ fontFamily: "var(--font-button)" }}
                 >
-                  <span>Keyingi bosqich: Hujjatlar</span>
+                  <span>Keyingi bosqich: NDA va tasdiq</span>
                   <ChevronRight size={16} />
                 </button>
               </div>
@@ -1073,7 +1058,7 @@ export default function Phase2QuestionnairePage() {
           )}
 
           {/* ──────────────────────────────────────────────────────────── */}
-          {/* STEP 4: SUPPORTING DOCUMENTS                                 */}
+          {/* STEP 4: ELECTRONIC NDA & FINAL SUBMISSION (Overhauled UI/UX) */}
           {/* ──────────────────────────────────────────────────────────── */}
           {currentStep === 4 && (
             <div className="flex flex-col gap-6 animate-fade-in">
@@ -1083,125 +1068,8 @@ export default function Phase2QuestionnairePage() {
                 }`}
                 style={{ fontFamily: "var(--font-zuume)" }}
               >
-                <Upload size={20} className="text-[#00A8FF]" />
-                <span>4-Bo'lim — Tasdiqlovchi Hujjatlarni Yuklash</span>
-              </h3>
-
-              <p className={`text-xs leading-relaxed ${isLight ? "text-slate-600" : "text-white/70"}`}>
-                Investorlar va hakamlar baholashi uchun tegishli moliyaviy hamda huquqiy hujjatlaringizni (PDF, DOCX, PNG, JPG max 10MB) biriktiring:
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  { title: "Buxgalteriya Balansi / P&L", type: "buxgalteriya_balansi" },
-                  { title: "Bank Ko'chirmalari (6-12 oylik)", type: "bank_kochirmasi" },
-                  { title: "Soliq Deklaratsiyasi va Ma'lumotnoma", type: "soliq_deklaratsiyasi" },
-                  { title: "Litsenziya, Patent yoki Hamkorlik Shartnomasi", type: "litsenziya_patent" },
-                ].map((slot) => (
-                  <div
-                    key={slot.type}
-                    className={`p-4 rounded-2xl border flex flex-col gap-3 ${
-                      isLight ? "bg-slate-50 border-slate-200" : "bg-white/5 border-white/10"
-                    }`}
-                  >
-                    <span className={`text-xs font-semibold ${isLight ? "text-slate-700" : "text-white/80"}`}>
-                      {slot.title}
-                    </span>
-
-                    <label className="flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-[#00A8FF]/40 bg-[#00A8FF]/5 hover:bg-[#00A8FF]/10 text-[#00A8FF] text-xs font-semibold cursor-pointer transition-all duration-200 active:scale-[0.98]">
-                      <Upload size={15} />
-                      <span>{uploading ? "Yuklanmoqda..." : "Fayl biriktirish"}</span>
-                      <input
-                        type="file"
-                        accept=".pdf,.docx,.xlsx,.jpg,.png"
-                        onChange={(e) => handleFileUpload(e, slot.type)}
-                        disabled={uploading}
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-                ))}
-              </div>
-
-              {uploadedDocs.length > 0 && (
-                <div className="flex flex-col gap-2 mt-2">
-                  <span className={`text-xs font-semibold ${isLight ? "text-slate-600" : "text-white/60"}`}>
-                    Biriktirilgan hujjatlar ({uploadedDocs.length} ta):
-                  </span>
-                  {uploadedDocs.map((doc, idx) => (
-                    <div
-                      key={idx}
-                      className={`p-3 rounded-xl border flex items-center justify-between text-xs ${
-                        isLight ? "bg-white border-slate-200" : "bg-white/5 border-white/10"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5 truncate pr-2">
-                        <FileCheck size={16} className="text-emerald-500 shrink-0" />
-                        <span className="font-semibold truncate">{doc.file_name}</span>
-                        <span className="text-[10px] font-mono text-slate-400 shrink-0">
-                          ({(doc.file_size / 1024 / 1024).toFixed(2)} MB)
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <a
-                          href={doc.file_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="p-1.5 rounded-lg text-[#00A8FF] hover:bg-[#00A8FF]/10"
-                          title="Ko'rish"
-                        >
-                          <Eye size={15} />
-                        </a>
-                        <button
-                          onClick={() => setUploadedDocs((prev) => prev.filter((_, i) => i !== idx))}
-                          className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 cursor-pointer"
-                          title="O'chirish"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="flex items-center justify-between pt-4">
-                <button
-                  onClick={() => setCurrentStep(3)}
-                  className={`px-5 py-2.5 rounded-xl text-sm font-medium border transition-all duration-200 active:scale-[0.98] cursor-pointer ${
-                    isLight ? "bg-white border-slate-200 text-slate-700 hover:bg-slate-100" : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
-                  }`}
-                >
-                  Orqaga
-                </button>
-
-                <button
-                  onClick={() => setCurrentStep(5)}
-                  className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 shadow-lg active:scale-[0.97] cursor-pointer ${
-                    isLight ? "bg-slate-900 text-white hover:bg-slate-800" : "bg-white text-[#0a0f2c] hover:bg-white/90 shadow-white/10"
-                  }`}
-                  style={{ fontFamily: "var(--font-button)" }}
-                >
-                  <span>Keyingi bosqich: NDA va tasdiq</span>
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ──────────────────────────────────────────────────────────── */}
-          {/* STEP 5: ELECTRONIC NDA & FINAL SUBMISSION                   */}
-          {/* ──────────────────────────────────────────────────────────── */}
-          {currentStep === 5 && (
-            <div className="flex flex-col gap-6 animate-fade-in">
-              <h3
-                className={`text-xl sm:text-2xl font-bold uppercase tracking-wider flex items-center gap-2 ${
-                  isLight ? "text-slate-900" : "text-white"
-                }`}
-                style={{ fontFamily: "var(--font-zuume)" }}
-              >
                 <Shield size={20} className="text-[#00A8FF]" />
-                <span>5-Bo'lim — Maxfiylik va Yakuniy Tasdiqlash</span>
+                <span>4-Bo'lim — Maxfiylik va Yakuniy Tasdiqlash</span>
               </h3>
 
               {/* Summary Card */}
@@ -1209,7 +1077,7 @@ export default function Phase2QuestionnairePage() {
                 <div className="flex items-center justify-between border-b border-[#00A8FF]/20 pb-3">
                   <div className="flex items-center gap-2 text-[#00A8FF] font-semibold text-xs">
                     <FileSpreadsheet size={18} />
-                    <span>PDF Hujjat Strukturasi va Moliyaviy Xulosa</span>
+                    <span>Moliyaviy va Arizaga Oid Xulosa</span>
                   </div>
                   <span className="px-2.5 py-0.5 rounded-md bg-[#00A8FF]/20 text-[#00A8FF] font-mono text-[10px] font-bold">
                     PREVIEW
@@ -1230,7 +1098,7 @@ export default function Phase2QuestionnairePage() {
                   <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-0.5">
                     <span className="text-slate-400 text-[10px] uppercase font-bold">So'ralayotgan Investitsiya:</span>
                     <span className="font-extrabold text-[#00A8FF] font-mono text-sm">
-                      {parsedRequestedAmount.toLocaleString("ru-RU")} UZS
+                      {requestedAmount || "0"} UZS
                     </span>
                   </div>
                   <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-0.5">
@@ -1242,12 +1110,14 @@ export default function Phase2QuestionnairePage() {
                 </div>
               </div>
 
-              {/* NDA Callout */}
-              <div className="p-5 rounded-2xl border bg-[#00A8FF]/5 border-[#00A8FF]/30 flex flex-col gap-3">
+              {/* Scrollable Readable NDA Box */}
+              <div className={`rounded-2xl border p-4 sm:p-5 flex flex-col gap-3 transition-colors ${
+                isLight ? "bg-slate-50 border-slate-200" : "bg-[#0c0e14] border-white/10"
+              }`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-[#00A8FF] font-semibold text-xs">
                     <Lock size={16} />
-                    <span>Maxfiylik To'g'risida Kelishuv (NDA)</span>
+                    <span>Maxfiylik To'g'risida Kelishuv (NDA) Matni</span>
                   </div>
 
                   <button
@@ -1255,36 +1125,73 @@ export default function Phase2QuestionnairePage() {
                     className="flex items-center gap-1 text-xs font-semibold text-[#00A8FF] hover:underline cursor-pointer"
                   >
                     <Eye size={14} />
-                    <span>To'liq matnni o'qish</span>
+                    <span>Kengaytirilgan o'qish</span>
                   </button>
                 </div>
 
-                <div className="flex items-center gap-3 pt-1">
-                  <input
-                    type="checkbox"
-                    id="ndaCheck"
-                    checked={ndaAgreed}
-                    onChange={(e) => setNdaAgreed(e.target.checked)}
-                    className="w-4 h-4 rounded border-slate-300 text-[#00A8FF] focus:ring-[#00A8FF] cursor-pointer"
-                  />
-                  <label htmlFor="ndaCheck" className={`text-xs font-semibold cursor-pointer ${isLight ? "text-slate-800" : "text-white"}`}>
-                    Maxfiylik to'g'risidagi kelishuv shartlari bilan tanishdim va ularga to'liq roziman *
-                  </label>
+                {/* Styled Scrollable Container */}
+                <div className={`p-4 rounded-xl border max-h-52 overflow-y-auto font-sans text-xs leading-relaxed space-y-3 whitespace-pre-line ${
+                  isLight
+                    ? "bg-white border-slate-200 text-slate-700 shadow-inner"
+                    : "bg-[#050608] border-white/10 text-white/80 shadow-inner"
+                }`}>
+                  {FULL_NDA_TEXT}
                 </div>
               </div>
 
-              {/* Truthfulness Declaration */}
-              <div className="flex items-center gap-3 p-4 rounded-2xl border border-slate-200 dark:border-white/10">
-                <input
-                  type="checkbox"
-                  id="truthCheck"
-                  checked={truthfulnessDeclared}
-                  onChange={(e) => setTruthfulnessDeclared(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 text-[#00A8FF] focus:ring-[#00A8FF] cursor-pointer"
-                />
-                <label htmlFor="truthCheck" className={`text-xs font-semibold cursor-pointer ${isLight ? "text-slate-800" : "text-white"}`}>
-                  Taqdim etilgan barcha moliyaviy va huquqiy ma'lumotlar aniq va haqiqiy ekanligini tasdiqlayman *
-                </label>
+              {/* Enhanced Interactive Checkboxes */}
+              <div className="flex flex-col gap-3">
+                <div
+                  onClick={() => setNdaAgreed(!ndaAgreed)}
+                  className={`p-4 rounded-2xl border flex items-center gap-3.5 transition-all cursor-pointer ${
+                    ndaAgreed
+                      ? isLight
+                        ? "bg-blue-50/80 border-[#00A8FF] text-slate-900 shadow-sm"
+                        : "bg-[#00A8FF]/15 border-[#00A8FF]/50 text-white shadow-sm"
+                      : isLight
+                      ? "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700"
+                      : "bg-white/5 border-white/10 hover:border-white/20 text-white/80"
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded-lg border flex items-center justify-center shrink-0 transition-colors ${
+                    ndaAgreed
+                      ? "bg-[#00A8FF] border-[#00A8FF] text-white"
+                      : isLight
+                      ? "border-slate-300 bg-white"
+                      : "border-white/20 bg-white/5"
+                  }`}>
+                    {ndaAgreed && <Check size={14} className="stroke-[3]" />}
+                  </div>
+                  <span className="text-xs font-semibold leading-normal select-none">
+                    Maxfiylik to'g'risidagi kelishuv (NDA) shartlari bilan tanishdim va ularga to'liq roziman *
+                  </span>
+                </div>
+
+                <div
+                  onClick={() => setTruthfulnessDeclared(!truthfulnessDeclared)}
+                  className={`p-4 rounded-2xl border flex items-center gap-3.5 transition-all cursor-pointer ${
+                    truthfulnessDeclared
+                      ? isLight
+                        ? "bg-emerald-50/80 border-emerald-500 text-slate-900 shadow-sm"
+                        : "bg-emerald-500/15 border-emerald-500/50 text-white shadow-sm"
+                      : isLight
+                      ? "bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700"
+                      : "bg-white/5 border-white/10 hover:border-white/20 text-white/80"
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded-lg border flex items-center justify-center shrink-0 transition-colors ${
+                    truthfulnessDeclared
+                      ? "bg-emerald-500 border-emerald-500 text-white"
+                      : isLight
+                      ? "border-slate-300 bg-white"
+                      : "border-white/20 bg-white/5"
+                  }`}>
+                    {truthfulnessDeclared && <Check size={14} className="stroke-[3]" />}
+                  </div>
+                  <span className="text-xs font-semibold leading-normal select-none">
+                    Taqdim etilgan barcha moliyaviy va huquqiy ma'lumotlar aniq va haqiqiy ekanligini tasdiqlayman *
+                  </span>
+                </div>
               </div>
 
               {/* Signer Name Input */}
@@ -1306,7 +1213,7 @@ export default function Phase2QuestionnairePage() {
               {/* Submit Controls */}
               <div className="flex items-center justify-between pt-6 border-t border-slate-200 dark:border-white/10">
                 <button
-                  onClick={() => setCurrentStep(4)}
+                  onClick={() => setCurrentStep(3)}
                   className={`px-5 py-2.5 rounded-xl text-sm font-medium border transition-all duration-200 active:scale-[0.98] cursor-pointer ${
                     isLight ? "bg-white border-slate-200 text-slate-700 hover:bg-slate-100" : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
                   }`}
