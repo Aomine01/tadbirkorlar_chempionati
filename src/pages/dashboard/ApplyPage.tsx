@@ -545,7 +545,14 @@ const ApplyPage = () => {
         gender: formData.gender,
       });
 
-      if (insertErr) throw new Error(insertErr.message);
+      if (insertErr) {
+        // Handle unique constraint violation (user already has an application)
+        if ((insertErr as any).code === "23505" || insertErr.message?.includes("duplicate") || insertErr.message?.includes("unique")) {
+          setAlreadyApplied(true);
+          return;
+        }
+        throw new Error(insertErr.message);
+      }
       navigate("/dashboard", { replace: true });
     } catch (err: unknown) {
       setGlobalError(err instanceof Error ? err.message : "Xatolik yuz berdi");

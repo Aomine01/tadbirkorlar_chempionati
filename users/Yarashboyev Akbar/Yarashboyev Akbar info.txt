@@ -1,0 +1,16 @@
+Viloyat: TOSHKENT VILOYATI
+
+Location: TOSHKENT VILOYATI
+
+Name:Yarashboyev Akbar
+
+age: 24 
+
+Industry name:  Craft cafe
+
+About business: «Craft Cafe» brendi ostida umumiy ovqatlanish sohasida faoliyat yuritib, sog'lom va hamyonbop taomlar tayyorlash hamda mijozlarga sifatli xizmat ko'rsatish bilan shug'ullanadi. Kafe sog'lom ovqatlanish trendiga yo'naltirilgan bo'lib, menyu tarkibida frеsh va tabiiy ingredientlardan tayyorlangan taomlar mavjud. Hozirda 1 ta filial faoliyat yuritmoqda va 7 nafar xodim ish bilan ta'minlangan.
+
+Maqsad: Yangi filial ochish orqali xizmat ko‘rsatish hududini kengaytirish va ko‘proq mijozlarni sifatli, sog‘lom hamda hamyonbop taomlar bilan ta’minlash.
+Faoliyatni kengaytirish, yangi ish o‘rinlari yaratish va kelgusida brendni hududiy miqyosda rivojlantirish.
+
+Yuridik name: “Fresh and Cheap” MCHJ

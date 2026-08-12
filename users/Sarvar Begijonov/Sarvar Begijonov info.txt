@@ -1,0 +1,15 @@
+Viloyat: TOSHKENT SHAHRI
+
+Location: TOSHKENT SHAHRI
+
+Name: Sarvar Begijonov
+
+age: 23
+
+Industry name: Padel time
+
+About business: Paddle Time Toshkent shahridagi zamonaviy padel sport klubidir. Klub professional padel kortlari, inventar ijarasi, murabbiylik mashg'ulotlari hamda turnir va sport tadbirlarini tashkil etish xizmatlarini taqdim etadi. Dastlabki bosqichda jamoa 3 nafar xodim va 2 nafar murabbiydan iborat bo'ladi. Kelgusida klub faoliyati kengaytirilib, O'zbekistonda padel sportini rivojlantirish va ommalashtirish rejalashtirilgan.
+
+Maqsad: Investitsiya mablag'lari zamonaviy padel sport klubini ishga tushirish, yuqori sifatli infratuzilmani yaratish va mijozlar bazasini tez shakllantirish uchun jalb qilinadi. Asosiy maqsad Toshkentdagi yetakchi padel klubiga aylanish, keyinchalik yangi filiallarni ochish hamda O'zbekistondagi eng kuchli padel brendlaridan birini yaratish.
+
+Yuridik name: Padel Time Mchj

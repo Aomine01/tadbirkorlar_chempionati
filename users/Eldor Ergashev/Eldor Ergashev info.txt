@@ -1,0 +1,19 @@
+Viloyat:Navoiy viloyati
+
+Location: Navoiy viloyati
+
+Name:Eldor Ergashev
+
+age:27
+
+Industry name:Apex Pizza
+
+About business:"7-14 Group" MChJ tarkibida fast food yo‘nalishida faoliyat yuritadi. Tadbirkorlik sohasida 4 yildan ortiq tajribaga ega. Shundan 3 yil davomida THOMPSON o‘quv markazining Navoiy filiali rahbari sifatida faoliyat yuritgan, so‘nggi 1 yildan buyon Apex Pizza brendi ostida fast food yo‘nalishini rivojlantirib kelmoqda. Marketing, xodimlarni boshqarish va biznes ko‘rsatkichlarini tahlil qilish uning asosiy kuchli jihatlari hisoblanadi.
+
+Maqsad:Navoiy viloyatida zamonaviy ovqatlanish shoxobchalari tarmog‘ini kengaytirish.
+Fast food biznesining zamonaviy modellarini hududlarda ommalashtirish.
+Sifatli xizmat ko‘rsatish orqali mijozlar qamrovini oshirish.
+Yangi ish o‘rinlarini yaratish va faoliyatni yanada rivojlantirish.
+
+Yuridik name: “7-14 Group” MChJ
+

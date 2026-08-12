@@ -1,0 +1,16 @@
+Viloyat: TOSHKENT VILOYATI
+
+Location: TOSHKENT VILOYATI
+
+Name: Turg’unov Bobur
+
+age: 35
+
+Industry name: Mctown Hotdog
+
+About business: «McTown Hotdog» brendi ostida tez ovqatlanish sohasida faoliyat yuritib, hot dog va burger yo'nalishidagi sifatli va hamyonbop taomlarni mijozlarga taqdim etadi. Brend shahar bo'ylab qulay joylarda joylashgan kichik formatli savdo nuqtalari orqali ishlaydi — bu yuqori mijozlar oqimini ta'minlaydi va keng auditoriyaga xizmat ko'rsatish imkonini beradi. Hozirda tarmoq tarkibida 8 ta filial faoliyat yuritmoqda va 15 nafardan ortiq xodim ish bilan ta'minlangan. Kompaniya xizmat sifati va boshqaruv tizimini doimiy takomillashtirish orqali faoliyatini kengaytirib bormoqda.
+
+Maqsad: Yangi filiallar ochish orqali tarmoqni kengaytirish, ko‘proq mijozlarga xizmat ko‘rsatish va yoshlar uchun yangi ish o‘rinlarini yaratish.
+Zamonaviy va tizimli boshqaruvni joriy etish hamda brendni xalqaro bozorga olib chiqib, tez ovqatlanish sohasida raqobatbardosh tarmoqqa aylantirish.
+
+Yuridik name: YTT Turgunov Bobur

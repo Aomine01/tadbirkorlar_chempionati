@@ -1,0 +1,16 @@
+Viloyat: TOSHKENT SHAHRI
+
+Location: TOSHKENT SHAHRI
+
+Name:Falina Tamila
+
+age: 25
+
+Industry name: SECOND BLOOM
+
+About business: «Second Bloom» — guldastalarni qayta sotish uchun mo'ljallangan onlayn auktsion platforma. Platforma sotuvchini potentsial xaridorlar bilan bir necha daqiqada bog'laydi. Xizmat o'z mobil ilovasi va Telegram-bot orqali ishlaydi — foydalanuvchi ham sotishi, ham sotib olishi mumkin. Biznes modeli bukеtlarni joylashtirish uchun to'lov asosida qurilgan. Hozirda jamoada 3 nafar xodim faoliyat yuritadi.
+
+Maqsad: O'zbekiston va Qozog'istonda kuniga 75 000 dan ortiq tug'ilgan kun egalariga yetib borish va ularda guldastalarni qayta sotish odatini shakllantirish.
+Platforma foydalanuvchilar bazasini kengaytirish va ilova funksionalini rivojlantirish.
+
+Yuridik name: OOO SECONDBLOOM

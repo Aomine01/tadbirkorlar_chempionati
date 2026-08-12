@@ -1,0 +1,24 @@
+Viloyat:Farg‘ona viloyati
+
+
+Location:Farg‘ona viloyati
+
+Name:Azamjon Raxmadjonov
+
+age:33
+
+phone:+998 91 111 66 64
+
+Industry name:Food truck va mobil savdo yechimlarini ishlab chiqarish
+
+
+
+About business:"Baaz Eco" tizimi asosida food truck va mobil savdo yechimlarini loyihalash hamda ishlab chiqarish bilan shug‘ullanadi. Korxona zamonaviy mobil savdo vositalarini ishlab chiqarish orqali tadbirkorlar uchun tayyor biznes yechimlarini taklif etadi. Ishlab chiqarish jarayonida sifat, funksionallik va zamonaviy dizaynga alohida e’tibor qaratilib, turli yo‘nalishdagi bizneslar uchun moslashtirilgan food trucklar tayyorlanadi. Kompaniya mobil tadbirkorlik infratuzilmasini rivojlantirish va yoshlarning o‘z biznesini boshlashi uchun qulay imkoniyatlar yaratishga xizmat qilmoqda.
+
+
+Maqsad:Mahsulotlarni xalqaro bozorlarga olib chiqish.
+Baaz Eco brendini dunyo miqyosida rivojlantirish.
+Minglab yoshlarning o‘z biznesini boshlashi uchun zamonaviy mobil savdo yechimlarini taqdim etish.
+Ishlab chiqarish quvvatini kengaytirish va eksport hajmini oshirish.
+
+

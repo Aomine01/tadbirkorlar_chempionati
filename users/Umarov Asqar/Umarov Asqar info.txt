@@ -1,0 +1,17 @@
+Viloyat: NAVOIY VILOYATI
+
+Location: Navoiy viloyati
+
+Name: Umarov Asqar
+
+age: 20
+
+Industry name: ClearBoat
+
+About business: Clearboat — suv havzalarini ekologik tozalashga ixtisoslashgan texnologik kompaniya. Sun'iy intellekt, IoT va qayta tiklanuvchi energiya asosida chiqindilarni avtomatik yig'uvchi robot-kemalar ishlab chiqaradi: Clearboat — daryo, kanal va suv omborlari uchun, Clearboat Mini — mehmonxona, basseyn va akvaparklar uchun.
+Daromad qurilma savdosi hamda texnik xizmat, ehtiyot qism va robotlarni ijaraga berish (Robot-as-a-Service) orqali shakllanadi. Asosiy mijozlar — Ekologiya va Suv xo'jaligi vazirliklari, hokimliklar, kommunal tashkilotlar, dam olish maskanlari, mehmonxona va akvaparklar.
+
+Maqsad: Suv havzalarini ekologik toza saqlash uchun innovatsion robot-kemalarni ishlab chiqish, ishlab chiqarish va bozorga taqdim etish.
+Zamonaviy, energiya tejamkor hamda iqtisodiy samarali tozalash yechimlari bilan korxonalarni ta'minlash.
+
+Yuridik name: N/A

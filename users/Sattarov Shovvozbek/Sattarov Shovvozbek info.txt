@@ -1,0 +1,16 @@
+Viloyat: XORAZM VILOYATI
+
+Location: Urganch shahri
+
+Name:Sattarov Shovvozbek
+
+age: 24 
+
+Industry name: DATA
+
+About business:DATA UNION — IT, xorijiy tillar, bolalar ta'limi va xususiy maktab yo‘nalishlarida faoliyat yurituvchi zamonaviy ta'lim ekotizimidir. Kompaniya sifatli va zamonaviy ta'lim xizmatlarini taqdim etib, yoshlarning bilim va ko‘nikmalarini rivojlantirishga xizmat qilmoqda. Hozirda kompaniyada 250 nafardan ortiq xodim faoliyat yuritadi va bugungi kunga qadar 10 000 nafardan ortiq o‘quvchi ta'lim olgan. Kelgusida ta'lim infratuzilmasini kengaytirish va xizmatlar sifatini yanada oshirish rejalashtirilgan.
+
+Maqsad: Ta'lim infratuzilmasini kengaytirish, zamonaviy o‘quv muhitini yaratish va xizmatlar sifatini yanada oshirish orqali ko‘proq yoshlarni sifatli ta'lim bilan qamrab olish.
+Operatsion jarayonlarni takomillashtirish, yangi filiallar va ta'lim yo‘nalishlarini rivojlantirish hamda DATA brendini O‘zbekiston va Markaziy Osiyoning yetakchi xususiy ta'lim ekotizimiga aylantirish.
+
+Yuridik name: DATA UNION

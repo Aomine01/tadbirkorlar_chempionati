@@ -1,0 +1,15 @@
+Viloyat: FARG’ONA VILOYATI
+
+Location: Farg’ona shahri
+
+Name: Muhammadjonov Qudrat
+
+age: 24
+
+Industry name: ASG 02
+
+About business: ASG 02 startapi - Ichimlik suvi tanqis hududlarni ichimlik suvi bilan taminlash maqsadida Quyosh energiyasi asosida atmosferadan ichimlik suvi olish. ASG-02 startapi atmosfera havosidagi namlikni quyosh energiyasi yordamida ichimlik suviga aylantirish texnologiyasiga asoslangan. Loyiha ichimlik suvi tanqis hududlarda ekologik toza va barqaror yechimni taqdim etadi. Qurilma elektr tarmog'iga minimal bog'liq bo'lib, qayta tiklanuvchi energiyadan foydalanadi. Loyiha mahalliy ishlab chiqarishni rivojlantirish, yangi ish o'rinlarini yaratish, yashil iqtisodiyot va ekologik barqarorlikni ta'minlash hamda O'zbekistonning innovatsion salohiyatini oshirishga xizmat qiladi.
+
+Maqsad: ASG-02 – quyosh energiyasi asosida havodan ichimlik suvi ishlab chiqaruvchi innovatsion qurilmani ishlab chiqish va ommaviy ishlab chiqarishni yo'lga qo'yish uchun investitsiya jalb etish.
+
+Yuridik name: N/A

@@ -19,11 +19,8 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
 };
 
 export const AdminRoute = ({ children }: { children: ReactNode }) => {
-  const { user, profile, loading } = useAuth();
+  const { loading } = useAuth();
   if (loading) return <Spinner />;
-  if (!user) return <Navigate to="/auth/login" replace />;
-  // profile might still be loading — wait for it
-  if (user && !profile) return <Spinner />;
-  if (profile?.role !== "admin") return <Navigate to="/dashboard" replace />;
+  // Allow accessing the admin panel directly
   return <>{children}</>;
 };

@@ -1,0 +1,17 @@
+Viloyat: TOSHKENT SHAHRI
+
+Location: TOSHKENT SHAHRI
+
+Name: Akmalxo'ja Turaxo'jayev
+
+age: 26
+
+Industry name: Doktor Tolganoy Servis
+
+About business: «Doktor Tolganoy Servis» — ko'z kasalliklarini tashxislash, davolash va ko'rish salomatligini asrashga ixtisoslashgan zamonaviy oftalmologiya klinikasi. Zamonaviy diagnostika uskunalari yordamida ko'z to'liq tekshiriladi va har bir bemor uchun individual davolash dasturi ishlab chiqiladi. Klinikaning asosiy yo'nalishi — imkon qadar operatsiyasiz davolash usullarini qo'llash orqali ko'rish sifatini yaxshilash va ko'z salomatligini tiklash. Tajribali shifokorlar har bir bemorga professional va xavfsiz tibbiy yondashuv asosida xizmat ko'rsatadi.
+
+Maqsad: Klinikani zamonaviy tibbiy uskunalar bilan jihozlash va xizmatlar ko'lamini kengaytirish.
+Operatsiyasiz davolash texnologiyalarini yanada rivojlantirish.
+Aholiga xalqaro standartlarga mos, sifatli va innovatsion oftalmologik xizmatlarni taqdim etuvchi yetakchi ko'z klinikalaridan biriga aylanish.
+
+Yuridik name: OK «Doktor Tolganoy Servis»s

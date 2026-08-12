@@ -1,0 +1,16 @@
+Viloyat: FARG’ONA VILOYATI
+
+Location: FARG’ONA VILOYATI
+
+Name: Azamjon Yahyozoda
+
+age: 29
+
+Industry name: CAG IrriSet
+
+About business: «CAG IrriSet» brendi ostida tomchilab sug'orish komplektlari ishlab chiqarish va sotish yo'nalishida faoliyat yuritadi. Kompaniya fermer va dehqonlarga suv tejash, hosildorlikni oshirish hamda qishloq xo'jaligini zamonaviy texnologiyalar bilan ta'minlashga ixtisoslashgan. Mahsulotlar aqlli sug'orish boshqaruvi tizimini o'z ichiga oladi. Hozirda korxonada 5 nafar xodim faoliyat yuritmoqda.
+
+Maqsad: Ishlab chiqarish va savdo hajmini kengaytirish orqali 2 yil ichida 100 mingta komplekt mahsulotni realizatsiya qilish hamda korxonaning bozor ulushini oshirish.
+Mahsulotlarni xalqaro bozorga olib chiqish, xususan, suv tanqisligi mavjud davlatlarga eksportni yo‘lga qo‘yish va kompaniyani ushbu yo‘nalishda xalqaro miqyosda raqobatbardosh brendga aylantirish.
+
+Yuridik name: CAG Trade MCHJ

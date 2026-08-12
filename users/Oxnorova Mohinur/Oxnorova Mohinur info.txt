@@ -1,0 +1,16 @@
+Viloyat: TOSHKENT SHAHRI
+
+Location: TOSHKENT SHAHRI
+
+Name:Oxnorova Mohinur
+
+age: 20
+
+Industry name: EcoCups
+
+About business: ECOCUPS - ekologik toza, yeyiladigan va biologik parchalanadigan, qahva va boshqa issiq ichimliklarga stakanlar ishlab chiqarish startapi. Mahsulotimiz bir martalik plastik va qog‘oz stakanlarga ekologik alternativa bo‘lib, kafe, qahvaxonalar, restoranlar, mehmonxonalar va catering korxonalariga mo‘ljallangan. Biznesning asosiy maqsadi bir martalik qadoqlash chiqindilarini kamaytirish, HoReCa sektori uchun barqaror va innovatsion yechim yaratish hamda O‘zbekistonda ekologik iste'mol madaniyatini rivojlantirishdir.
+
+Maqsad: HoReCa sektori uchun barqaror va innovatsion yechim yaratish hamda O‘zbekistonda ekologik iste'mol madaniyatini rivojlantirishdir.
+Mablag' ishlab chiqarish uskunalarini xarid qilish, mahsulotni takomillashtirish, sertifikatlash va bozorga chiqarishni jadallashtirish uchun yo'naltiriladi
+
+Yuridik name: N/A

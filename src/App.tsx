@@ -4,6 +4,7 @@ import FormPage from "./pages/FormPage";
 import LoginPage from "./pages/auth/LoginPage";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import ApplyPage from "./pages/dashboard/ApplyPage";
+import Phase2QuestionnairePage from "./pages/Phase2QuestionnairePage";
 import AdminPage from "./pages/admin/AdminPage";
 import IshtirokchilarPage from "./pages/IshtirokchilarPage";
 import { ProtectedRoute, AdminRoute } from "./components/RouteGuards";
@@ -23,7 +24,14 @@ const App = () => {
           <Route path="/auth/login" element={<LoginPage />} />
           <Route path="/ishtirokchilar" element={<IshtirokchilarPage />} />
 
-          {/* ── Applicant portal (auth required) ───────────── */}
+          <Route
+            path="/phase2-form"
+            element={
+              <ProtectedRoute>
+                <Phase2QuestionnairePage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/dashboard"
             element={

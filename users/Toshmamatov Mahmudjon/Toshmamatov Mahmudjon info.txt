@@ -1,0 +1,17 @@
+Viloyat: TOSHKENT SHAHRI
+
+Location: TOSHKENT SHAHRI
+
+Name: Toshmamatov Mahmudjon
+
+age: 18
+
+Industry name: EXPRESS COPY
+
+About business: Express Copy — avtomatlashtirilgan chop etish, skanerlash va nusxa olish terminallarini ishlab chiqaruvchi va joriy etuvchi zamonaviy vending kompaniyasidir. Terminallar orqali mijozlar joyning o'ziga xos narxlarga moslashtirilgan tarzda tez va qulay xizmatdan foydalanishlari mumkin — xizmat narxi 1000 so'mdan boshlanadi. Hozirda Toshkent Amaliy Fanlar Universitetida 2 ta va Prezident Boshqaruv Akademiyasida 1 ta (test rejimida) terminal o'rnatilgan. Kompaniyaning biznes modeli — apparatlarni sotish emas, balki ularni ijaraga berish va foydalanishga topshirish orqali barqaror daromad shakllantirishga asoslangan.
+
+Maqsad: O'zbekiston hududlarida terminallar tarmog'ini ko'paytirish, ta'lim muassasalari va jamoat joylarini qamrab olish orqali avtomatlashtirilgan chop etish xizmatlarini keng ommalashtirish. 
+Markaziy Osiyo va MDH davlatlari bozoriga chiqish, mintaqaviy miqyosda tanilgan vending texnologiyalar brendiga aylanish.
+
+Yuridik name: YATT DAMINOV FARRUKH 
+FARKHOD O'G'LI

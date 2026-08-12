@@ -1,0 +1,17 @@
+Viloyat: TOSHKENT VILOYATI
+
+Location: TOSHKENT VILOYATI
+
+Name: Baratov Sardor
+
+age: 29
+
+Industry name: New Wey Basketball
+
+About business: Korxona 7–12 yoshdagi bolalar salomatligini mustahkamlash va ularning jismoniy rivojlanishini qo‘llab-quvvatlashga qaratilgan sport-sog‘lomlashtirish xizmatlarini ko‘rsatadi. Hozirda kompaniyada 2 nafar xodim faoliyat yuritmoqda va 1 ta filial mavjud. Avval kompaniya 12 ta filialdan 25 ta filialgacha kengayib, 25 nafargacha xodim bilan faoliyat olib borgan, biroq rentabellik 7 foizdan oshmagan. Hozirda faoliyat bitta filialda optimallashtirilgan bo‘lib, rentabellik 60 foizdan yuqori ko‘rsatkichga erishgan. Kelgusida biznesni samarali masshtablash modeli va IT mahsulotini yaratish ustida ish olib borilmoqda.
+
+Maqsad:Biznesni samarali masshtablash modeli va innovatsion IT mahsulotini yaratish orqali kompaniya qiymatini 2 yil ichida 500 ming AQSH dollariga yetkazish.
+2 yil davomida Toshkent shahridagi bolalar sporti bozorining 40 foizini egallash hamda yillik aylanmasi 800 ming AQSH dollaridan ortiq bo‘lgan respublika miqyosidagi sport-sog‘lomlashtirish tarmog‘ini shakllantirish.
+
+Yuridik name: YaTT Baratov Sardor 
+Gayniddinovich

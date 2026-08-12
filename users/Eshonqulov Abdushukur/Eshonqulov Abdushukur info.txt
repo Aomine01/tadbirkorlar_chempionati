@@ -1,0 +1,16 @@
+Viloyat: Samarqand viloyati
+
+Location: Samarqand viloyati
+
+Name:Eshonqulov Abdushukur
+
+age:29
+
+Industry name: SamEcoBench
+
+About business:«SamEcoBench» — quyosh energiyasi asosida ishlaydigan Smart City mahsulotlarini ishlab chiqaruvchi innovatsion kompaniya. Tarkibida smart skameykalar, aqlli avtobus bekatlar, Eco Tree quyosh daraxtlari, Smart Highway va boshqa ekologik yechimlar mavjud. Mahsulotlar USB, simsiz quvvatlash, Wi-Fi, LED yoritish va reklama modullari bilan jihozlangan. Korxonada malakali mutaxassislar faoliyat yuritadi.
+
+Maqsad: Investitsiya jalb qilib, ishlab chiqarish quvvatini oshirish va mahsulotlarni xalqaro standartlarga mos ravishda rivojlantirish.
+Eksport bozorlariga chiqish va Markaziy Osiyoda Smart City sohasida yetakchi kompaniyalardan biriga aylanish.
+
+Yuridik name: “SamEcoBench” MCHJ

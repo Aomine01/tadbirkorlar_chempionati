@@ -1,0 +1,17 @@
+Viloyat: TOSHKENT SHAHRI
+
+Location: TOSHKENT SHAHRI
+
+Name: Nabiyev Begzod
+
+age: 29
+
+Industry name: Voltra Energy
+
+About business: «Voltra Energy» quyosh panellarini sotish, obyektlarga o'rnatish va loyihalash xizmatlarini ko'rsatadi. Shuningdek, ko'cha chiroqlari va boshqa yashil energetika mahsulotlarini yetkazib berish, o'rnatish va ishga tushirish bilan shug'ullanadi. Xizmatlar turar joy, tijorat va sanoat obyektlari uchun mo'ljallangan.
+
+Maqsad: Bozorda ulushni kengaytirish va yangi ish o'rinlari yaratish.
+Quyosh panellari va yashil energetika mahsulotlarini O'zbekiston bo'ylab keng tarqatish.
+Qo'shni davlatlarga ham mahsulot va xizmatlarni yetkazib berish — eksportga chiqish.
+
+Yuridik name: Voltra Energy MCHJ

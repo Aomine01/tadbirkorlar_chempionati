@@ -1,0 +1,17 @@
+Viloyat: TOSHKENT SHAHRI
+
+Location: TOSHKENT SHAHRI
+
+Name: Akmaljonov Alisher
+
+age: 27 
+
+Industry name: Sino AI
+
+About business: «Sino AI» — sun'iy intellekt yordamida surunkali kasalliklar xavfini erta aniqlashga ixtisoslashgan xalqaro raqamli tibbiyot platformasi. Zamonaviy texnologiyalar, tibbiy ma'lumotlar va shaxsiylashtirilgan tahlil orqali foydalanuvchilarga o'z salomatligini muntazam nazorat qilish imkonini beradi. Hozirda platforma O'zbekiston, Qozog'iston, Qirg'iziston, Tojikiston va Ozarbayjonda — 5 ta mamlakat bozorida faoliyat yuritmoqda. Jamoada xorijiy ekspertlarni ham o'z ichiga olgan 15 nafar yuqori malakali mutaxassis ishlaydi.
+
+Maqsad: Sino AI texnologiyasini yanada rivojlantirish va xalqaro bozorlarda faol kengayish — 9 ta davlatga chiqish.
+Millionlab foydalanuvchilarga xizmat ko'rsatadigan global tibbiy ekotizim yaratish.
+Insonning qayerda yashashi va daromadidan qat'i nazar, erta diagnostikani butun dunyo aholisi uchun ochiq va qulay qilish.
+
+Yuridik name: Sino AI Technologies MChJ

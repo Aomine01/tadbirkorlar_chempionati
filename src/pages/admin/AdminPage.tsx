@@ -1,855 +1,2288 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
-  CheckCircle2,
-  XCircle,
-  Clock,
-  X,
   ChevronDown,
-  Trash2,
-  AlertTriangle,
-  MessageSquare,
   Search,
+  ArrowLeft,
+  XCircle,
+  AlertCircle,
+  FileText,
+  LogOut,
+  Calendar,
+  Check,
+  X,
+  RefreshCw,
+  Send,
+  Shield,
+  Info,
+  Sun,
+  Moon,
+  Image as ImageIcon,
+  MapPin,
+  Maximize2,
+  Sparkles,
+  CheckCircle2,
+  Layers,
+  SlidersHorizontal,
+  UserCheck,
+  Clock,
+  Inbox,
+  RotateCcw,
+  Menu,
+  Building2,
+  Rocket,
+  FileCheck,
+  Download,
 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
-import type { Application, ApplicationStatus, ApplicationCategory } from "../../types/database";
+import { useTheme } from "../../contexts/ThemeContext";
+import logoWhite from "../../assets/logos/white full.png";
+import logoBlue from "../../assets/logos/blue-full.png";
+import HeroImage from "../../assets/img/hero-image.png";
+import HeroLightImage from "../../assets/imglight/herolight.png";
 
-/* ─── Config ───────────────────────────────────────── */
+/* ─── Status Types & Configurations ───────────────────────────── */
 
-const STATUS_CONFIG: Record<
-  ApplicationStatus,
-  { label: string; color: string; bg: string; border: string; borderLeft: string; icon: typeof CheckCircle2 }
-> = {
-  submitted:    { label: "Yuborilgan",        color: "#00A8FF", bg: "bg-[#00A8FF]/10",  border: "border-[#00A8FF]/30",  borderLeft: "border-l-[#00A8FF]",  icon: Clock        },
-  under_review: { label: "Ko'rib chiqilmoqda", color: "#F59E0B", bg: "bg-amber-500/10",  border: "border-amber-500/30",  borderLeft: "border-l-amber-500",  icon: Clock        },
-  approved:     { label: "Tasdiqlandi",        color: "#10B981", bg: "bg-emerald-500/10", border: "border-emerald-500/30", borderLeft: "border-l-emerald-500", icon: CheckCircle2 },
-  rejected:     { label: "Rad etildi",         color: "#EF4444", bg: "bg-red-500/10",     border: "border-red-500/30",    borderLeft: "border-l-red-500",    icon: XCircle      },
-};
+export type StatusKey = "yangi_ariza" | "korib_chiqilmoqda" | "qaytarildi" | "rad_etildi" | "tasdiqlangan";
 
-const CATEGORY_LABELS: Record<ApplicationCategory, string> = {
-  ideas:    "G'oya",
-  startup:  "Startap",
+export interface StatusConfig {
+  key: StatusKey;
+  label: string;
+  darkBg: string;
+  darkText: string;
+  darkBorder: string;
+  dotColor: string;
+  lightBg: string;
+  lightText: string;
+  lightBorder: string;
+  stepIndex: number;
+}
+
+export const STATUS_LIST: StatusConfig[] = [
+  {
+    key: "yangi_ariza",
+    label: "Yangi Ariza",
+    darkBg: "bg-violet-500/15",
+    darkText: "text-violet-400",
+    darkBorder: "border-violet-500/40",
+    dotColor: "bg-violet-400",
+    lightBg: "bg-violet-50",
+    lightText: "text-violet-700",
+    lightBorder: "border-violet-200",
+    stepIndex: 0,
+  },
+  {
+    key: "korib_chiqilmoqda",
+    label: "Ko'rib chiqilmoqda",
+    darkBg: "bg-[#00A8FF]/15",
+    darkText: "text-[#00A8FF]",
+    darkBorder: "border-[#00A8FF]/40",
+    dotColor: "bg-[#00A8FF]",
+    lightBg: "bg-sky-50",
+    lightText: "text-sky-700",
+    lightBorder: "border-sky-200",
+    stepIndex: 1,
+  },
+  {
+    key: "qaytarildi",
+    label: "Qaytarildi",
+    darkBg: "bg-amber-500/15",
+    darkText: "text-amber-400",
+    darkBorder: "border-amber-500/40",
+    dotColor: "bg-amber-400",
+    lightBg: "bg-amber-50",
+    lightText: "text-amber-700",
+    lightBorder: "border-amber-200",
+    stepIndex: 1,
+  },
+  {
+    key: "rad_etildi",
+    label: "Rad etildi",
+    darkBg: "bg-rose-500/15",
+    darkText: "text-rose-400",
+    darkBorder: "border-rose-500/40",
+    dotColor: "bg-rose-500",
+    lightBg: "bg-rose-50",
+    lightText: "text-rose-700",
+    lightBorder: "border-rose-200",
+    stepIndex: 1,
+  },
+  {
+    key: "tasdiqlangan",
+    label: "Tasdiqlangan",
+    darkBg: "bg-emerald-500/15",
+    darkText: "text-emerald-400",
+    darkBorder: "border-emerald-500/40",
+    dotColor: "bg-emerald-400",
+    lightBg: "bg-emerald-50",
+    lightText: "text-emerald-700",
+    lightBorder: "border-emerald-200",
+    stepIndex: 2,
+  },
+];
+
+export const STEPPER_STAGES = [
+  "Ko'rib chiqilmoqda",
+  "Saralash jarayonida",
+  "Natija tasdiqlandi",
+];
+
+/* ─── Interfaces ─────────────────────────────────────────────── */
+
+export interface ApplicantItem {
+  id: string;
+  fullId: string;
+  numericId: number;
+  fio: string;
+  brandName: string;
+  legalName: string;
+  category: string;
+  categoryLabel: string;
+  age: number;
+  region: string;
+  gender: "Ayol" | "Erkak";
+  phone: string;
+  businessDescription: string;
+  goals: string[];
+  potentialImpact: string[];
+  avatarUrl: string | null;
+  productImageUrl: string | null;
+  productImageUrls: string[];
+  jshshir: string;
+  passport: string;
+  birthDate: string;
+  date: string;
+  status: StatusKey;
+  rejectionComment?: string;
+}
+
+export interface Phase2ApplicationItem {
+  id: string;
+  application_id: string;
+  user_id: string;
+  category: "business" | "startup" | "other";
+  company_name: string;
+  legal_structure: string;
+  registration_date: string | null;
+  ownership_structure: string;
+  permanent_employees_count: number;
+  external_funding_details: string;
+  requested_investment_amount: number;
+  investment_allocation: any[];
+  expected_outcomes: string;
+  tax_and_license_status: string;
+  legal_disputes_status: string;
+  section_a_data: Record<string, any>;
+  section_b_data: Record<string, any>;
+  uploaded_documents: Array<{
+    file_name: string;
+    file_url: string;
+    file_size: number;
+    doc_type: string;
+    uploaded_at: string;
+  }>;
+  truthfulness_declared: boolean;
+  nda_agreed: boolean;
+  nda_agreed_at: string;
+  nda_signer_name: string;
+  nda_user_ip: string;
+  nda_version: string;
+  additional_notes?: string;
+  status: string;
+  created_at: string;
+}
+
+/* ─── Region Normalizer ───────────────────────────────────────── */
+
+function normalizeRegionName(regionStr: string): string {
+  if (!regionStr) return "TOSHKENT SHAHRI";
+  let norm = regionStr.trim().toUpperCase();
+  if (
+    norm.includes("QORAQALPOG") ||
+    norm.includes("QORAQOLPOG") ||
+    norm.includes("KARAKALPAK")
+  ) {
+    return "QORAQALPOG'ISTON RESPUBLIKASI";
+  }
+  norm = norm.replace(/’|‘|`/g, "'");
+  return norm;
+}
+
+function generatePseudoJSHSHIR(idStr: string): string {
+  let hash = 0;
+  for (let i = 0; i < idStr.length; i++) {
+    hash = (hash << 5) - hash + idStr.charCodeAt(i);
+    hash |= 0;
+  }
+  const posHash = Math.abs(hash);
+  const prefix = "3" + String(100000 + (posHash % 899999));
+  const suffix = String(1000000 + (posHash % 8999999));
+  return (prefix + suffix).slice(0, 14);
+}
+
+function generatePseudoPassport(idStr: string): string {
+  let hash = 0;
+  for (let i = 0; i < idStr.length; i++) {
+    hash = (hash << 7) - hash + idStr.charCodeAt(i);
+    hash |= 0;
+  }
+  const num = 1000745 + (Math.abs(hash) % 8000000);
+  return `AD${num}`;
+}
+
+const CATEGORY_MAP: Record<string, string> = {
   business: "An'anaviy Biznes",
+  startup: "Startap",
+  ideas: "G'oya",
 };
 
-/* ─── Helper Functions ──────────────────────────────── */
+/* ─── Main Admin Component ────────────────────────────────────── */
 
-const cleanDescription = (desc: string) => {
-  return (desc || "")
-    .replace(/\[Founder:\s*[^\]]+\]/i, "")
-    .replace(/\[Gender:\s*(male|female)\]/i, "")
-    .replace(/\[Phone:\s*[^\]]+\]/i, "")
-    .trim();
-};
+export default function AdminPage() {
+  const { theme, toggleTheme } = useTheme();
+  const isLight = theme === "light";
 
-const getFounderName = (app: Application) => {
-  const rawDescription = app.business_description || "";
-  const founderMatch = rawDescription.match(/\[Founder:\s*([^\]]+)\]/i);
-  return founderMatch ? founderMatch[1].trim() : app.brand_name;
-};
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [activePhase, setActivePhase] = useState<"moderation" | "1-bosqich" | "2-bosqich">("moderation");
+  const [arizalarOpen, setArizalarOpen] = useState(true);
+  const [selectedStatusKey, setSelectedStatusKey] = useState<StatusKey>("korib_chiqilmoqda");
 
-/* ─── Detail Modal ─────────────────────────────────── */
+  // Selected applicant for Detail View
+  const [selectedApplicant, setSelectedApplicant] = useState<ApplicantItem | null>(null);
+  const [activeMainImg, setActiveMainImg] = useState<string | null>(null);
+  const [lightboxImg, setLightboxImg] = useState<string | null>(null);
 
-type ModalMode = "view" | "rejecting" | "confirm_delete";
+  // Applicants data
+  const [applicants, setApplicants] = useState<ApplicantItem[]>([]);
+  const [loadingApps, setLoadingApps] = useState(true);
 
-const DetailModal = ({
-  app,
-  onClose,
-  onStatusChange,
-  onDelete,
-  initialMode = "view",
-}: {
-  app: Application;
-  onClose: () => void;
-  onStatusChange: (id: string, status: ApplicationStatus, comment?: string) => void;
-  onDelete: (id: string) => void;
-  initialMode?: ModalMode;
-}) => {
-  const [updating, setUpdating] = useState(false);
-  const [mode, setMode] = useState<ModalMode>(initialMode);
-  const [rejectComment, setRejectComment] = useState("");
-  const [commentError, setCommentError] = useState("");
-  const [actionError, setActionError] = useState("");
-  const statusCfg = STATUS_CONFIG[app.status];
+  // Phase 2 Applications data
+  const [phase2Apps, setPhase2Apps] = useState<Phase2ApplicationItem[]>([]);
+  const [selectedPhase2App, setSelectedPhase2App] = useState<Phase2ApplicationItem | null>(null);
+  const [loadingPhase2, setLoadingPhase2] = useState(false);
 
-  const clearError = () => setActionError("");
+  // Filters state
+  const [searchName, setSearchName] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [regionFilter, setRegionFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("");
 
-  /* ── Set status (approve / under_review) ── */
-  const changeStatus = async (newStatus: ApplicationStatus) => {
-    setUpdating(true);
-    clearError();
-    const { error } = await supabase
-      .from("applications")
-      .update({ status: newStatus, rejection_comment: null })
-      .eq("id", app.id);
-    setUpdating(false);
-    if (error) {
-      console.error("changeStatus error:", error);
-      setActionError(error.message);
-    } else {
-      onStatusChange(app.id, newStatus);
-      onClose();
+  // Rejection Dialog State
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejectError, setRejectError] = useState("");
+
+  // Load ALL Phase 1 applications
+  const loadActualApplications = useCallback(async () => {
+    setLoadingApps(true);
+    try {
+      const { data, error } = await supabase
+        .from("applications")
+        .select("*")
+        .eq("is_deleted", false)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching Supabase applications:", error);
+        setLoadingApps(false);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const mapped: ApplicantItem[] = data.map((item, idx) => {
+          const rawDesc = item.business_description || "";
+          const founderMatch = rawDesc.match(/\[Founder:\s*([^\]]+)\]/i);
+          const phoneMatch = rawDesc.match(/\[Phone:\s*([^\]]+)\]/i);
+
+          const cleanDesc = rawDesc
+            .replace(/\[Founder:\s*[^\]]+\]/i, "")
+            .replace(/\[Gender:\s*(male|female)\]/i, "")
+            .replace(/\[Phone:\s*[^\]]+\]/i, "")
+            .trim();
+
+          const founderName = founderMatch
+            ? founderMatch[1].trim()
+            : item.brand_name && item.brand_name !== "N/A"
+            ? item.brand_name
+            : item.legal_name || `Arizachi #${idx + 1}`;
+
+          const phone = phoneMatch ? phoneMatch[1].trim() : "+998 90 123 45 67";
+
+          let stKey: StatusKey = "korib_chiqilmoqda";
+          if (item.status === "submitted") stKey = "yangi_ariza";
+          else if (item.status === "approved") stKey = "tasdiqlangan";
+          else if (item.status === "rejected") stKey = "rad_etildi";
+          else if ((item.status as string) === "returned" || (item.status as string) === "qaytarildi") stKey = "qaytarildi";
+
+          const birthYear = item.age ? 2026 - item.age : 1995;
+          const birthDate = `15.06.${birthYear}`;
+
+          const createdDate = item.created_at
+            ? new Date(item.created_at).toLocaleDateString("ru-RU") +
+              " " +
+              new Date(item.created_at).toLocaleTimeString("ru-RU").slice(0, 5)
+            : "07.08.2026 14:00";
+
+          let galleryImages: string[] = [];
+          if (Array.isArray(item.product_image_urls)) {
+            galleryImages = item.product_image_urls;
+          } else if (typeof item.product_image_urls === "string") {
+            try {
+              galleryImages = JSON.parse(item.product_image_urls);
+            } catch {
+              galleryImages = [item.product_image_urls];
+            }
+          }
+
+          return {
+            id: item.id.slice(0, 8),
+            fullId: item.id,
+            numericId: idx + 1,
+            fio: founderName.toUpperCase(),
+            brandName: item.brand_name || item.legal_name || "Brend",
+            legalName: item.legal_name || item.brand_name || "Korxona",
+            category: item.category || "business",
+            categoryLabel: CATEGORY_MAP[item.category] || "An'anaviy Biznes",
+            age: item.age || 28,
+            region: normalizeRegionName(item.region),
+            jshshir: generatePseudoJSHSHIR(item.id),
+            passport: generatePseudoPassport(item.id),
+            gender: item.gender === "female" ? "Ayol" : "Erkak",
+            birthDate: birthDate,
+            phone: phone,
+            businessDescription: cleanDesc || "Loyiha bo'yicha batafsil ma'lumotlar taqdim etilgan.",
+            goals: Array.isArray(item.goals) ? item.goals : [],
+            potentialImpact: Array.isArray(item.potential_impact) ? item.potential_impact : [],
+            avatarUrl: item.avatar_url || null,
+            productImageUrl: item.product_image_url || null,
+            productImageUrls: galleryImages,
+            date: createdDate,
+            status: stKey,
+            rejectionComment: item.rejection_comment || undefined,
+          };
+        });
+
+        setApplicants(mapped);
+      }
+    } catch (err) {
+      console.error("Error loading actual applications:", err);
+    } finally {
+      setLoadingApps(false);
+    }
+  }, []);
+
+  // Load Phase 2 applications
+  const loadPhase2Applications = useCallback(async () => {
+    setLoadingPhase2(true);
+    try {
+      const { data, error } = await supabase
+        .from("phase2_applications")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (!error && data) {
+        setPhase2Apps(data as any[]);
+      }
+    } catch (err) {
+      console.error("Error loading Phase 2 apps:", err);
+    } finally {
+      setLoadingPhase2(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadActualApplications();
+    loadPhase2Applications();
+
+    const channel = supabase
+      .channel("admin-realtime-applications")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "applications" },
+        () => loadActualApplications()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "phase2_applications" },
+        () => loadPhase2Applications()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [loadActualApplications, loadPhase2Applications]);
+
+  const uniqueRegions = useMemo(() => {
+    const set = new Set<string>();
+    applicants.forEach((a) => {
+      if (a.region) set.add(a.region);
+    });
+    return Array.from(set).sort();
+  }, [applicants]);
+
+  const galleryItems = useMemo(() => {
+    if (!selectedApplicant) return [];
+    const items: Array<{ url: string; label: string }> = [];
+    const seen = new Set<string>();
+
+    const getCleanKey = (urlStr: string) => {
+      try {
+        const u = new URL(urlStr);
+        return (u.origin + u.pathname).toLowerCase().replace(/\/$/, "");
+      } catch {
+        return urlStr.split("?")[0].toLowerCase().replace(/\/$/, "");
+      }
+    };
+
+    if (selectedApplicant.productImageUrl) {
+      const key = getCleanKey(selectedApplicant.productImageUrl);
+      seen.add(key);
+      items.push({ url: selectedApplicant.productImageUrl, label: "Rasm 1" });
+    }
+
+    selectedApplicant.productImageUrls.forEach((url) => {
+      if (url) {
+        const key = getCleanKey(url);
+        if (!seen.has(key)) {
+          seen.add(key);
+          items.push({ url, label: `Rasm ${items.length + 1}` });
+        }
+      }
+    });
+
+    if (selectedApplicant.avatarUrl) {
+      const key = getCleanKey(selectedApplicant.avatarUrl);
+      if (!seen.has(key)) {
+        seen.add(key);
+        items.push({ url: selectedApplicant.avatarUrl, label: `Rasm ${items.length + 1}` });
+      }
+    }
+
+    return items;
+  }, [selectedApplicant]);
+
+  const statusCounts = useMemo(() => {
+    const counts: Record<StatusKey, number> = {
+      yangi_ariza: 0,
+      korib_chiqilmoqda: 0,
+      qaytarildi: 0,
+      rad_etildi: 0,
+      tasdiqlangan: 0,
+    };
+    applicants.forEach((app) => {
+      if (counts[app.status] !== undefined) {
+        counts[app.status] = (counts[app.status] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [applicants]);
+
+  const filteredApplicants = useMemo(() => {
+    return applicants.filter((app) => {
+      if (app.status !== selectedStatusKey) return false;
+      if (searchName.trim()) {
+        const query = searchName.toLowerCase().trim();
+        const matchFio = app.fio.toLowerCase().includes(query);
+        const matchBrand = app.brandName.toLowerCase().includes(query);
+        if (!matchFio && !matchBrand) return false;
+      }
+      if (categoryFilter !== "all" && app.category !== categoryFilter) return false;
+      if (regionFilter !== "all" && app.region !== regionFilter) return false;
+      if (dateFilter && !app.date.includes(dateFilter)) return false;
+      return true;
+    });
+  }, [applicants, selectedStatusKey, searchName, categoryFilter, regionFilter, dateFilter]);
+
+  const moderationApps = useMemo(() => applicants.filter((a) => a.status === "yangi_ariza"), [applicants]);
+  const approvedApps = useMemo(() => applicants.filter((a) => a.status === "tasdiqlangan"), [applicants]);
+
+  const handleSelectApplicant = (app: ApplicantItem) => {
+    setSelectedApplicant(app);
+    const initialImg = app.productImageUrl || (app.productImageUrls.length > 0 ? app.productImageUrls[0] : app.avatarUrl);
+    setActiveMainImg(initialImg);
+  };
+
+  const handleUpdateStatus = async (appId: string, newStatus: StatusKey, comment?: string) => {
+    setApplicants((prev) =>
+      prev.map((item) => {
+        if (item.id === appId || item.fullId === appId) {
+          return { ...item, status: newStatus, rejectionComment: comment };
+        }
+        return item;
+      })
+    );
+
+    if (selectedApplicant && (selectedApplicant.id === appId || selectedApplicant.fullId === appId)) {
+      setSelectedApplicant((prev) => (prev ? { ...prev, status: newStatus, rejectionComment: comment } : null));
+    }
+
+    const dbStatusMap: Record<StatusKey, string> = {
+      yangi_ariza: "submitted",
+      korib_chiqilmoqda: "under_review",
+      qaytarildi: "returned",
+      rad_etildi: "rejected",
+      tasdiqlangan: "approved",
+    };
+
+    const targetApp = applicants.find((a) => a.id === appId || a.fullId === appId);
+    if (targetApp) {
+      await supabase
+        .from("applications")
+        .update({
+          status: dbStatusMap[newStatus],
+          rejection_comment: comment || null,
+        } as any)
+        .eq("id", targetApp.fullId);
     }
   };
 
-  /* ── Reject with required comment ── */
-  const handleRejectConfirm = async () => {
-    if (rejectComment.trim().length < 10) {
-      setCommentError("Kamida 10 ta belgi kiriting");
+  const handleApprove = async (appId: string) => {
+    await handleUpdateStatus(appId, "tasdiqlangan");
+    // After approval, navigate back to moderation list
+    setSelectedApplicant(null);
+  };
+
+  const handleConfirmReject = () => {
+    if (!rejectReason.trim() || rejectReason.trim().length < 5) {
+      setRejectError("Kamida 5 ta belgi bilan rad etish sababini yozing.");
       return;
     }
-    setUpdating(true);
-    clearError();
-    const { error } = await supabase
-      .from("applications")
-      .update({ status: "rejected", rejection_comment: rejectComment.trim() })
-      .eq("id", app.id);
-    setUpdating(false);
-    if (error) {
-      console.error("rejectConfirm error:", error);
-      setActionError(error.message);
-    } else {
-      onStatusChange(app.id, "rejected", rejectComment.trim());
-      onClose();
+    if (selectedApplicant) {
+      handleUpdateStatus(selectedApplicant.fullId, "rad_etildi", rejectReason.trim());
     }
+    setRejectModalOpen(false);
+    setRejectReason("");
+    setRejectError("");
+    setSelectedApplicant(null);
   };
 
-  /* ── Soft delete ── */
-  const handleDeleteConfirm = async () => {
-    setUpdating(true);
-    clearError();
-    const { error } = await supabase
-      .from("applications")
-      .update({ is_deleted: true })
-      .eq("id", app.id);
-    setUpdating(false);
-    if (error) {
-      console.error("deleteConfirm error:", error);
-      setActionError(error.message);
-    } else {
-      onDelete(app.id);
-      onClose();
-    }
-  };
+  const currentStatusCfg = STATUS_LIST.find((s) => s.key === selectedStatusKey) || STATUS_LIST[0];
 
-  const founderName = getFounderName(app);
-  const displayDesc = cleanDescription(app.business_description);
+  const SidebarContent = () => (
+    <div className="p-5 flex flex-col justify-between h-full gap-6 overflow-y-auto no-scrollbar">
+      <div className="flex flex-col gap-6">
+        <div className={`pb-3 border-b flex items-center justify-between ${isLight ? "border-slate-100" : "border-white/10"}`}>
+          <span
+            className={`text-xs font-bold uppercase tracking-widest ${isLight ? "text-slate-400" : "text-white/40"}`}
+            style={{ fontFamily: "var(--font-zuume)" }}
+          >
+            BOSHQARUV MENUSI
+          </span>
+          <span className="w-2 h-2 rounded-full bg-[#00A8FF] animate-pulse" />
+        </div>
 
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-start justify-center px-4 py-8 overflow-y-auto" data-lenis-prevent>
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
-      <div
-        className="relative w-full max-w-2xl rounded-2xl border border-white/10 overflow-hidden my-auto animate-modal-in"
-        style={{ background: "#0d1117" }}
-      >
-        {/* Modal header */}
-        <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-white/8">
-          <div>
-            <h2 className="font-bold text-lg text-white" style={{ fontFamily: "var(--font-zuume)" }}>
-              {founderName.toUpperCase()}
-            </h2>
-            <p className="text-xs text-white/40">{app.brand_name}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* Delete button */}
-            {mode === "view" && (
-              <button
-                onClick={() => setMode("confirm_delete")}
-                title="Arizani o'chirish"
-                className="w-8 h-8 flex items-center justify-center rounded-full text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+        <nav className="flex flex-col gap-3">
+          {/* ── MODERATSIYA (top-level) ── */}
+          <button
+            onClick={() => {
+              setActivePhase("moderation");
+              setSelectedApplicant(null);
+              setMobileDrawerOpen(false);
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+              activePhase === "moderation"
+                ? isLight
+                  ? "bg-violet-50 text-violet-700 shadow-xs border border-violet-200"
+                  : "bg-violet-500/20 text-violet-400 border border-violet-500/40 shadow-xs"
+                : isLight
+                ? "text-slate-700 hover:bg-slate-50"
+                : "text-white/70 hover:bg-white/5"
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Inbox size={16} className={activePhase === "moderation" ? "text-violet-400" : isLight ? "text-slate-400" : "text-white/40"} />
+              <span
+                className="font-bold tracking-wider uppercase"
+                style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
               >
-                <Trash2 size={15} />
-              </button>
+                Moderatsiya
+              </span>
+            </div>
+            {statusCounts.yangi_ariza > 0 && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-violet-500/20 text-violet-400 border border-violet-500/30 animate-pulse">
+                {statusCounts.yangi_ariza} YANGI
+              </span>
             )}
+            {statusCounts.yangi_ariza === 0 && (
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isLight ? "bg-slate-100 text-slate-400" : "bg-white/5 text-white/30"}`}>
+                {statusCounts.yangi_ariza}
+              </span>
+            )}
+          </button>
+
+          {/* ── 1-BOSQICH (collapsible) ── */}
+          <div>
             <button
-              onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              onClick={() => {
+                setActivePhase("1-bosqich");
+                setArizalarOpen(!arizalarOpen);
+              }}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                activePhase === "1-bosqich"
+                  ? isLight
+                    ? "bg-blue-50 text-[#00A8FF] shadow-xs"
+                    : "bg-[#00A8FF]/20 text-[#00A8FF] border border-[#00A8FF]/40 shadow-xs"
+                  : isLight
+                  ? "text-slate-700 hover:bg-slate-50"
+                  : "text-white/70 hover:bg-white/5"
+              }`}
             >
-              <X size={16} />
+              <div className="flex items-center gap-2.5">
+                <Layers size={16} className="text-[#00A8FF]" />
+                <span
+                  className="font-bold tracking-wider uppercase"
+                  style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
+                >
+                  1-Bosqich
+                </span>
+              </div>
+              <ChevronDown
+                size={15}
+                className={`transition-transform duration-200 ${
+                  arizalarOpen ? "rotate-180 text-[#00A8FF]" : isLight ? "text-slate-400" : "text-white/40"
+                }`}
+              />
             </button>
-          </div>
-        </div>
 
-        {/* Content */}
-        <div className="p-4 sm:p-6 flex flex-col gap-5 max-h-[70vh] overflow-y-auto no-scrollbar">
-          {/* Status badge */}
-          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full ${statusCfg.bg} ${statusCfg.border} border self-start`}>
-            <statusCfg.icon size={13} style={{ color: statusCfg.color }} />
-            <span className="text-xs font-medium" style={{ color: statusCfg.color }}>
-              {statusCfg.label}
+            {arizalarOpen && (
+              <div className={`mt-1.5 ml-3 pl-3 border-l-2 flex flex-col gap-1 py-1 ${isLight ? "border-slate-100" : "border-white/10"}`}>
+                {STATUS_LIST.filter((s) => s.key !== "yangi_ariza").map((statusItem) => {
+                  const isSelected = activePhase === "1-bosqich" && selectedStatusKey === statusItem.key;
+                  const count = statusCounts[statusItem.key] || 0;
+
+                  return (
+                    <button
+                      key={statusItem.key}
+                      onClick={() => {
+                        setActivePhase("1-bosqich");
+                        setSelectedStatusKey(statusItem.key);
+                        setSelectedApplicant(null);
+                        setMobileDrawerOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                        isSelected
+                          ? isLight
+                            ? "bg-slate-100 text-[#00A8FF] font-bold shadow-2xs"
+                            : "bg-white/10 text-[#00A8FF] font-bold border border-[#00A8FF]/30"
+                          : isLight
+                          ? "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                          : "text-white/60 hover:bg-white/5 hover:text-white"
+                      }`}
+                    >
+                      <span
+                        className="truncate pr-2 uppercase tracking-wide"
+                        style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.03em" }}
+                      >
+                        {statusItem.label}
+                      </span>
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                          isSelected
+                            ? statusItem.key === "tasdiqlangan"
+                              ? "bg-emerald-500 text-white shadow-2xs"
+                              : "bg-[#00A8FF] text-white shadow-2xs"
+                            : count > 0
+                            ? isLight
+                              ? "bg-slate-100 text-slate-700"
+                              : "bg-white/10 text-white/80"
+                            : isLight
+                            ? "bg-slate-50 text-slate-300"
+                            : "bg-white/5 text-white/30"
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* ── 2-BOSQICH ── */}
+          <button
+            onClick={() => {
+              setActivePhase("2-bosqich");
+              setSelectedApplicant(null);
+              setMobileDrawerOpen(false);
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+              activePhase === "2-bosqich"
+                ? isLight
+                  ? "bg-blue-50 text-[#00A8FF] shadow-xs"
+                  : "bg-[#00A8FF]/20 text-[#00A8FF] border border-[#00A8FF]/40 shadow-xs"
+                : isLight
+                ? "text-slate-700 hover:bg-slate-50"
+                : "text-white/70 hover:bg-white/5"
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Sparkles size={16} className={activePhase === "2-bosqich" ? "text-[#00A8FF]" : isLight ? "text-slate-400" : "text-white/40"} />
+              <span
+                className="font-bold tracking-wider uppercase"
+                style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
+              >
+                2-Bosqich (Tahlil)
+              </span>
+            </div>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              {phase2Apps.length} TA
             </span>
-          </div>
-
-          {/* Existing rejection comment */}
-          {app.rejection_comment && app.status === "rejected" && (
-            <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3">
-              <p className="text-[10px] text-red-400/60 uppercase tracking-widest mb-1 flex items-center gap-1.5">
-                <MessageSquare size={10} /> Rad etish sababi
-              </p>
-              <p className="text-sm text-red-300">{app.rejection_comment}</p>
-            </div>
-          )}
-
-          {/* Info grid */}
-          {(() => {
-            const phoneMatch = app.business_description?.match(/\[Phone:\s*([^\]]+)\]/i);
-            const displayPhone = phoneMatch ? phoneMatch[1].trim() : "-";
-            return (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {[
-                  { label: "Ism",       value: founderName },
-                  { label: "Brend",     value: app.brand_name },
-                  { label: "Yo'nalish", value: CATEGORY_LABELS[app.category] },
-                  { label: "Yosh",      value: `${app.age} yosh` },
-                  { label: "Viloyat",   value: app.region },
-                  { label: "Telefon",   value: displayPhone },
-                  { label: "Sana",      value: new Date(app.created_at).toLocaleDateString("uz-UZ") },
-                ].map((item) => (
-                  <div key={item.label} className="rounded-xl border border-white/8 bg-white/3 px-4 py-3">
-                    <p className="text-[10px] text-white/30 uppercase tracking-widest mb-0.5">{item.label}</p>
-                    <p className="text-sm font-semibold text-white truncate">{item.value}</p>
-                  </div>
-                ))}
-              </div>
-            );
-          })()}
-
-          {/* Description */}
-          <div className="rounded-xl border border-white/8 bg-white/3 px-4 py-3">
-            <p className="text-[10px] text-white/30 uppercase tracking-widest mb-2">Biznes tavsifi</p>
-            <p className="text-sm text-white/70 leading-relaxed whitespace-pre-wrap">{displayDesc}</p>
-          </div>
-
-          {/* Goals & Impact */}
-          <div className="grid sm:grid-cols-2 gap-3">
-            {[
-              { label: "Maqsad",          items: app.goals },
-              { label: "Potensial Ta'sir", items: app.potential_impact },
-            ].map((section) => (
-              <div key={section.label} className="rounded-xl border border-white/8 bg-white/3 px-4 py-3">
-                <p className="text-[10px] text-white/30 uppercase tracking-widest mb-2">{section.label}</p>
-                <ul className="flex flex-col gap-1.5">
-                  {section.items.map((item, i) => (
-                    <li key={i} className="flex items-start gap-2 text-xs text-white/60">
-                      <span className="mt-1.5 w-1 h-1 rounded-full bg-[#00A8FF] shrink-0" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-
-          {/* Avatar */}
-          {app.avatar_url && (
-            <div>
-              <p className="text-[10px] text-white/30 uppercase tracking-widest mb-2">Shaxsiy fotosurat</p>
-              <div className="rounded-xl overflow-hidden aspect-video border border-white/8 max-w-sm">
-                <img src={app.avatar_url} alt="Fotosurat" className="w-full h-full object-cover" loading="lazy" />
-              </div>
-            </div>
-          )}
-
-          {/* Product images */}
-          {(() => {
-            const rawUrls = app.product_image_urls;
-            const parsedUrls: string[] = Array.isArray(rawUrls)
-              ? rawUrls
-              : typeof rawUrls === "string" && rawUrls.length > 2
-              ? (() => { try { return JSON.parse(rawUrls); } catch { return []; } })()
-              : [];
-            const productImages = parsedUrls.length > 0
-              ? parsedUrls
-              : app.product_image_url ? [app.product_image_url] : [];
-            if (productImages.length === 0) return null;
-            return (
-              <div>
-                <p className="text-[10px] text-white/30 uppercase tracking-widest mb-2">
-                  Mahsulot rasmlari ({productImages.length} ta)
-                </p>
-                <div className={`grid gap-3 ${productImages.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
-                  {productImages.map((url, i) => (
-                    <div key={i} className="rounded-xl overflow-hidden aspect-video border border-white/8">
-                      <img src={url} alt={`Mahsulot ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* ── ACTIONS ── */}
-          <div className="pt-4 border-t border-white/8">
-
-            {/* Error banner */}
-            {actionError && (
-              <div className="mb-3 rounded-xl border border-red-500/30 bg-red-500/8 px-4 py-3 flex items-start gap-2">
-                <AlertTriangle size={14} className="text-red-400 mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-xs font-semibold text-red-400">Xatolik yuz berdi</p>
-                  <p className="text-xs text-red-300/70 mt-0.5 font-mono">{actionError}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Default action buttons */}
-            {mode === "view" && (
-              <div className="flex flex-col sm:flex-row gap-2.5">
-                <button
-                  disabled={updating || app.status === "approved"}
-                  onClick={() => changeStatus("approved")}
-                  className="flex-1 flex items-center justify-center gap-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 font-semibold rounded-xl py-3 text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  {updating ? <div className="w-4 h-4 border-2 border-white/20 border-t-emerald-400 rounded-full animate-spin" /> : <CheckCircle2 size={15} />}
-                  Tasdiqlash
-                </button>
-                <button
-                  disabled={updating || app.status === "under_review"}
-                  onClick={() => changeStatus("under_review")}
-                  className="flex-1 flex items-center justify-center gap-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 font-semibold rounded-xl py-3 text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  <Clock size={15} />
-                  Ko'rib chiqilmoqda
-                </button>
-                <button
-                  disabled={updating}
-                  onClick={() => { setMode("rejecting"); setRejectComment(""); setCommentError(""); }}
-                  className="flex-1 flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 font-semibold rounded-xl py-3 text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  <XCircle size={15} />
-                  Rad etish
-                </button>
-              </div>
-            )}
-
-            {/* Rejection comment form */}
-            {mode === "rejecting" && (
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2 text-red-400">
-                  <MessageSquare size={14} />
-                  <p className="text-sm font-semibold">Rad etish sababi (majburiy)</p>
-                </div>
-                <textarea
-                  value={rejectComment}
-                  onChange={(e) => { setRejectComment(e.target.value); setCommentError(""); }}
-                  placeholder="Arizani rad etish sababini yozing (kamida 10 belgi)..."
-                  rows={4}
-                  className={`w-full bg-white/5 border rounded-xl px-4 py-3 text-sm text-white placeholder-white/25 outline-none resize-none transition-all focus:border-red-500/50 ${
-                    commentError ? "border-red-500/50" : "border-white/10"
-                  }`}
-                  style={{ colorScheme: "dark" }}
-                />
-                {commentError && (
-                  <p className="text-xs text-red-400">{commentError}</p>
-                )}
-                <div className="flex flex-col sm:flex-row gap-2.5">
-                  <button
-                    onClick={() => setMode("view")}
-                    disabled={updating}
-                    className="flex-1 py-3 rounded-xl border border-white/10 text-sm text-white/50 hover:text-white hover:border-white/20 transition-all cursor-pointer"
-                  >
-                    Bekor qilish
-                  </button>
-                  <button
-                    onClick={handleRejectConfirm}
-                    disabled={updating}
-                    className="flex-1 flex items-center justify-center gap-2 bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-400 font-semibold rounded-xl py-3 text-sm transition-all disabled:opacity-40 cursor-pointer"
-                  >
-                    {updating
-                      ? <div className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
-                      : <XCircle size={15} />
-                    }
-                    Rad etishni tasdiqlash
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Delete confirmation */}
-            {mode === "confirm_delete" && (
-              <div className="flex flex-col gap-3">
-                <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 flex items-start gap-3">
-                  <AlertTriangle size={16} className="text-red-400 mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-sm font-semibold text-red-400">Arizani o'chirish</p>
-                    <p className="text-xs text-white/50 mt-0.5">
-                      Bu amal qaytarib bo'lmaydi. Foydalanuvchi o'z arizasi o'chirilganini ko'radi va qayta ariza topshira oladi.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-2.5">
-                  <button
-                    onClick={() => setMode("view")}
-                    disabled={updating}
-                    className="flex-1 py-3 rounded-xl border border-white/10 text-sm text-white/50 hover:text-white hover:border-white/20 transition-all cursor-pointer"
-                  >
-                    Bekor qilish
-                  </button>
-                  <button
-                    onClick={handleDeleteConfirm}
-                    disabled={updating}
-                    className="flex-1 flex items-center justify-center gap-2 bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-400 font-semibold rounded-xl py-3 text-sm transition-all disabled:opacity-40 cursor-pointer"
-                  >
-                    {updating
-                      ? <div className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
-                      : <Trash2 size={15} />
-                    }
-                    Ha, o'chirish
-                  </button>
-                </div>
-              </div>
-            )}
-
-          </div>
-        </div>
+          </button>
+        </nav>
       </div>
-      <style>{`
-        @keyframes modal-in {
-          from { opacity: 0; transform: scale(0.97) translateY(6px); }
-          to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        .animate-modal-in {
-          animation: modal-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-      `}</style>
+
+      <div className={`pt-4 border-t ${isLight ? "border-slate-100" : "border-white/10"}`}>
+        <Link
+          to="/"
+          className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+            isLight ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100" : "text-white/60 hover:text-white hover:bg-white/5"
+          }`}
+        >
+          <LogOut size={16} className={isLight ? "text-slate-400" : "text-white/40"} />
+          <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>Chiqish</span>
+        </Link>
+      </div>
     </div>
   );
-};
-
-/* ─── Filter Select ────────────────────────────────── */
-
-const FilterSelect = ({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: { value: string; label: string }[];
-}) => (
-  <div className="relative">
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="appearance-none bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 pr-9 text-sm text-white outline-none focus:border-[#00A8FF]/40 transition-all cursor-pointer"
-      style={{ colorScheme: "dark" }}
-      aria-label={label}
-    >
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>{o.label}</option>
-      ))}
-    </select>
-    <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
-  </div>
-);
-
-/* ─── Application Card Component ───────────────────── */
-
-const AdminApplicationCard = ({
-  app,
-  onOpenDetails,
-  onRejectClick,
-  onStatusChange,
-  updatingId,
-  setUpdatingId,
-}: {
-  app: Application;
-  onOpenDetails: () => void;
-  onRejectClick: () => void;
-  onStatusChange: (id: string, status: ApplicationStatus) => void;
-  updatingId: string | null;
-  setUpdatingId: (id: string | null) => void;
-}) => {
-  const founderName = getFounderName(app);
-  const displayDesc = cleanDescription(app.business_description);
-  const cfg = STATUS_CONFIG[app.status];
-  const isUpdating = updatingId === app.id;
-
-  const quickChangeStatus = async (e: React.MouseEvent, newStatus: ApplicationStatus) => {
-    e.stopPropagation();
-    setUpdatingId(app.id);
-    const { error } = await supabase
-      .from("applications")
-      .update({ status: newStatus, rejection_comment: null })
-      .eq("id", app.id);
-    setUpdatingId(null);
-    if (!error) {
-      onStatusChange(app.id, newStatus);
-    } else {
-      alert("Xatolik yuz berdi: " + error.message);
-    }
-  };
-
-  const handleCardClick = () => {
-    if (!isUpdating) onOpenDetails();
-  };
 
   return (
     <div
-      onClick={handleCardClick}
-      className={`group relative rounded-2xl border ${cfg.border} border-l-4 ${cfg.borderLeft} bg-[#0d1117]/60 hover:bg-[#0d1117]/95 hover:border-white/15 transition-all duration-300 p-5 cursor-pointer flex flex-col justify-between gap-4 shadow-lg hover:shadow-2xl`}
+      className={`min-h-screen flex flex-col font-sans transition-colors duration-300 relative selection:bg-[#00A8FF]/20 ${
+        isLight ? "bg-[#F8FAFC] text-slate-800" : "bg-[#000001] text-white"
+      }`}
+      style={{
+        fontFamily: "var(--font-body)",
+        backgroundImage: `url(${isLight ? HeroLightImage : HeroImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed",
+      }}
     >
-      {/* Top Identity block */}
-      <div>
-        <div className="flex items-start justify-between gap-3 mb-2.5">
-          {/* Avatar on card */}
-          {app.avatar_url ? (
-            <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-white/10 bg-zinc-900 shadow-inner">
-              <img src={app.avatar_url} alt={founderName} className="w-full h-full object-cover" loading="lazy" />
-            </div>
-          ) : (
-            <div className="w-12 h-12 rounded-xl shrink-0 border border-white/10 bg-gradient-to-br from-[#00A8FF]/10 to-transparent flex items-center justify-center text-white/30 text-[10px] font-bold">
-              IMG
-            </div>
-          )}
+      <div
+        className={`absolute inset-0 pointer-events-none ${
+          isLight ? "bg-white/85 backdrop-blur-xs" : "bg-black/85 backdrop-blur-xs"
+        }`}
+      />
 
-          <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-white text-base leading-snug truncate uppercase" style={{ fontFamily: "var(--font-zuume)" }}>
-              {founderName}
-            </h3>
-            <p className="text-xs text-[#00A8FF] font-medium truncate leading-tight mt-0.5" style={{ fontFamily: "var(--font-button)" }}>
-              {app.brand_name}
-            </p>
-          </div>
+      <header
+        className={`h-16 border-b sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between transition-colors backdrop-blur-md ${
+          isLight ? "bg-white/90 border-slate-200/80 shadow-xs" : "bg-[#0a0c10]/95 border-white/10 shadow-lg"
+        }`}
+      >
+        <div className="flex items-center gap-3 sm:gap-4">
+          <button
+            onClick={() => setMobileDrawerOpen(true)}
+            className={`p-2 rounded-xl border md:hidden transition-colors cursor-pointer ${
+              isLight
+                ? "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200"
+                : "bg-white/5 border-white/10 text-white hover:bg-white/10"
+            }`}
+            title="Menu"
+          >
+            <Menu size={18} />
+          </button>
 
-          <span className="text-[10px] text-white/30 font-medium whitespace-nowrap">
-            {new Date(app.created_at).toLocaleDateString("uz-UZ")}
-          </span>
-        </div>
-
-        {/* Description snipped */}
-        <p className="text-xs text-white/50 line-clamp-2 leading-relaxed h-8 mb-1" style={{ fontFamily: "var(--font-button)" }}>
-          {displayDesc}
-        </p>
-
-        {/* Small stats sheet */}
-        <div className="grid grid-cols-3 gap-2 py-2.5 my-1 border-t border-b border-white/5 text-[9px] font-semibold text-white/40" style={{ fontFamily: "var(--font-button)" }}>
-          <div className="min-w-0">
-            <span className="block text-[8px] text-white/20 uppercase font-bold tracking-wider mb-0.5">Viloyat</span>
-            <span className="text-white/80 truncate block">{app.region}</span>
-          </div>
-          <div className="min-w-0">
-            <span className="block text-[8px] text-white/20 uppercase font-bold tracking-wider mb-0.5">Yo'nalish</span>
-            <span className="text-white/80 truncate block">{CATEGORY_LABELS[app.category]}</span>
-          </div>
-          <div className="min-w-0">
-            <span className="block text-[8px] text-white/20 uppercase font-bold tracking-wider mb-0.5">Yosh</span>
-            <span className="text-white/80 block">{app.age} yosh</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Action panel at the bottom */}
-      <div className="flex items-center justify-between gap-3 pt-1">
-        <div className="flex gap-2">
-          {/* Quick status actions */}
-          {app.status !== "approved" && (
-            <button
-              disabled={isUpdating}
-              onClick={(e) => quickChangeStatus(e, "approved")}
-              className="px-2.5 py-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/15 text-emerald-400 text-[10px] font-bold uppercase transition-colors cursor-pointer"
-            >
-              {isUpdating ? "..." : "Tasdiqlash"}
-            </button>
-          )}
-          {app.status !== "under_review" && (
-            <button
-              disabled={isUpdating}
-              onClick={(e) => quickChangeStatus(e, "under_review")}
-              className="px-2.5 py-1.5 rounded-lg border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/15 text-amber-400 text-[10px] font-bold uppercase transition-colors cursor-pointer"
-            >
-              {isUpdating ? "..." : "Ko'rib chiqish"}
-            </button>
-          )}
-          {app.status !== "rejected" && (
-            <button
-              disabled={isUpdating}
-              onClick={(e) => { e.stopPropagation(); onRejectClick(); }}
-              className="px-2.5 py-1.5 rounded-lg border border-red-500/20 bg-red-500/5 hover:bg-red-500/15 text-red-400 text-[10px] font-bold uppercase transition-colors cursor-pointer"
-            >
-              Rad etish
-            </button>
-          )}
-        </div>
-
-        <button
-          disabled={isUpdating}
-          onClick={handleCardClick}
-          className="flex items-center gap-1.5 text-xs text-[#00A8FF] hover:text-white transition-colors cursor-pointer font-semibold"
-          style={{ fontFamily: "var(--font-button)" }}
-        >
-          Batafsil →
-        </button>
-      </div>
-    </div>
-  );
-};
-
-/* ─── Page ─────────────────────────────────────────── */
-
-const AdminPage = () => {
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<Application | null>(null);
-  const [modalInitialMode, setModalInitialMode] = useState<ModalMode>("view");
-
-  // Filters & Search
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [regionFilter, setRegionFilter] = useState<string>("all");
-
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
-  
-  // Infinite Scroll state
-  const [visibleCount, setVisibleCount] = useState(12);
-
-  const fetchApplications = useCallback(async () => {
-    setLoading(true);
-    const { data } = await supabase
-      .from("applications")
-      .select("*")
-      .eq("is_deleted", false)
-      .order("created_at", { ascending: false });
-    setApplications(data ?? []);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { fetchApplications(); }, [fetchApplications]);
-
-  const handleStatusChange = (id: string, newStatus: ApplicationStatus, comment?: string) => {
-    setApplications((prev) =>
-      prev.map((a) =>
-        a.id === id
-          ? { ...a, status: newStatus, rejection_comment: comment ?? null }
-          : a
-      )
-    );
-  };
-
-  const handleDelete = (id: string) => {
-    setApplications((prev) => prev.filter((a) => a.id !== id));
-  };
-
-  // Reset pagination count on search/filter update
-  useEffect(() => {
-    setVisibleCount(12);
-  }, [statusFilter, categoryFilter, regionFilter, searchQuery]);
-
-  // Infinite scrolling observer hook
-  useEffect(() => {
-    if (loading || filtered.length <= visibleCount) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setVisibleCount((prev) => prev + 12);
-        }
-      },
-      { threshold: 0.1, rootMargin: "200px" }
-    );
-
-    const trigger = document.getElementById("infinite-scroll-trigger");
-    if (trigger) observer.observe(trigger);
-
-    return () => observer.disconnect();
-  }, [applications, visibleCount, loading, statusFilter, categoryFilter, regionFilter, searchQuery]);
-
-  // Derived filter values
-  const uniqueRegions = Array.from(new Set(applications.map((a) => a.region))).sort();
-
-  const filtered = applications.filter((a) => {
-    if (statusFilter !== "all" && a.status !== statusFilter) return false;
-    if (categoryFilter !== "all" && a.category !== categoryFilter) return false;
-    if (regionFilter !== "all" && a.region !== regionFilter) return false;
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const founderName = getFounderName(a).toLowerCase();
-      const brand = a.brand_name.toLowerCase();
-      const region = a.region.toLowerCase();
-      const desc = cleanDescription(a.business_description).toLowerCase();
-      
-      return (
-        founderName.includes(q) ||
-        brand.includes(q) ||
-        region.includes(q) ||
-        desc.includes(q)
-      );
-    }
-    return true;
-  });
-
-  const displayed = filtered.slice(0, visibleCount);
-
-  const stats = {
-    total:        applications.length,
-    submitted:    applications.filter((a) => a.status === "submitted").length,
-    under_review: applications.filter((a) => a.status === "under_review").length,
-    approved:     applications.filter((a) => a.status === "approved").length,
-    rejected:     applications.filter((a) => a.status === "rejected").length,
-  };
-
-  return (
-    <div className="min-h-screen" style={{ background: "#080b10" }} data-lenis-prevent>
-      {/* Header */}
-      <div className="border-b border-white/8 bg-black/60 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link to="/" className="text-sm text-white/40 hover:text-white transition-colors">
-              ← Bosh sahifa
-            </Link>
-            <span className="text-white/20">|</span>
-            <h1 className="text-sm font-bold text-[#00A8FF]" style={{ fontFamily: "var(--font-zuume)" }}>
-              ADMIN PANEL
-            </h1>
-          </div>
-          <Link to="/dashboard" className="text-xs text-white/30 hover:text-white transition-colors">
-            Dashboard →
+          <Link to="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
+            <img
+              src={isLight ? logoBlue : logoWhite}
+              alt="Logo"
+              className="h-7 sm:h-8 w-auto object-contain"
+            />
           </Link>
+          <div className={`hidden sm:flex items-center gap-2 text-xs pl-4 border-l ${isLight ? "border-slate-200 text-slate-400" : "border-white/10 text-white/40"}`}>
+            <Shield size={16} className="text-[#00A8FF]" />
+            <span
+              className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-700" : "text-white/80"}`}
+              style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
+            >
+              Boshqaruv Paneli
+            </span>
+          </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {/* Stats row with subtle glowing status rings */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
-          {[
-            { label: "Jami",               value: stats.total,        color: "text-white animate-pulse" },
-            { label: "Yuborilgan",          value: stats.submitted,    color: "text-[#00A8FF] shadow-[#00A8FF]/5" },
-            { label: "Ko'rib chiqilmoqda",  value: stats.under_review, color: "text-amber-400 shadow-amber-500/5" },
-            { label: "Tasdiqlandi",         value: stats.approved,     color: "text-emerald-400 shadow-emerald-500/5" },
-            { label: "Rad etildi",          value: stats.rejected,     color: "text-red-400 shadow-red-500/5" },
-          ].map((stat) => (
-            <div key={stat.label} className="rounded-xl border border-white/8 bg-[#0d1117]/35 backdrop-blur-sm px-4 py-4 text-center hover:scale-102 transition-transform duration-300 shadow-md">
-              <p className={`text-3xl font-black tracking-tight ${stat.color}`} style={{ fontFamily: "var(--font-zuume)" }}>
-                {stat.value}
-              </p>
-              <p className="text-[9px] text-white/35 font-bold uppercase tracking-widest mt-1.5">{stat.label}</p>
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <button
+            onClick={toggleTheme}
+            className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
+              isLight
+                ? "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200 shadow-2xs"
+                : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10 shadow-2xs"
+            }`}
+          >
+            {isLight ? <Moon size={16} /> : <Sun size={16} />}
+          </button>
+
+          <div
+            className={`flex items-center gap-2.5 px-3 sm:px-3.5 py-1.5 rounded-xl border transition-colors ${
+              isLight
+                ? "bg-slate-50 border-slate-200/80 text-slate-700"
+                : "bg-white/5 border-white/10 text-white"
+            }`}
+          >
+            <div className="w-6 h-6 rounded-lg bg-[#00A8FF] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+              <UserCheck size={14} />
             </div>
-          ))}
+            <span
+              className="text-xs font-bold uppercase tracking-wider hidden sm:inline"
+              style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.04em" }}
+            >
+              Administrator
+            </span>
+          </div>
         </div>
+      </header>
 
-        {/* CRM Search & Filters bar */}
-        <div className="flex flex-col gap-4 mb-6 bg-[#0d1117]/40 border border-white/8 rounded-2xl p-5 shadow-lg">
-          <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center">
-            
-            {/* Search Input bar */}
-            <div className="relative flex-1">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Ism, brend, viloyat yoki tavsif bo'yicha qidirish..."
-                className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-10 py-3 text-sm text-white placeholder-white/20 outline-none focus:border-[#00A8FF]/60 transition-all shadow-inner"
+      {mobileDrawerOpen && (
+        <div className="fixed inset-0 z-[9999] md:hidden flex">
+          <div
+            onClick={() => setMobileDrawerOpen(false)}
+            className="fixed inset-0 bg-black/70 backdrop-blur-xs animate-fade-in"
+          />
+          <div
+            className={`relative w-72 max-w-[80vw] h-full shadow-2xl flex flex-col z-10 animate-slide-in ${
+              isLight ? "bg-white text-slate-800" : "bg-[#0a0c10] text-white border-r border-white/10"
+            }`}
+          >
+            <div className={`p-4 border-b flex items-center justify-between ${isLight ? "border-slate-100" : "border-white/10"}`}>
+              <img
+                src={isLight ? logoBlue : logoWhite}
+                alt="Logo"
+                className="h-7 w-auto object-contain"
               />
-              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors cursor-pointer"
+              <button
+                onClick={() => setMobileDrawerOpen(false)}
+                className={`p-1.5 rounded-lg border ${isLight ? "border-slate-200 text-slate-500" : "border-white/10 text-white/60"}`}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <SidebarContent />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex-1 flex overflow-hidden relative z-10">
+        <aside
+          className={`w-64 sm:w-72 border-r flex flex-col justify-between shrink-0 select-none hidden md:flex backdrop-blur-md transition-colors ${
+            isLight ? "bg-white/90 border-slate-200/80" : "bg-[#0a0c10]/90 border-white/10"
+          }`}
+        >
+          <SidebarContent />
+        </aside>
+
+        <main className="flex-1 p-3 sm:p-6 lg:p-8 overflow-y-auto no-scrollbar max-w-7xl mx-auto w-full">
+          {activePhase === "moderation" ? (
+            /* ═══════════════════════════════════════════════════════════ */
+            /* MODERATION VIEW — Yangi Arizalar (submitted)               */
+            /* ═══════════════════════════════════════════════════════════ */
+            selectedApplicant ? (
+              /* MODERATION DETAIL VIEW */
+              <div className="flex flex-col gap-6 animate-fade-in">
+                <div
+                  className={`rounded-2xl border p-4 sm:p-6 backdrop-blur-md shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                    isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
+                  }`}
                 >
-                  <X size={15} />
-                </button>
-              )}
-            </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setSelectedApplicant(null)}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#00A8FF] text-white text-xs font-bold shadow-md uppercase tracking-wider cursor-pointer"
+                      style={{ fontFamily: "var(--font-zuume)" }}
+                    >
+                      <ArrowLeft size={15} />
+                      <span>Orqaga</span>
+                    </button>
+                    <div>
+                      <h2
+                        className={`text-xl sm:text-2xl font-bold uppercase tracking-wider ${
+                          isLight ? "text-slate-900" : "text-white"
+                        }`}
+                        style={{ fontFamily: "var(--font-zuume)" }}
+                      >
+                        {selectedApplicant.fio}
+                      </h2>
+                      <p className={`text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>{selectedApplicant.brandName}</p>
+                    </div>
+                  </div>
 
-            {/* Filter selectors list */}
-            <div className="flex flex-wrap gap-2.5 items-center">
-              <FilterSelect
-                label="Holat"
-                value={statusFilter}
-                onChange={setStatusFilter}
-                options={[
-                  { value: "all",          label: "Barcha holatlar"      },
-                  { value: "submitted",    label: "Yuborilgan"           },
-                  { value: "under_review", label: "Ko'rib chiqilmoqda"   },
-                  { value: "approved",     label: "Tasdiqlandi"          },
-                  { value: "rejected",     label: "Rad etildi"           },
-                ]}
-              />
-              <FilterSelect
-                label="Yo'nalish"
-                value={categoryFilter}
-                onChange={categoryFilter => setCategoryFilter(categoryFilter)}
-                options={[
-                  { value: "all",      label: "Barcha yo'nalishlar" },
-                  { value: "ideas",    label: "G'oya"               },
-                  { value: "startup",  label: "Startap"             },
-                  { value: "business", label: "An'anaviy Biznes"    },
-                ]}
-              />
-              <FilterSelect
-                label="Viloyat"
-                value={regionFilter}
-                onChange={regionFilter => setRegionFilter(regionFilter)}
-                options={[
-                  { value: "all", label: "Barcha viloyatlar" },
-                  ...uniqueRegions.map((r) => ({ value: r, label: r })),
-                ]}
-              />
-              <span className="text-xs text-white/20 font-bold uppercase tracking-wider ml-auto lg:ml-2 pl-2 border-l border-white/10" style={{ fontFamily: "var(--font-button)" }}>
-                {filtered.length} ta ariza
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() => handleApprove(selectedApplicant.fullId)}
+                      className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold text-xs shadow-md transition-all cursor-pointer hover:shadow-lg active:scale-95 flex items-center gap-2 border border-emerald-400/30"
+                    >
+                      <CheckCircle2 size={15} />
+                      <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>Tasdiqlash va Ishtirokchiga qo'shish</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleUpdateStatus(selectedApplicant.fullId, "korib_chiqilmoqda")}
+                      className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-semibold text-xs shadow-md transition-all cursor-pointer hover:shadow-lg active:scale-95 flex items-center gap-2 border border-sky-400/30"
+                    >
+                      <SlidersHorizontal size={14} />
+                      <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>Ko'rib chiqishga o'tkazish</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setRejectModalOpen(true);
+                        setRejectReason(selectedApplicant.rejectionComment || "");
+                      }}
+                      className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white font-semibold text-xs shadow-md transition-all cursor-pointer hover:shadow-lg active:scale-95 flex items-center gap-2 border border-rose-400/30"
+                    >
+                      <XCircle size={14} />
+                      <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>Rad etish</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Applicant Info Card */}
+                <div
+                  className={`rounded-2xl border p-5 sm:p-6 backdrop-blur-md shadow-xl grid grid-cols-1 md:grid-cols-2 gap-y-3.5 gap-x-8 text-xs sm:text-sm ${
+                    isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
+                  }`}
+                >
+                  <div className={`col-span-2 flex items-center gap-3 pb-3 mb-1 border-b ${isLight ? "border-slate-100" : "border-white/10"}`}>
+                    <div className="w-14 h-14 rounded-2xl overflow-hidden bg-slate-900 shrink-0 border border-white/15">
+                      {selectedApplicant.avatarUrl ? (
+                        <img src={selectedApplicant.avatarUrl} alt={selectedApplicant.fio} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-violet-500/20 text-violet-400 font-bold text-xl">
+                          {selectedApplicant.fio.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className={`text-base font-extrabold uppercase tracking-wide ${isLight ? "text-slate-900" : "text-white"}`} style={{ fontFamily: "var(--font-zuume)" }}>
+                        {selectedApplicant.fio}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-violet-500/15 text-violet-400 border border-violet-500/30 uppercase">
+                          Yangi Ariza
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#00A8FF]/15 text-[#00A8FF] border border-[#00A8FF]/30">
+                          {selectedApplicant.categoryLabel}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {[
+                    { label: "Brend Nomi", val: selectedApplicant.brandName },
+                    { label: "Kategoriya", val: selectedApplicant.categoryLabel },
+                    { label: "Viloyat / Hudud", val: selectedApplicant.region },
+                    { label: "Telefon", val: selectedApplicant.phone },
+                    { label: "Jins", val: selectedApplicant.gender },
+                    { label: "Sana", val: selectedApplicant.date },
+                  ].map(({ label, val }) => (
+                    <div key={label} className={`flex items-center justify-between py-2 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
+                      <span className={isLight ? "font-medium text-slate-500" : "font-medium text-white/50"}>{label}</span>
+                      <span className={`font-bold text-right ${isLight ? "text-slate-900" : "text-white"}`}>{val}</span>
+                    </div>
+                  ))}
+
+                  <div className={`col-span-2 flex flex-col gap-1.5 py-3 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
+                    <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/50"}`}>Biznes Tavsifi</span>
+                    <p className={`text-xs leading-relaxed p-3 rounded-xl ${isLight ? "bg-slate-50" : "bg-white/5"}`}>{selectedApplicant.businessDescription}</p>
+                  </div>
+
+                  {selectedApplicant.goals.length > 0 && (
+                    <div className={`col-span-2 flex flex-col gap-1.5 py-3 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
+                      <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/50"}`}>Maqsadlar</span>
+                      <ul className="flex flex-col gap-1">
+                        {selectedApplicant.goals.map((g, i) => (
+                          <li key={i} className={`text-xs flex gap-2 ${isLight ? "text-slate-700" : "text-white/70"}`}>
+                            <span className="text-emerald-400 shrink-0">•</span>{g}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Product Images */}
+                  {(selectedApplicant.productImageUrl || selectedApplicant.productImageUrls.length > 0) && (
+                    <div className="col-span-2 flex flex-col gap-2 py-3">
+                      <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/50"}`}>Mahsulot Rasmlari</span>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {[selectedApplicant.productImageUrl, ...selectedApplicant.productImageUrls]
+                          .filter((url, i, arr) => url && arr.indexOf(url) === i)
+                          .map((url, i) => (
+                            <div
+                              key={i}
+                              onClick={() => setLightboxImg(url)}
+                              className="aspect-video rounded-xl overflow-hidden border border-white/10 cursor-pointer hover:border-[#00A8FF]/40 transition-colors"
+                            >
+                              <img src={url!} alt={`Rasm ${i + 1}`} className="w-full h-full object-cover" />
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* MODERATION LIST VIEW */
+              <div className="flex flex-col gap-6 animate-fade-in">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2
+                      className={`text-2xl sm:text-4xl font-bold uppercase tracking-wider ${
+                        isLight ? "text-slate-900" : "text-white"
+                      }`}
+                      style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.03em" }}
+                    >
+                      Moderatsiya
+                    </h2>
+                    <p className={`text-xs mt-1 ${isLight ? "text-slate-500" : "text-white/50"}`}>
+                      Yangi kelgan arizalarni ko'rib chiqing va tasdiqlang
+                    </p>
+                  </div>
+                  <span
+                    className={`px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
+                      statusCounts.yangi_ariza > 0
+                        ? "bg-violet-500/15 text-violet-400 border-violet-500/30"
+                        : isLight
+                        ? "bg-blue-50 text-[#00A8FF] border-blue-200/60"
+                        : "bg-[#00A8FF]/10 text-[#00A8FF] border-[#00A8FF]/30"
+                    }`}
+                    style={{ fontFamily: "var(--font-zuume)" }}
+                  >
+                    {statusCounts.yangi_ariza} ta yangi
+                  </span>
+                </div>
+
+                {loadingApps ? (
+                  <div className="py-20 flex flex-col items-center justify-center gap-3">
+                    <div className="w-8 h-8 border-3 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                    <span className={`text-xs font-semibold ${isLight ? "text-slate-500" : "text-white/60"}`}>Yuklanmoqda...</span>
+                  </div>
+                ) : moderationApps.length === 0 ? (
+                  <div
+                    className={`rounded-2xl border p-12 text-center backdrop-blur-md shadow-xl flex flex-col items-center gap-4 ${
+                      isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
+                    }`}
+                  >
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${isLight ? "bg-slate-100" : "bg-white/5"}`}>
+                      <CheckCircle2 size={32} className="text-emerald-400" />
+                    </div>
+                    <div>
+                      <p className={`text-sm font-bold ${isLight ? "text-slate-700" : "text-white/80"}`} style={{ fontFamily: "var(--font-zuume)" }}>
+                        Yangi arizalar yo'q
+                      </p>
+                      <p className={`text-xs mt-1 ${isLight ? "text-slate-400" : "text-white/40"}`}>
+                        Hamma arizalar ko'rib chiqilgan
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className={`rounded-2xl border shadow-xl backdrop-blur-md overflow-hidden transition-colors ${
+                      isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/95 border-white/10"
+                    }`}
+                  >
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse min-w-[650px]">
+                        <thead>
+                          <tr
+                            className={`border-b text-xs font-bold uppercase tracking-wider ${
+                              isLight ? "bg-slate-50/90 border-slate-200 text-slate-700" : "bg-white/5 border-white/10 text-white/70"
+                            }`}
+                            style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
+                          >
+                            <th className="py-4 px-4 w-12 text-center">#</th>
+                            <th className="py-4 px-4">Arizachi F.I.O & Brend</th>
+                            <th className="py-4 px-4">Kategoriya</th>
+                            <th className="py-4 px-4">Viloyat</th>
+                            <th className="py-4 px-4">Sana</th>
+                            <th className="py-4 px-4 text-center">Amallar</th>
+                          </tr>
+                        </thead>
+                        <tbody className={`divide-y text-xs ${isLight ? "divide-slate-200/60 text-slate-800" : "divide-white/5 text-white/90"}`}>
+                          {moderationApps.map((item, index) => (
+                            <tr key={item.id} className={`transition-all ${isLight ? "hover:bg-violet-50/60" : "hover:bg-violet-500/5"}`}>
+                              <td className={`py-4 px-4 text-center font-mono text-xs font-semibold ${isLight ? "text-slate-400" : "text-white/40"}`}>{index + 1}</td>
+                              <td className="py-4 px-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-900 shrink-0 border border-white/15">
+                                    {item.avatarUrl ? (
+                                      <img src={item.avatarUrl} alt={item.fio} className="w-full h-full object-cover" />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center bg-violet-500/20 text-violet-400 font-bold text-sm">
+                                        {item.fio.charAt(0)}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex flex-col gap-0.5">
+                                    <span className={`text-sm font-extrabold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>{item.fio}</span>
+                                    <span className={`text-xs font-semibold ${isLight ? "text-slate-500" : "text-violet-400/80"}`}>{item.brandName}</span>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-4 px-4">
+                                <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-[#00A8FF]/10 text-[#00A8FF] border border-[#00A8FF]/20">
+                                  {item.categoryLabel}
+                                </span>
+                              </td>
+                              <td className={`py-4 px-4 font-semibold text-xs ${isLight ? "text-slate-700" : "text-white/80"}`}>{item.region}</td>
+                              <td className={`py-4 px-4 font-mono text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>{item.date}</td>
+                              <td className="py-4 px-4">
+                                <div className="flex items-center gap-2 justify-center">
+                                  <button
+                                    onClick={() => handleSelectApplicant(item)}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
+                                      isLight ? "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100" : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
+                                    }`}
+                                  >
+                                    Ko'rish
+                                  </button>
+                                  <button
+                                    onClick={() => handleApprove(item.fullId)}
+                                    className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                                  >
+                                    <Check size={13} />
+                                    Tasdiqlash
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setSelectedApplicant(item);
+                                      setRejectModalOpen(true);
+                                      setRejectReason("");
+                                    }}
+                                    className="px-3 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 text-xs font-bold transition-all cursor-pointer border border-rose-500/30 flex items-center gap-1.5"
+                                  >
+                                    <X size={13} />
+                                    Rad
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          ) : activePhase === "2-bosqich" ? (
+            loadingPhase2 ? (
+              <div className="py-20 flex flex-col items-center justify-center gap-3">
+                <div className="w-8 h-8 border-3 border-[#00A8FF] border-t-transparent rounded-full animate-spin" />
+                <span className={`text-xs font-semibold ${isLight ? "text-slate-500" : "text-white/60"}`}>
+                  2-Bosqich arizalari yuklanmoqda...
+                </span>
+              </div>
+            ) : selectedPhase2App ? (
+              /* PHASE 2 APPLICANT DETAIL INSPECTION VIEW */
+              <div className="flex flex-col gap-6 animate-fade-in">
+                <div
+                  className={`rounded-2xl border p-5 sm:p-6 backdrop-blur-md shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                    isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setSelectedPhase2App(null)}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#00A8FF] text-white text-xs font-bold shadow-md uppercase tracking-wider cursor-pointer"
+                      style={{ fontFamily: "var(--font-zuume)" }}
+                    >
+                      <ArrowLeft size={15} />
+                      <span>Orqaga</span>
+                    </button>
+
+                    <h2
+                      className={`text-xl sm:text-2xl font-bold uppercase tracking-wider ${
+                        isLight ? "text-slate-900" : "text-white"
+                      }`}
+                      style={{ fontFamily: "var(--font-zuume)" }}
+                    >
+                      2-Bosqich Tahlil Kartasi
+                    </h2>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-1 rounded-full text-xs font-bold uppercase bg-[#00A8FF]/15 text-[#00A8FF] border border-[#00A8FF]/30">
+                      {selectedPhase2App.category === "startup" ? "Startap / Innovatsiya" : "An'anaviy Biznes"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* General Info Card */}
+                <div
+                  className={`rounded-2xl border p-6 backdrop-blur-md shadow-xl flex flex-col gap-5 ${
+                    isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
+                  }`}
+                >
+                  <div className="flex items-center justify-between border-b pb-3 border-slate-200 dark:border-white/10">
+                    <h3 className="text-base font-bold uppercase tracking-wider flex items-center gap-2" style={{ fontFamily: "var(--font-zuume)" }}>
+                      <Building2 size={18} className="text-[#00A8FF]" />
+                      <span>{selectedPhase2App.company_name} — Umumiy Ma'lumotlar</span>
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs sm:text-sm">
+                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-white/5">
+                      <span className="text-slate-400">Tashkiliy-huquqiy shakli:</span>
+                      <span className="font-bold">{selectedPhase2App.legal_structure}</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-white/5">
+                      <span className="text-slate-400">Ro'yxatdan o'tgan sana:</span>
+                      <span className="font-bold">{selectedPhase2App.registration_date || "Kiritilmagan"}</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-white/5">
+                      <span className="text-slate-400">Doimiy xodimlar soni:</span>
+                      <span className="font-bold">{selectedPhase2App.permanent_employees_count} kishi</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-white/5">
+                      <span className="text-slate-400">So'ralayotgan investitsiya:</span>
+                      <span className="font-extrabold text-[#00A8FF]">
+                        {selectedPhase2App.requested_investment_amount?.toLocaleString("ru-RU")} UZS
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 text-xs">
+                    <span className="font-bold uppercase tracking-wider text-slate-400">Egalik tuzilmasi:</span>
+                    <p className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 leading-relaxed">{selectedPhase2App.ownership_structure}</p>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 text-xs">
+                    <span className="font-bold uppercase tracking-wider text-slate-400">Investitsiya natijalaridan kutilayotgan samaradorlik:</span>
+                    <p className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 leading-relaxed">{selectedPhase2App.expected_outcomes}</p>
+                  </div>
+                </div>
+
+                {/* Section A or B Dynamic Detailed Data Card */}
+                <div
+                  className={`rounded-2xl border p-6 backdrop-blur-md shadow-xl flex flex-col gap-5 ${
+                    isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
+                  }`}
+                >
+                  {selectedPhase2App.category === "startup" ? (
+                    <>
+                      <h3 className="text-base font-bold uppercase tracking-wider flex items-center gap-2 text-amber-400" style={{ fontFamily: "var(--font-zuume)" }}>
+                        <Rocket size={18} />
+                        <span>B-Bo'lim — Startap / Innovatsiyalar Tahlili</span>
+                      </h3>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs sm:text-sm">
+                        <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
+                          <span className="text-slate-400 font-bold uppercase text-[10px]">Mahsulot Bosqichi (B1):</span>
+                          <span className="font-bold text-amber-400">{selectedPhase2App.section_b_data?.product_stage || "N/A"}</span>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
+                          <span className="text-slate-400 font-bold uppercase text-[10px]">Biznes Modeli / Monetizatsiya (B2):</span>
+                          <span className="font-semibold">{selectedPhase2App.section_b_data?.business_model || "N/A"}</span>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
+                          <span className="text-slate-400 font-bold uppercase text-[10px]">Hozirgi Traksiya (MAU/MRR) (B3):</span>
+                          <span className="font-semibold">{selectedPhase2App.section_b_data?.current_traction_mau_mrr || "N/A"}</span>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
+                          <span className="text-slate-400 font-bold uppercase text-[10px]">12 Oy Kutilayotgan Traksiya (B4):</span>
+                          <span className="font-semibold">{selectedPhase2App.section_b_data?.expected_traction_12m || "N/A"}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1 text-xs">
+                        <span className="font-bold uppercase tracking-wider text-slate-400">Maqsadli Bozor Hajmi TAM/SAM/SOM (B5):</span>
+                        <p className="p-3 rounded-xl bg-white/5">{selectedPhase2App.section_b_data?.target_market_size || "N/A"}</p>
+                      </div>
+
+                      <div className="flex flex-col gap-1 text-xs">
+                        <span className="font-bold uppercase tracking-wider text-slate-400">Raqobatdoshlik va IP/Patent (B7):</span>
+                        <p className="p-3 rounded-xl bg-white/5">{selectedPhase2App.section_b_data?.competitive_advantage_ip || "N/A"}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <h3 className="text-base font-bold uppercase tracking-wider flex items-center gap-2 text-[#00A8FF]" style={{ fontFamily: "var(--font-zuume)" }}>
+                        <Building2 size={18} />
+                        <span>A-Bo'lim — An'anaviy Biznes Tahlili</span>
+                      </h3>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs sm:text-sm">
+                        <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
+                          <span className="text-slate-400 font-bold uppercase text-[10px]">12 Oylik Tushum Dinamikasi (A1):</span>
+                          <span className="font-semibold">{selectedPhase2App.section_a_data?.revenue_12m_dynamics || "N/A"}</span>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
+                          <span className="text-slate-400 font-bold uppercase text-[10px]">Kutilayotgan Yillik Tushum (A2):</span>
+                          <span className="font-semibold text-emerald-400">{selectedPhase2App.section_a_data?.expected_revenue_12m || "N/A"}</span>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
+                          <span className="text-slate-400 font-bold uppercase text-[10px]">Joriy Qarzlar (A5):</span>
+                          <span className="font-semibold">{selectedPhase2App.section_a_data?.current_debts_and_payments || "N/A"}</span>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
+                          <span className="text-slate-400 font-bold uppercase text-[10px]">Aktivlar va Garov Imkoniyati (A6):</span>
+                          <span className="font-semibold">{selectedPhase2App.section_a_data?.assets_and_collateral || "N/A"}</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Uploaded Documents Viewer Card */}
+                <div
+                  className={`rounded-2xl border p-6 backdrop-blur-md shadow-xl flex flex-col gap-4 ${
+                    isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
+                  }`}
+                >
+                  <h3 className="text-base font-bold uppercase tracking-wider flex items-center gap-2" style={{ fontFamily: "var(--font-zuume)" }}>
+                    <FileCheck size={18} className="text-emerald-500" />
+                    <span>Biriktirilgan Hujjatlar ({selectedPhase2App.uploaded_documents?.length || 0} ta)</span>
+                  </h3>
+
+                  {selectedPhase2App.uploaded_documents?.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {selectedPhase2App.uploaded_documents.map((doc, idx) => (
+                        <div
+                          key={idx}
+                          className="p-3.5 rounded-xl border border-white/10 bg-white/5 flex items-center justify-between text-xs"
+                        >
+                          <div className="flex items-center gap-2.5 truncate pr-2">
+                            <FileText size={16} className="text-[#00A8FF] shrink-0" />
+                            <span className="font-semibold truncate">{doc.file_name}</span>
+                          </div>
+                          <a
+                            href={doc.file_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="px-3 py-1.5 rounded-lg bg-[#00A8FF] text-white font-bold flex items-center gap-1.5 hover:bg-[#0090FF]"
+                          >
+                            <Download size={13} />
+                            <span>Yuklab Olish</span>
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400">Ushbu nomzod tomonidan alohida fayl biriktirilmagan</p>
+                  )}
+                </div>
+
+                {/* Electronic NDA Verification Badge */}
+                <div className="p-5 rounded-2xl border bg-emerald-500/10 border-emerald-500/30 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-3">
+                    <Shield size={22} className="text-emerald-400 shrink-0" />
+                    <div>
+                      <span className="font-bold text-emerald-400 uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>
+                        Elektron NDA Imzolangan (Rasmiy Kelishuv)
+                      </span>
+                      <p className="text-slate-300 text-[11px] mt-0.5">
+                        Imzolovchi: <strong>{selectedPhase2App.nda_signer_name}</strong> • Imzolangan sana: {new Date(selectedPhase2App.nda_agreed_at || selectedPhase2App.created_at).toLocaleString("ru-RU")}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold border border-emerald-500/40">
+                    VERIFIED v1.0
+                  </span>
+                </div>
+              </div>
+            ) : (
+              /* PHASE 2 APPLICANTS LIST VIEW */
+              <div className="flex flex-col gap-6 animate-fade-in">
+                <div className="flex items-center justify-between">
+                  <h2
+                    className={`text-2xl sm:text-4xl font-bold uppercase tracking-wider ${
+                      isLight ? "text-slate-900" : "text-white"
+                    }`}
+                    style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.03em" }}
+                  >
+                    2-Bosqich Biznes va Moliyaviy Tahlil Arizalari
+                  </h2>
+                  <span
+                    className="px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#00A8FF]/15 text-[#00A8FF] border border-[#00A8FF]/30"
+                    style={{ fontFamily: "var(--font-zuume)" }}
+                  >
+                    Jami: {phase2Apps.length} ta
+                  </span>
+                </div>
+
+                {/* Phase 2 Submissions Table */}
+                <div
+                  className={`rounded-2xl border shadow-xl backdrop-blur-md overflow-hidden transition-colors ${
+                    isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/95 border-white/10"
+                  }`}
+                >
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse min-w-[700px]">
+                      <thead>
+                        <tr
+                          className={`border-b text-xs font-bold uppercase tracking-wider ${
+                            isLight ? "bg-slate-50/90 border-slate-200 text-slate-700" : "bg-white/5 border-white/10 text-white/70"
+                          }`}
+                          style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
+                        >
+                          <th className="py-4 px-4 w-12 text-center">#</th>
+                          <th className="py-4 px-4">Korxona Nomi</th>
+                          <th className="py-4 px-4">Toifasi</th>
+                          <th className="py-4 px-4">So'ralgan Investitsiya</th>
+                          <th className="py-4 px-4 text-center">Hujjatlar</th>
+                          <th className="py-4 px-4 text-center">NDA Tasdiq</th>
+                          <th className="py-4 px-4 text-center">Batafsil</th>
+                        </tr>
+                      </thead>
+                      <tbody className={`divide-y text-xs ${isLight ? "divide-slate-200/60 text-slate-800" : "divide-white/5 text-white/90"}`}>
+                        {phase2Apps.length > 0 ? (
+                          phase2Apps.map((item, index) => (
+                            <tr
+                              key={item.id}
+                              onClick={() => setSelectedPhase2App(item)}
+                              className={`transition-all cursor-pointer ${
+                                isLight ? "hover:bg-blue-50/60" : "hover:bg-[#00A8FF]/10"
+                              }`}
+                            >
+                              <td className="py-4 px-4 text-center font-mono text-slate-400">{index + 1}</td>
+                              <td className="py-4 px-4 font-bold text-sm text-[#00A8FF]">{item.company_name}</td>
+                              <td className="py-4 px-4">
+                                <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${
+                                  item.category === "startup"
+                                    ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
+                                    : "bg-[#00A8FF]/15 text-[#00A8FF] border-[#00A8FF]/30"
+                                }`}>
+                                  {item.category === "startup" ? "Startap / Innovatsiya" : "An'anaviy Biznes"}
+                                </span>
+                              </td>
+                              <td className="py-4 px-4 font-mono font-bold text-emerald-400">
+                                {item.requested_investment_amount?.toLocaleString("ru-RU")} UZS
+                              </td>
+                              <td className="py-4 px-4 text-center">
+                                <span className="px-2 py-0.5 rounded-full bg-white/10 font-bold text-[11px]">
+                                  {item.uploaded_documents?.length || 0} ta fayl
+                                </span>
+                              </td>
+                              <td className="py-4 px-4 text-center">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-bold text-[10px] border border-emerald-500/30">
+                                  <Shield size={12} />
+                                  <span>IMZOLANGAN</span>
+                                </span>
+                              </td>
+                              <td className="py-4 px-4 text-center">
+                                <button className="px-3 py-1 rounded-lg bg-[#00A8FF] text-white font-bold text-xs hover:bg-[#0090FF]">
+                                  Ko'rish
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={7} className="py-12 text-center text-slate-400">
+                              <div className="flex flex-col items-center justify-center gap-2">
+                                <FileText size={32} className="opacity-40" />
+                                <p className="text-sm font-medium">Hozircha 2-bosqich so'rovnomalari kelib tushmagan</p>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )
+          ) : loadingApps ? (
+            <div className="py-20 flex flex-col items-center justify-center gap-3">
+              <div className="w-8 h-8 border-3 border-[#00A8FF] border-t-transparent rounded-full animate-spin" />
+              <span className={`text-xs font-semibold ${isLight ? "text-slate-500" : "text-white/60"}`}>
+                Bazadan real arizalar yuklanmoqda...
               </span>
             </div>
+          ) : selectedApplicant ? (
+            /* ──────────────────────────────────────────────────────────── */
+            /* VIEW MODE 1: PHASE 1 APPLICANT DETAILS                       */
+            /* ──────────────────────────────────────────────────────────── */
+            <div className="flex flex-col gap-6 animate-fade-in">
+              <div
+                className={`rounded-2xl border p-4 sm:p-6 backdrop-blur-md shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all ${
+                  isLight
+                    ? "bg-white/90 border-slate-200/90 hover:border-blue-300"
+                    : "bg-[#0a0c10]/90 border-white/10 hover:border-[#00A8FF]/30"
+                }`}
+              >
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <button
+                    onClick={() => setSelectedApplicant(null)}
+                    className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-[#00A8FF] hover:bg-[#0090FF] text-white text-xs font-bold shadow-md transition-all cursor-pointer hover:shadow-lg active:scale-95 uppercase tracking-wider"
+                    style={{ fontFamily: "var(--font-zuume)" }}
+                  >
+                    <ArrowLeft size={15} />
+                    <span>Orqaga</span>
+                  </button>
 
-          </div>
-        </div>
+                  <div className="flex items-center gap-2.5 sm:gap-3">
+                    <h2
+                      className={`text-xl sm:text-3xl font-bold uppercase tracking-wider ${
+                        isLight ? "text-slate-900" : "text-white"
+                      }`}
+                      style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.04em" }}
+                    >
+                      Ariza
+                    </h2>
+                    <span
+                      className={`text-xs font-mono px-2 py-0.5 sm:py-1 rounded-md font-semibold ${
+                        isLight ? "bg-slate-100 text-slate-600" : "bg-white/10 text-white/70"
+                      }`}
+                    >
+                      #{selectedApplicant.id}
+                    </span>
+                  </div>
+                </div>
 
-        {/* Content list (Grid instead of table) */}
-        {loading ? (
-          <div className="flex items-center justify-center py-32">
-            <div className="w-8 h-8 border-2 border-white/20 border-t-[#00A8FF] rounded-full animate-spin" />
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-32 text-white/20 text-sm font-bold uppercase tracking-widest" style={{ fontFamily: "var(--font-button)" }}>
-            Arizalar topilmadi
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {displayed.map((app) => (
-                <AdminApplicationCard
-                  key={app.id}
-                  app={app}
-                  onOpenDetails={() => {
-                    setSelected(app);
-                    setModalInitialMode("view");
-                  }}
-                  onRejectClick={() => {
-                    setSelected(app);
-                    setModalInitialMode("rejecting");
-                  }}
-                  onStatusChange={handleStatusChange}
-                  updatingId={updatingId}
-                  setUpdatingId={setUpdatingId}
-                />
-              ))}
-            </div>
+                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                  <button
+                    onClick={() => handleUpdateStatus(selectedApplicant.fullId, "qaytarildi")}
+                    className="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold text-xs shadow-xs transition-all cursor-pointer hover:shadow-md active:scale-95 flex items-center gap-2 border border-amber-400/30"
+                  >
+                    <RefreshCw size={14} />
+                    <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>Qayta ko'rib chiqishga qaytarish</span>
+                  </button>
 
-            {/* Scroll trigger element for infinite scroll */}
-            {filtered.length > visibleCount && (
-              <div id="infinite-scroll-trigger" className="flex justify-center py-10">
-                <div className="w-6 h-6 border-2 border-white/20 border-t-[#00A8FF] rounded-full animate-spin" />
+                  <button
+                    onClick={() => handleUpdateStatus(selectedApplicant.fullId, "korib_chiqilmoqda")}
+                    className="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold text-xs shadow-xs transition-all cursor-pointer hover:shadow-md active:scale-95 flex items-center gap-2 border border-emerald-400/30"
+                  >
+                    <Send size={14} />
+                    <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>Saralashga o'tkazish</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setRejectModalOpen(true);
+                      setRejectReason(selectedApplicant.rejectionComment || "");
+                    }}
+                    className="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white font-semibold text-xs shadow-xs transition-all cursor-pointer hover:shadow-md active:scale-95 flex items-center gap-2 border border-rose-400/30"
+                  >
+                    <XCircle size={14} />
+                    <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>Rad etish</span>
+                  </button>
+                </div>
               </div>
-            )}
-          </>
-        )}
+
+              {/* Stepper Timeline Bar */}
+              <div
+                className={`rounded-2xl border p-4 sm:p-6 backdrop-blur-md shadow-xl overflow-x-auto transition-colors ${
+                  isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
+                }`}
+              >
+                <div className="min-w-[450px]">
+                  <div className="relative flex items-center justify-between px-6 sm:px-8">
+                    <div className={`absolute left-10 right-10 top-4 h-0.5 -z-0 ${isLight ? "bg-slate-200" : "bg-white/10"}`} />
+
+                    {STEPPER_STAGES.map((stageName, idx) => {
+                      const stepNumber = idx + 1;
+                      const activeStageIndex = currentStatusCfg.stepIndex;
+                      const isCompleted = stepNumber < activeStageIndex;
+                      const isCurrent = stepNumber === activeStageIndex;
+
+                      return (
+                        <div key={stageName} className="relative z-10 flex flex-col items-center group">
+                          <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                              isCompleted
+                                ? "bg-emerald-500 text-white shadow-md"
+                                : isCurrent
+                                ? "bg-emerald-500 text-white ring-4 ring-emerald-500/20 shadow-md"
+                                : isLight
+                                ? "bg-slate-100 text-slate-400 border border-slate-200"
+                                : "bg-white/5 text-white/30 border border-white/10"
+                            }`}
+                          >
+                            {isCompleted || isCurrent ? (
+                              <Check size={16} strokeWidth={2.5} />
+                            ) : (
+                              <span className="text-xs font-bold" style={{ fontFamily: "var(--font-zuume)" }}>
+                                {stepNumber}
+                              </span>
+                            )}
+                          </div>
+
+                          <span
+                            className={`mt-2.5 text-xs font-bold uppercase tracking-wider max-w-[130px] text-center leading-tight transition-colors ${
+                              isCurrent
+                                ? "text-emerald-500"
+                                : isCompleted
+                                ? isLight
+                                  ? "text-slate-700"
+                                  : "text-white/80"
+                                : isLight
+                                ? "text-slate-400"
+                                : "text-white/30"
+                            }`}
+                            style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.03em" }}
+                          >
+                            {stageName}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Founder Summary */}
+              <div
+                className={`rounded-2xl border p-5 sm:p-6 backdrop-blur-md shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 transition-colors ${
+                  isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="relative w-14 sm:w-16 h-14 sm:h-16 rounded-2xl overflow-hidden bg-slate-900 border border-white/10 shrink-0 shadow-md">
+                    {selectedApplicant.avatarUrl ? (
+                      <img
+                        src={selectedApplicant.avatarUrl}
+                        alt={selectedApplicant.fio}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-[#00A8FF]/15 text-[#00A8FF] font-bold text-xl">
+                        {selectedApplicant.fio.charAt(0)}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3
+                        className={`text-lg sm:text-2xl font-extrabold ${
+                          isLight ? "text-slate-900" : "text-white"
+                        }`}
+                      >
+                        {selectedApplicant.fio}
+                      </h3>
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#00A8FF]/15 text-[#00A8FF] border border-[#00A8FF]/30">
+                        {selectedApplicant.categoryLabel}
+                      </span>
+                    </div>
+
+                    <p className={`text-xs sm:text-sm font-semibold ${isLight ? "text-slate-600" : "text-white/70"}`}>
+                      {selectedApplicant.brandName}
+                    </p>
+
+                    <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
+                      <MapPin size={14} className="text-[#00A8FF]" />
+                      <span>{selectedApplicant.region}</span>
+                      <span>•</span>
+                      <span>{selectedApplicant.age} yosh</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Gallery Section */}
+              <div
+                className={`rounded-2xl border p-4 sm:p-6 backdrop-blur-md shadow-xl flex flex-col gap-5 transition-colors ${
+                  isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
+                }`}
+              >
+                <div className={`flex items-center justify-between border-b pb-3 ${isLight ? "border-slate-100" : "border-white/10"}`}>
+                  <h3
+                    className={`text-sm sm:text-base font-bold uppercase tracking-wider flex items-center gap-2 ${
+                      isLight ? "text-slate-900" : "text-white"
+                    }`}
+                    style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.04em" }}
+                  >
+                    <ImageIcon size={18} className="text-[#00A8FF]" />
+                    <span>Loyiha Va Mahsulot Rasmlari</span>
+                  </h3>
+                  <span className={`text-xs font-medium ${isLight ? "text-slate-400" : "text-white/40"}`}>
+                    Jami {galleryItems.length} ta noyob rasm
+                  </span>
+                </div>
+
+                {activeMainImg ? (
+                  <div className="relative w-full max-h-[480px] min-h-[260px] sm:min-h-[300px] rounded-2xl overflow-hidden bg-black/90 flex items-center justify-center border border-white/10 group">
+                    <img
+                      src={activeMainImg}
+                      alt="Loyiha rasmi"
+                      className="max-h-[460px] w-auto max-w-full object-contain mx-auto transition-all duration-300"
+                    />
+
+                    <div className="absolute top-3 left-3 sm:top-4 sm:left-4 flex items-center gap-2">
+                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#00A8FF] text-white shadow-md flex items-center gap-1.5 uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>
+                        <CheckCircle2 size={13} strokeWidth={2.5} />
+                        <span>Asosiy Ko'rinish</span>
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => setLightboxImg(activeMainImg)}
+                      className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 sm:p-2.5 rounded-xl bg-black/60 backdrop-blur-md text-white/80 hover:text-white hover:bg-black/80 transition-colors cursor-pointer"
+                      title="To'liq rasmda ko'rish"
+                    >
+                      <Maximize2 size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className={`p-8 rounded-xl border border-dashed text-center text-xs ${isLight ? "border-slate-200 text-slate-400" : "border-white/10 text-white/40"}`}>
+                    Ushbu arizachi uchun rasm joylanmagan
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-2">
+                  <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/50"}`} style={{ fontFamily: "var(--font-zuume)" }}>
+                    Barcha galereya rasmlari (Tanlash uchun bosing):
+                  </span>
+                  <div className="flex items-center gap-3 overflow-x-auto pb-2 no-scrollbar">
+                    {galleryItems.map((item, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setActiveMainImg(item.url)}
+                        className={`relative w-20 sm:w-24 h-16 sm:h-20 rounded-xl overflow-hidden border-2 shrink-0 transition-all cursor-pointer ${
+                          activeMainImg === item.url
+                            ? "border-[#00A8FF] ring-2 ring-[#00A8FF]/30 scale-105"
+                            : "border-transparent opacity-70 hover:opacity-100"
+                        }`}
+                      >
+                        <img src={item.url} alt={item.label} className="w-full h-full object-cover" />
+                        <span className="absolute bottom-1 left-1 right-1 text-[9px] font-bold bg-black/70 text-white text-center rounded py-0.5 truncate uppercase tracking-tight" style={{ fontFamily: "var(--font-zuume)" }}>
+                          {item.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Full Details Grid */}
+              <div
+                className={`rounded-2xl border p-5 sm:p-8 backdrop-blur-md shadow-xl flex flex-col gap-6 transition-colors ${
+                  isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
+                }`}
+              >
+                <div className={`flex items-center justify-between border-b pb-4 ${isLight ? "border-slate-100" : "border-white/10"}`}>
+                  <h3
+                    className={`text-base sm:text-lg font-bold uppercase tracking-wider flex items-center gap-2 ${
+                      isLight ? "text-slate-900" : "text-white"
+                    }`}
+                    style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.04em" }}
+                  >
+                    <Info size={18} className="text-[#00A8FF]" />
+                    <span>Arizachi Ma'lumotlari</span>
+                  </h3>
+                  <span className={`text-xs font-mono ${isLight ? "text-slate-400" : "text-white/40"}`}>ID: #{selectedApplicant.id}</span>
+                </div>
+
+                {selectedApplicant.status === "rad_etildi" && selectedApplicant.rejectionComment && (
+                  <div className={`rounded-xl border p-4 text-xs flex items-start gap-3 ${
+                    isLight ? "border-rose-200 bg-rose-50/80 text-rose-800" : "border-rose-500/30 bg-rose-500/10 text-rose-300"
+                  }`}>
+                    <AlertCircle size={18} className="text-rose-500 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>Rad etish sababi:</span>
+                      <p className="mt-1 leading-relaxed opacity-90">{selectedApplicant.rejectionComment}</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3.5 gap-x-8 text-xs sm:text-sm">
+                  <div className={`flex items-center justify-between py-2 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
+                    <span className={isLight ? "font-medium text-slate-500" : "font-medium text-white/50"}>Holati</span>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-bold border uppercase tracking-wider ${
+                        isLight
+                          ? `${currentStatusCfg.lightBg} ${currentStatusCfg.lightText} ${currentStatusCfg.lightBorder}`
+                          : `${currentStatusCfg.darkBg} ${currentStatusCfg.darkText} ${currentStatusCfg.darkBorder}`
+                      }`}
+                      style={{ fontFamily: "var(--font-zuume)" }}
+                    >
+                      {currentStatusCfg.label}
+                    </span>
+                  </div>
+
+                  <div className={`flex items-center justify-between py-2 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
+                    <span className={isLight ? "font-medium text-slate-500" : "font-medium text-white/50"}>FIO</span>
+                    <span className={`font-extrabold text-right ${isLight ? "text-slate-900" : "text-white"}`}>{selectedApplicant.fio}</span>
+                  </div>
+
+                  <div className={`flex items-center justify-between py-2 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
+                    <span className={isLight ? "font-medium text-slate-500" : "font-medium text-white/50"}>Brend Nomi</span>
+                    <span className={`font-bold ${isLight ? "text-slate-900" : "text-white"}`}>{selectedApplicant.brandName}</span>
+                  </div>
+
+                  <div className={`flex items-center justify-between py-2 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
+                    <span className={isLight ? "font-medium text-slate-500" : "font-medium text-white/50"}>Kategoriya</span>
+                    <span className="font-bold text-[#00A8FF]">{selectedApplicant.categoryLabel}</span>
+                  </div>
+
+                  <div className={`flex items-center justify-between py-2 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
+                    <span className={isLight ? "font-medium text-slate-500" : "font-medium text-white/50"}>Viloyat / Hudud</span>
+                    <span className={`font-medium ${isLight ? "text-slate-800" : "text-white/80"}`}>{selectedApplicant.region}</span>
+                  </div>
+
+                  <div className={`flex items-center justify-between py-2 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
+                    <span className={isLight ? "font-medium text-slate-500" : "font-medium text-white/50"}>Telefon raqami</span>
+                    <a href={`tel:${selectedApplicant.phone}`} className="font-semibold text-[#00A8FF] hover:underline">
+                      {selectedApplicant.phone}
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : selectedStatusKey === "tasdiqlangan" ? (
+            /* ══════════════════════════════════════════════════════════ */
+            /* TASDIQLANGAN (APPROVED) LIST VIEW                          */
+            /* ══════════════════════════════════════════════════════════ */
+            <div className="flex flex-col gap-6 animate-fade-in">
+              <div className="flex items-center justify-between">
+                <h2
+                  className={`text-2xl sm:text-4xl font-bold uppercase tracking-wider ${
+                    isLight ? "text-slate-900" : "text-white"
+                  }`}
+                  style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.03em" }}
+                >
+                  Tasdiqlangan Arizalar
+                </h2>
+                <span
+                  className="px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                  style={{ fontFamily: "var(--font-zuume)" }}
+                >
+                  Jami: {approvedApps.length} ta
+                </span>
+              </div>
+
+              <div
+                className={`rounded-2xl border shadow-xl backdrop-blur-md overflow-hidden transition-colors ${
+                  isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/95 border-white/10"
+                }`}
+              >
+                {approvedApps.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <FileText size={32} className="opacity-40" />
+                      <p className={`text-sm font-medium ${isLight ? "text-slate-400" : "text-white/40"}`}>Hozircha tasdiqlangan arizalar yo'q</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse min-w-[650px]">
+                      <thead>
+                        <tr
+                          className={`border-b text-xs font-bold uppercase tracking-wider ${
+                            isLight ? "bg-slate-50/90 border-slate-200 text-slate-700" : "bg-white/5 border-white/10 text-white/70"
+                          }`}
+                          style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
+                        >
+                          <th className="py-4 px-4 w-12 text-center">#</th>
+                          <th className="py-4 px-4">Arizachi F.I.O & Brend</th>
+                          <th className="py-4 px-4">Kategoriya</th>
+                          <th className="py-4 px-4">Viloyat / Hudud</th>
+                          <th className="py-4 px-4">Sana</th>
+                          <th className="py-4 px-4 text-center">Holati</th>
+                        </tr>
+                      </thead>
+                      <tbody className={`divide-y text-xs ${isLight ? "divide-slate-200/60 text-slate-800" : "divide-white/5 text-white/90"}`}>
+                        {approvedApps.map((item, index) => (
+                          <tr key={item.id} className={`transition-all ${isLight ? "hover:bg-emerald-50/60" : "hover:bg-emerald-500/5"}`}>
+                            <td className={`py-4 px-4 text-center font-mono text-xs font-semibold ${isLight ? "text-slate-400" : "text-white/40"}`}>{index + 1}</td>
+                            <td className="py-4 px-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-900 shrink-0 border border-white/15">
+                                  {item.avatarUrl ? (
+                                    <img src={item.avatarUrl} alt={item.fio} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-emerald-500/20 text-emerald-400 font-bold text-sm">
+                                      {item.fio.charAt(0)}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex flex-col gap-0.5">
+                                  <span className={`text-sm font-extrabold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>{item.fio}</span>
+                                  <span className={`text-xs font-semibold ${isLight ? "text-slate-500" : "text-emerald-400/80"}`}>{item.brandName}</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-4 px-4">
+                              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-[#00A8FF]/10 text-[#00A8FF] border border-[#00A8FF]/20">
+                                {item.categoryLabel}
+                              </span>
+                            </td>
+                            <td className={`py-4 px-4 font-semibold text-xs ${isLight ? "text-slate-700" : "text-white/80"}`}>{item.region}</td>
+                            <td className={`py-4 px-4 font-mono text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>{item.date}</td>
+                            <td className="py-4 px-4 text-center">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border-emerald-500/30" style={{ fontFamily: "var(--font-zuume)" }}>
+                                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                                Tasdiqlangan
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            /* ──────────────────────────────────────────────────────────── */
+            /* VIEW MODE 2: PHASE 1 APPLICATIONS TABLE LIST                 */
+            /* ──────────────────────────────────────────────────────────── */
+            <div className="flex flex-col gap-6 animate-fade-in">
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+                <div
+                  className={`rounded-2xl border p-4 sm:p-5 backdrop-blur-md shadow-lg flex items-center justify-between transition-all ${
+                    isLight ? "bg-white/90 border-slate-200/80" : "bg-[#0a0c10]/90 border-white/10"
+                  }`}
+                >
+                  <div className="flex flex-col gap-1">
+                    <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/50"}`} style={{ fontFamily: "var(--font-zuume)" }}>
+                      Jami
+                    </span>
+                    <span className={`text-xl sm:text-3xl font-extrabold ${isLight ? "text-slate-900" : "text-white"}`}>
+                      {applicants.length}
+                    </span>
+                  </div>
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-[#00A8FF]/15 text-[#00A8FF] flex items-center justify-center border border-[#00A8FF]/30 shadow-xs">
+                    <Inbox size={20} />
+                  </div>
+                </div>
+
+                <div
+                  className={`rounded-2xl border p-4 sm:p-5 backdrop-blur-md shadow-lg flex items-center justify-between transition-all ${
+                    isLight ? "bg-white/90 border-slate-200/80" : "bg-[#0a0c10]/90 border-white/10"
+                  }`}
+                >
+                  <div className="flex flex-col gap-1">
+                    <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/50"}`} style={{ fontFamily: "var(--font-zuume)" }}>
+                      Ko'rib chiqilmoqda
+                    </span>
+                    <span className="text-xl sm:text-3xl font-extrabold text-[#00A8FF]">
+                      {statusCounts.korib_chiqilmoqda}
+                    </span>
+                  </div>
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-[#00A8FF]/15 text-[#00A8FF] flex items-center justify-center border border-[#00A8FF]/30 shadow-xs">
+                    <Clock size={20} />
+                  </div>
+                </div>
+
+                <div
+                  className={`rounded-2xl border p-4 sm:p-5 backdrop-blur-md shadow-lg flex items-center justify-between transition-all ${
+                    isLight ? "bg-white/90 border-slate-200/80" : "bg-[#0a0c10]/90 border-white/10"
+                  }`}
+                >
+                  <div className="flex flex-col gap-1">
+                    <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/50"}`} style={{ fontFamily: "var(--font-zuume)" }}>
+                      Qaytarilgan
+                    </span>
+                    <span className="text-xl sm:text-3xl font-extrabold text-amber-400">
+                      {statusCounts.qaytarildi}
+                    </span>
+                  </div>
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-500/15 text-amber-400 flex items-center justify-center border border-amber-500/30 shadow-xs">
+                    <RotateCcw size={20} />
+                  </div>
+                </div>
+
+                <div
+                  className={`rounded-2xl border p-4 sm:p-5 backdrop-blur-md shadow-lg flex items-center justify-between transition-all ${
+                    isLight ? "bg-white/90 border-slate-200/80" : "bg-[#0a0c10]/90 border-white/10"
+                  }`}
+                >
+                  <div className="flex flex-col gap-1">
+                    <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/50"}`} style={{ fontFamily: "var(--font-zuume)" }}>
+                      Rad etilgan
+                    </span>
+                    <span className="text-xl sm:text-3xl font-extrabold text-rose-500">
+                      {statusCounts.rad_etildi}
+                    </span>
+                  </div>
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-rose-500/15 text-rose-500 flex items-center justify-center border border-rose-500/30 shadow-xs">
+                    <XCircle size={20} />
+                  </div>
+                </div>
+
+                <div
+                  className={`rounded-2xl border p-4 sm:p-5 backdrop-blur-md shadow-lg flex items-center justify-between transition-all ${
+                    isLight ? "bg-white/90 border-slate-200/80" : "bg-[#0a0c10]/90 border-white/10"
+                  }`}
+                >
+                  <div className="flex flex-col gap-1">
+                    <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/50"}`} style={{ fontFamily: "var(--font-zuume)" }}>
+                      Tasdiqlangan
+                    </span>
+                    <span className="text-xl sm:text-3xl font-extrabold text-emerald-400">
+                      {statusCounts.tasdiqlangan}
+                    </span>
+                  </div>
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center border border-emerald-500/30 shadow-xs">
+                    <CheckCircle2 size={20} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-5">
+                <div className="flex items-center justify-between">
+                  <h2
+                    className={`text-2xl sm:text-4xl font-bold uppercase tracking-wider ${
+                      isLight ? "text-slate-900" : "text-white"
+                    }`}
+                    style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.03em" }}
+                  >
+                    {currentStatusCfg.label}
+                  </h2>
+                  <span className={`text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full border ${
+                    isLight ? "bg-blue-50 text-[#00A8FF] border-blue-200/60" : "bg-[#00A8FF]/10 text-[#00A8FF] border-[#00A8FF]/30"
+                  }`} style={{ fontFamily: "var(--font-zuume)" }}>
+                    Jami: {filteredApplicants.length} ta
+                  </span>
+                </div>
+
+                <div
+                  className={`rounded-2xl border p-4 shadow-xl backdrop-blur-md grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 transition-colors ${
+                    isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
+                  }`}
+                >
+                  <div className="relative">
+                    <Search size={15} className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${isLight ? "text-slate-400" : "text-white/40"}`} />
+                    <input
+                      type="text"
+                      placeholder="F.I.O yoki Brend nomi..."
+                      value={searchName}
+                      onChange={(e) => setSearchName(e.target.value)}
+                      className={`w-full pl-9 pr-3.5 py-2.5 rounded-xl border text-xs transition-all outline-none ${
+                        isLight
+                          ? "bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400 focus:bg-white focus:border-[#00A8FF]"
+                          : "bg-white/5 border-white/10 text-white placeholder-white/40 focus:bg-white/10 focus:border-[#00A8FF]"
+                      }`}
+                    />
+                  </div>
+
+                  <div className="relative">
+                    <select
+                      value={categoryFilter}
+                      onChange={(e) => setCategoryFilter(e.target.value)}
+                      className={`w-full px-3.5 py-2.5 rounded-xl border text-xs transition-all outline-none appearance-none cursor-pointer ${
+                        isLight
+                          ? "bg-slate-50 border-slate-200 text-slate-700 focus:bg-white focus:border-[#00A8FF]"
+                          : "bg-[#0a0c10] border-white/10 text-white focus:border-[#00A8FF]"
+                      }`}
+                    >
+                      <option value="all" className={isLight ? "bg-white text-slate-800" : "bg-[#0a0c10] text-white"}>Kategoriya (Barchasi)</option>
+                      <option value="business" className={isLight ? "bg-white text-slate-800" : "bg-[#0a0c10] text-white"}>An'anaviy Biznes</option>
+                      <option value="startup" className={isLight ? "bg-white text-slate-800" : "bg-[#0a0c10] text-white"}>Startap</option>
+                      <option value="ideas" className={isLight ? "bg-white text-slate-800" : "bg-[#0a0c10] text-white"}>G'oya</option>
+                    </select>
+                    <SlidersHorizontal size={14} className={`absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${isLight ? "text-slate-400" : "text-white/40"}`} />
+                  </div>
+
+                  <div className="relative">
+                    <select
+                      value={regionFilter}
+                      onChange={(e) => setRegionFilter(e.target.value)}
+                      className={`w-full px-3.5 py-2.5 rounded-xl border text-xs transition-all outline-none appearance-none cursor-pointer ${
+                        isLight
+                          ? "bg-slate-50 border-slate-200 text-slate-700 focus:bg-white focus:border-[#00A8FF]"
+                          : "bg-[#0a0c10] border-white/10 text-white focus:border-[#00A8FF]"
+                      }`}
+                    >
+                      <option value="all" className={isLight ? "bg-white text-slate-800" : "bg-[#0a0c10] text-white"}>Viloyat / Hudud (Barchasi)</option>
+                      {uniqueRegions.map((reg) => (
+                        <option key={reg} value={reg} className={isLight ? "bg-white text-slate-800" : "bg-[#0a0c10] text-white"}>
+                          {reg}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={14} className={`absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${isLight ? "text-slate-400" : "text-white/40"}`} />
+                  </div>
+
+                  <div className="relative">
+                    <Calendar size={15} className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${isLight ? "text-slate-400" : "text-white/40"}`} />
+                    <input
+                      type="text"
+                      placeholder="Sana (masalan 07.08.2026)"
+                      value={dateFilter}
+                      onChange={(e) => setDateFilter(e.target.value)}
+                      className={`w-full pl-9 pr-3.5 py-2.5 rounded-xl border text-xs transition-all outline-none ${
+                        isLight
+                          ? "bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400 focus:bg-white focus:border-[#00A8FF]"
+                          : "bg-white/5 border-white/10 text-white placeholder-white/40 focus:bg-white/10 focus:border-[#00A8FF]"
+                      }`}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div
+                className={`rounded-2xl border shadow-xl backdrop-blur-md overflow-hidden transition-colors ${
+                  isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/95 border-white/10"
+                }`}
+              >
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse min-w-[650px]">
+                    <thead>
+                      <tr
+                        className={`border-b text-xs font-bold uppercase tracking-wider ${
+                          isLight ? "bg-slate-50/90 border-slate-200 text-slate-700" : "bg-white/5 border-white/10 text-white/70"
+                        }`}
+                        style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
+                      >
+                        <th className="py-4 px-4 w-12 text-center">#</th>
+                        <th className="py-4 px-4">Arizachi F.I.O & Brend</th>
+                        <th className="py-4 px-4">Kategoriya</th>
+                        <th className="py-4 px-4">Viloyat / Hudud</th>
+                        <th className="py-4 px-4">Sana</th>
+                        <th className="py-4 px-4 text-center">Holati</th>
+                      </tr>
+                    </thead>
+                    <tbody className={`divide-y text-xs ${isLight ? "divide-slate-200/60 text-slate-800" : "divide-white/5 text-white/90"}`}>
+                      {filteredApplicants.length > 0 ? (
+                        filteredApplicants.map((item, index) => (
+                          <tr
+                            key={item.id}
+                            onClick={() => handleSelectApplicant(item)}
+                            className={`transition-all cursor-pointer group ${
+                              isLight ? "hover:bg-blue-50/60" : "hover:bg-[#00A8FF]/10"
+                            }`}
+                          >
+                            <td className={`py-4 px-4 text-center font-mono text-xs font-semibold ${isLight ? "text-slate-400" : "text-white/40"}`}>
+                              {index + 1}
+                            </td>
+
+                            <td className="py-4 px-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-900 shrink-0 border border-white/15 shadow-xs">
+                                  {item.avatarUrl ? (
+                                    <img src={item.avatarUrl} alt={item.fio} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-[#00A8FF]/20 text-[#00A8FF] font-bold text-sm">
+                                      {item.fio.charAt(0)}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex flex-col gap-0.5">
+                                  <span
+                                    className={`text-sm sm:text-base font-extrabold tracking-tight transition-colors ${
+                                      isLight ? "text-slate-900 group-hover:text-[#00A8FF]" : "text-white group-hover:text-[#00A8FF]"
+                                    }`}
+                                  >
+                                    {item.fio}
+                                  </span>
+                                  <span className={`text-xs font-semibold ${isLight ? "text-slate-500" : "text-[#00A8FF]/80"}`}>
+                                    {item.brandName}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+
+                            <td className="py-4 px-4">
+                              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-[#00A8FF]/10 text-[#00A8FF] border border-[#00A8FF]/20">
+                                {item.categoryLabel}
+                              </span>
+                            </td>
+
+                            <td className={`py-4 px-4 font-semibold text-xs ${isLight ? "text-slate-700" : "text-white/80"}`}>
+                              {item.region}
+                            </td>
+
+                            <td className={`py-4 px-4 font-mono text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>
+                              {item.date}
+                            </td>
+
+                            <td className="py-4 px-4 text-center">
+                              <span
+                                className={`inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-bold border uppercase tracking-wider ${
+                                  isLight
+                                    ? `${currentStatusCfg.lightBg} ${currentStatusCfg.lightText} ${currentStatusCfg.lightBorder}`
+                                    : `${currentStatusCfg.darkBg} ${currentStatusCfg.darkText} ${currentStatusCfg.darkBorder}`
+                                }`}
+                                style={{ fontFamily: "var(--font-zuume)" }}
+                              >
+                                <span className={`w-2 h-2 rounded-full ${currentStatusCfg.dotColor} animate-pulse`} />
+                                <span>{currentStatusCfg.label}</span>
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={6} className={`py-12 text-center ${isLight ? "text-slate-400" : "text-white/40"}`}>
+                            <div className="flex flex-col items-center justify-center gap-2">
+                              <FileText size={32} className="opacity-40" />
+                              <p className="text-sm font-medium">Ushbu holatda arizalar topilmadi</p>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
       </div>
 
-      {/* Detail Modal view popup */}
-      {selected && (
-        <DetailModal
-          app={selected}
-          onClose={() => setSelected(null)}
-          onStatusChange={handleStatusChange}
-          onDelete={handleDelete}
-          initialMode={modalInitialMode}
-        />
+      {lightboxImg && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in">
+          <button
+            onClick={() => setLightboxImg(null)}
+            className="absolute top-6 right-6 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors cursor-pointer"
+          >
+            <X size={20} />
+          </button>
+          <img src={lightboxImg} alt="Preview" className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl" />
+        </div>
+      )}
+
+      {rejectModalOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+          <div
+            className={`rounded-2xl border max-w-md w-full p-6 shadow-xl flex flex-col gap-4 ${
+              isLight ? "bg-white border-slate-200" : "bg-[#0a0c10] border-white/10"
+            }`}
+          >
+            <div className={`flex items-center justify-between border-b pb-3 ${isLight ? "border-slate-100" : "border-white/10"}`}>
+              <h3 className="text-base font-bold uppercase tracking-wider flex items-center gap-2" style={{ fontFamily: "var(--font-zuume)" }}>
+                <XCircle size={18} className="text-rose-500" />
+                <span>Arizani rad etish</span>
+              </h3>
+              <button onClick={() => setRejectModalOpen(false)} className="cursor-pointer">
+                <X size={16} />
+              </button>
+            </div>
+
+            <textarea
+              rows={4}
+              placeholder="Rad etish sababini shu yerga yozing..."
+              value={rejectReason}
+              onChange={(e) => {
+                setRejectReason(e.target.value);
+                setRejectError("");
+              }}
+              className={`w-full p-3 rounded-xl border text-xs outline-none resize-none ${
+                isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-white/5 border-white/10 text-white"
+              }`}
+            />
+
+            {rejectError && <p className="text-xs text-rose-500 font-semibold">{rejectError}</p>}
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                onClick={() => setRejectModalOpen(false)}
+                className="px-4 py-2 rounded-xl bg-white/10 text-xs font-semibold cursor-pointer"
+              >
+                Bekor qilish
+              </button>
+              <button
+                onClick={handleConfirmReject}
+                className="px-4 py-2 rounded-xl bg-rose-600 text-white font-semibold text-xs shadow-2xs cursor-pointer"
+              >
+                Tasdiqlash va Rad etish
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
-};
-
-export default AdminPage;
+}

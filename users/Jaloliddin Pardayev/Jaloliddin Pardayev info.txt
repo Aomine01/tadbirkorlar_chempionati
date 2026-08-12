@@ -1,0 +1,18 @@
+Viloyat: TOSHKENT SHAHRI
+
+Location: TOSHKENT SHAHRI
+
+Name: Jaloliddin Pardayev
+
+age: 27
+
+Industry name: BOOK IT GROUP
+
+About business:Book It Dispatch — AQShdagi yuk tashuvchi kompaniyalarga masofadan professional logistika va dispetcherlik xizmatlarini ko'rsatuvchi eksportga yo'naltirilgan kompaniya. 
+
+Hozirda 40 dan ortiq transport kompaniyasi va 250 dan ortiq yuk avtomobiliga xizmat ko'rsatilmoqda. Jamoada 80 dan ortiq xodim faoliyat yuritadi — aksariyati 19–25 yoshli yoshlar. 2025-yillik aylanma 11,5 mlrd so'mni tashkil etgan; 2026-yil yakuniga qadar 25 mlrd so'mdan oshishi kutilmoqda. Asosiy operatsion markaz — Toshkent shahri.
+
+Maqsad: Investitsiya hisobida logistika jarayonlarini avtomatlashtiruvchi o'z IT platformasini rivojlantirish.
+Sun'iy intellekt va ma'lumotlar tahlili asosida xizmat samaradorligini oshirish.
+
+Yuridik name: BOOK IT GROUP MCHJ

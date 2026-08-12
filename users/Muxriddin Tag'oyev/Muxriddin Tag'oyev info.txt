@@ -1,0 +1,16 @@
+Viloyat: TOSHKENT VILOYATI
+
+Location: TOSHKENT VILOYATI
+
+Name: Muxriddin Tag'oyev
+
+age: 29 
+
+Industry name: Extrafos
+
+About business: Korxona qishloq xo‘jaligi uchun kompleks mineral o‘g‘itlar ishlab chiqarish bilan shug‘ullanadi. Mahsulotlar hosildorlikni oshirish orqali fermer va dehqon xo‘jaliklarining samaradorligi hamda daromadini ko‘paytirishga xizmat qiladi. Hozirda korxonada doimiy ravishda 24 nafar, mavsumiy davrlarda esa 35–40 nafargacha xodim faoliyat yuritadi. Respublika bo‘ylab 24 ta ombor faoliyat ko‘rsatib, mahsulotlarni hududlarga tezkor yetkazib berish tizimi yo‘lga qo‘yilgan. Korxona qishloq xo'jaligida oziq-ovqat xavfsizligini ta'minlashga hissa qo'shishga yo'naltirilgan.
+
+Maqsad: Ishlab chiqarish quvvatlarini kengaytirish, mahsulot hajmini oshirish va marketing faoliyatini kuchaytirish orqali kompleks mineral o‘g‘itlarni respublika bo‘ylab keng ommalashtirish.
+Fermer va dehqonlarni yuqori samaradorlikka erishtiruvchi innovatsion yechimlarni rivojlantirish hamda kompaniyani dunyoning ushbu sohadagi yetakchi 10 ta korxonasi qatoriga olib chiqib, global oziq-ovqat xavfsizligiga munosib hissa qo‘shish.
+
+Yuridik name: "Extrafos" MCHJ

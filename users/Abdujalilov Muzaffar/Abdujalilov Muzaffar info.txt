@@ -1,0 +1,16 @@
+Viloyat: ANDIJON VILOYATI
+
+Location: Andijon shahri
+
+Name: Abdujalilov Muzaffar
+
+age: 23 
+
+Industry name: Alpha United Logistics
+
+About business: Alpha United Logistics — AQSH transport bozorida yuk tashish jarayonlarini samarali boshqarish xizmatlarini ko‘rsatuvchi logistika kompaniyasidir. Kompaniya yuklarni rejalashtirish, dispatcherlik va logistika jarayonlarini muvofiqlashtirishga ixtisoslashgan. Zamonaviy boshqaruv yechimlari orqali mijozlarning transport operatsiyalarini samarali tashkil etishga xizmat qiladi. Hozirda kompaniyada 80 nafarga yaqin xodim faoliyat yuritmoqda.
+
+Maqsad: Logistika xizmatlari ko‘lamini kengaytirish, zamonaviy dispatcherlik markazini tashkil etish va transport boshqaruvi jarayonlarini yanada samarali yo‘lga qo‘yish.
+Logistika akademiyasini rivojlantirish, soha uchun malakali mutaxassislarni tayyorlash, yangi ish o‘rinlarini yaratish hamda kompaniyani xalqaro logistika xizmatlari bozorida yetakchi korxonalardan biriga aylantirish.
+
+Yuridik name: "Alpha United logistics" MCHJ

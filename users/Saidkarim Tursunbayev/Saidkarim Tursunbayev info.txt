@@ -1,0 +1,16 @@
+Viloyat: TOSHKENT SHAHRI
+
+Location: TOSHKENT SHAHRI
+
+Name: Saidkarim Tursunbayev
+
+age: 23
+ 
+Industry name: Entrium
+
+About business: «Entrium» — dunyoning yetakchi universitetlariga o'qishga kirishni maqsad qilgan o'quvchilar va talabalarni kompleks tayyorlaydigan ta'lim konsalting kompaniyasi. Mijozlarga akademik diagnostika, universitet tanlash, IELTS, SAT va boshqa xalqaro imtihonlarga tayyorlash, kuchli portfolio yaratish, motivatsion xatlar yozish hamda hujjatlarni topshirish jarayonida to'liq hamrohlik ko'rsatiladi. Shuningdek, sun'iy intellekt asosidagi AI-platforma rivojlantirilib, har bir talabaga shaxsiylashtirilgan va samarali ta'lim yechimlari taqdim etilmoqda.
+
+Maqsad: Markaziy Osiyodagi eng yirik EdTech platformalaridan birini yaratish va sun'iy intellekt asosida xorijda ta'lim olish bo'yicha innovatsion ekotizimni shakllantirish.
+Jalb qilinadigan investitsiyalarni AI-platformani rivojlantirish, jamoani kengaytirish, yangi ta'lim mahsulotlarini ishga tushirish va xalqaro bozorlarga chiqish uchun yo'naltirish.
+
+Yuridik name: “My Step Edu” MCHJ

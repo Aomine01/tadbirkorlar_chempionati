@@ -1,0 +1,70 @@
+MAXFIYLIK TO‘G‘RISIDA KELISHUV
+Toshkent shahri
+Yoshlar tadbirkorligini rivojlantirish davlat maqsadli jamg‘armasi (keyingi o‘rinlarda - Qabul qiluvchi) hamda Qabul qiluvchining rasmiy veb-sayti va/yoki axborot tizimi orqali mazkur Kelishuv shartlariga elektron shaklda rozilik bildirgan hamda Qabul qiluvchiga o‘z faoliyati, loyihasi, arizasi yoki hamkorlik munosabatlari doirasida axborot taqdim etuvchi jismoniy yoki yuridik shaxs (keyingi o‘rinlarda - Oshkor qiluvchi), birgalikda Tomonlar, alohida holda Tomon deb atalib, quyidagilar haqida ushbu Maxfiylik to‘g‘risidagi kelishuvni (keyingi o‘rinlarda - Kelishuv) tuzadilar. Mazkur Kelishuv alohida qog‘oz shaklidagi imzoni talab qilmaydi va ushbu Kelishuvda belgilangan tartibda elektron shaklda rozilik bildirilgan paytdan boshlab Oshkor qiluvchi tomonidan qabul qilingan hisoblanadi.
+
+1. KELISHUV PREDMETI
+
+1.1. Ushbu Kelishuvga muvofiq, Oshkor qiluvchi o‘z faoliyati, loyihasi, arizasi yoki hamkorlik munosabatlari doirasida Qabul qiluvchiga maxfiy axborotni taqdim etadi, Qabul qiluvchi esa ushbu axborotdan faqat uni ko‘rib chiqish, baholash, tegishli qarorlarni tayyorlash va Tomonlar o‘rtasidagi hamkorlik maqsadlari doirasida foydalanish hamda uni ushbu Kelishuv shartlariga rioya qilgan holda saqlash majburiyatini oladi.
+1.2. Mazkur Kelishuvda quyidagi tushunchalar qo‘llaniladi:
+Maxfiy axborot - tijorat, moliyaviy, texnik, tashkiliy, strategik, dasturiy ta’minotga oid, shaxsga doir yoki boshqa qonun bilan muhofaza qilinadigan, Oshkor qiluvchiga tegishli hamda uchinchi shaxslarga oshkor etilmagan axborot.
+Tijorat siri - O‘zbekiston Respublikasi qonunchiligiga muvofiq tijorat siri hisoblangan axborot.
+Axborotning maxfiyligi - maxfiy axborotni Oshkor qiluvchining roziligisiz uchinchi shaxslarga bermaslik majburiyati.
+Uchinchi shaxslar - ushbu Kelishuv taraflari bo‘lmagan jismoniy va yuridik shaxslar.
+Veb-sayt (axborot tizimi) - Qabul qiluvchi tomonidan arizalar, loyihalar, hujjatlar va boshqa axborotni elektron shaklda qabul qilish uchun foydalaniladigan rasmiy elektron resurs yoki platforma.
+Kelishuv shartlarini elektron shaklda qabul qilish - Oshkor qiluvchining veb-saytda mazkur Kelishuv matni bilan tanishganligini va uning shartlariga roziligini tasdiqlovchi tegishli belgi (checkbox)ni belgilashi hamda ariza, loyiha, hujjat yoki boshqa axborotni yuborishni tasdiqlovchi tugmani bosishi orqali Kelishuv shartlariga rozilik bildirishi va ularni to‘liq qabul qilishi.
+Elektron qayd - axborot tizimida Kelishuv shartlariga elektron shaklda rozilik bildirilganligi va/yoki axborot yuborilganligi faktini tasdiqlovchi, tizim imkoniyatlaridan kelib chiqib qayd etiladigan sana, vaqt, foydalanuvchi identifikatori, Kelishuv tahriri va boshqa texnik ma’lumotlar.
+
+2. MAXFIY AXBOROTNI TAQDIM ETISH TARTIBI
+
+2.1. Maxfiy axborot yozma, elektron, og‘zaki, grafik, audio, video yoki boshqa har qanday shaklda, shu jumladan veb-sayt, shaxsiy kabinet, elektron pochta, elektron tashuvchilar yoki boshqa aloqa vositalari orqali taqdim etilishi mumkin.
+2.2. Elektron shakldagi maxfiy axborot Qabul qiluvchining veb-sayti (axborot tizimi), undagi tegishli elektron shakllar, shaxsiy kabinet, Qabul qiluvchi ko‘rsatgan elektron pochta manzillari yoki boshqa rasmiy elektron kanallar orqali taqdim etilishi mumkin.
+2.3. Maxfiy axborotning taqdim etilganligi yoki qabul qilinganligi elektron xabarnoma, shaxsiy kabinetdagi holat, axborot tizimining elektron qaydlari yoki boshqa aloqa vositalari orqali tasdiqlanishi mumkin.
+
+3. QABUL QILUVCHINING MAJBURIYATLARI
+
+Qabul qiluvchi quyidagilarga majbur:
+maxfiy axborotni uchinchi shaxslarga Oshkor qiluvchining yozma yoki elektron shaklda ifodalangan roziligisiz oshkor etmaslik;
+maxfiy axborotdan faqat Tomonlar o‘rtasidagi hamkorlik, taqdim etilgan loyiha yoki arizani ko‘rib chiqish, baholash va tegishli qarorlarni tayyorlash maqsadlarida foydalanish;
+maxfiy axborotni saqlash uchun o‘z faoliyatida qo‘llaniladigan oqilona tashkiliy va texnik himoya choralarini ko‘rish;
+maxfiy axborotdan faqat xizmat vazifalarini bajarishi uchun zarur bo‘lgan xodimlarga foydalanish imkoniyatini berish hamda ularning maxfiylikka rioya etishini ta’minlash;
+Oshkor qiluvchining yozma yoki elektron talabi olingan taqdirda, qonunchilik hujjatlarida saqlanishi shart bo‘lgan hujjatlar bundan mustasno, maxfiy axborotni qaytarish yoki yo‘q qilish masalasini Tomonlar kelishuviga muvofiq hal etish.
+
+4. MAXFIY HISOBLANMAYDIGAN AXBOROT
+
+4.1. Quyidagi axborotlar maxfiy axborot hisoblanmaydi:
+Kelishuv shartlari elektron shaklda qabul qilingunga qadar qonuniy ravishda ommaga ma’lum bo‘lgan axborot;
+Oshkor qiluvchining yozma yoki elektron shaklda ifodalangan roziligi bilan oshkor etilgan axborot;
+O‘zbekiston Respublikasi qonunchiligiga muvofiq vakolatli davlat organlarining qonuniy talabi asosida taqdim etilishi lozim bo‘lgan axborot. Bunda Qabul qiluvchi, qonunchilikda taqiqlanmagan va amalda imkon mavjud bo‘lgan hollarda, Oshkor qiluvchini bu haqda oldindan xabardor qiladi;
+Qabul qiluvchida ushbu Kelishuv shartlari elektron shaklda qabul qilingunga qadar qonuniy asoslarda mavjud bo‘lgan axborot.
+
+5. JAVOBGARLIK
+
+5.1. Tomonlar ushbu Kelishuv bo‘yicha majburiyatlarni bajarmaganligi yoki lozim darajada bajarmaganligi uchun O‘zbekiston Respublikasi qonunchiligiga muvofiq javobgar bo‘ladilar.
+5.2. Qabul qiluvchi faqat o‘zining aybi bilan yetkazilgan va hujjatlar bilan tasdiqlangan bevosita zarar uchun javobgar bo‘ladi.
+5.3. Qabul qiluvchi boy berilgan foyda, kutilayotgan daromad yoki bilvosita zararlarni qoplash majburiyatini olmaydi.
+5.4. Maxfiy axborotning vakolatli davlat organlarining qonuniy talabi asosida oshkor etilishi ushbu Kelishuvning buzilishi hisoblanmaydi.
+
+6. KELISHUVNING AMAL QILISH MUDDATI
+
+6.1. Ushbu Kelishuv Oshkor qiluvchi tomonidan 1.2-bandda nazarda tutilgan tartibda Kelishuv shartlariga elektron shaklda rozilik bildirilgan paytdan boshlab kuchga kiradi. Axborot tizimida qayd etilgan rozilik bildirilgan sana va vaqt Kelishuv qabul qilingan sana va vaqt hisoblanadi.
+6.2. Maxfiylik majburiyati Kelishuv amal qilgan davr mobaynida hamda Tomonlar o‘rtasidagi hamkorlik tugaganidan so‘ng 3 (uch) yil davomida amal qiladi.
+
+7. NIZOLARNI HAL ETISH
+
+7.1. Kelishuv yuzasidan kelib chiqadigan barcha nizolar, avvalo, muzokaralar orqali hal etiladi.
+7.2. Muzokaralar natija bermagan taqdirda, nizolar O‘zbekiston Respublikasining amaldagi qonunchiligiga muvofiq tegishli sudlarda ko‘rib chiqiladi.
+
+8. YAKUNIY QOIDALAR
+
+8.1. Ushbu Kelishuv elektron shaklda veb-saytda joylashtiriladi. Kelishuvning Oshkor qiluvchi tomonidan elektron shaklda qabul qilingan tahriri Tomonlar uchun mazkur Kelishuv bo‘yicha qo‘llaniladigan tahrir hisoblanadi. Alohida qog‘oz nusxalarni rasmiylashtirish va qo‘lda imzolash, qonunchilikda bevosita talab etilgan hollar bundan mustasno, talab qilinmaydi.
+8.2. Qabul qiluvchi Kelishuvga o‘zgartirish va qo‘shimchalar kiritilgan yangi tahrirni veb-saytda joylashtirishi mumkin. Yangi tahrir u e’lon qilingandan keyin Oshkor qiluvchi tomonidan unga elektron shaklda qayta rozilik bildirilgan va keyinchalik taqdim etiladigan axborotga nisbatan qo‘llaniladi. Avval taqdim etilgan axborotga nisbatan, agar Tomonlar boshqacha kelishmagan bo‘lsa, ushbu axborot taqdim etilgan vaqtda elektron shaklda qabul qilingan tahrir amal qiladi.
+8.3. Mazkur Kelishuvda nazarda tutilmagan masalalar O‘zbekiston Respublikasi qonunchilik hujjatlariga muvofiq tartibga solinadi.
+8.4. Kelishuv shartlariga elektron shaklda rozilik bildirayotgan shaxs o‘zining mazkur Kelishuvni qabul qilish uchun zarur huquq va muomala layoqatiga ega ekanligini, yuridik shaxs nomidan harakat qilayotgan bo‘lsa, tegishli vakolatga ega ekanligini hamda veb-sayt (axborot tizimi) orqali taqdim etilgan ma’lumotlarning to‘g‘riligini tasdiqlaydi.
+8.5. Axborot tizimining elektron qaydlari, shu jumladan Kelishuv shartlariga elektron shaklda rozilik bildirilganligi, uning sanasi va vaqti hamda qabul qilingan Kelishuv tahriri to‘g‘risidagi ma’lumotlar, qonunchilikda yo‘l qo‘yilgan doirada, Kelishuvning qabul qilinganligini tasdiqlovchi dalil sifatida foydalanilishi mumkin.
+
+9. TOMONLARNI ANIQLASH VA ELEKTRON SHAKLDA ROZILIK BILDIRISH
+
+9.1. Qabul qiluvchi - Yoshlar tadbirkorligini rivojlantirish davlat maqsadli jamg‘armasi.
+9.2. Oshkor qiluvchi - mazkur Kelishuv shartlariga veb-sayt (axborot tizimi) orqali elektron shaklda rozilik bildirgan va Qabul qiluvchiga axborot taqdim etgan jismoniy yoki yuridik shaxs. Oshkor qiluvchining shaxsi va/yoki vakolati veb-saytda ro‘yxatdan o‘tish, avtorizatsiya qilish, ariza yoki boshqa elektron shaklni to‘ldirish jarayonida taqdim etilgan ma’lumotlar asosida aniqlanadi.
+9.3. Veb-saytda Kelishuvni qabul qilish uchun foydalanuvchiga Kelishuv matnini ko‘rish imkoniyati berilishi va rozilik alohida tasdiqlanishi lozim. Tavsiya etiladigan tasdiqlash matni: “Maxfiylik to‘g‘risidagi kelishuv shartlari bilan tanishdim va ularga roziman”.
+9.4. Kelishuv shartlariga elektron shaklda rozilik bildirilmagan taqdirda, maxfiy axborotni veb-sayt orqali Qabul qiluvchiga yuborish imkoniyati cheklanishi mumkin.

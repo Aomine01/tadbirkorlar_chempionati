@@ -1,0 +1,16 @@
+Viloyat: TOSHKENT VILOYATI
+
+Location: TOSHKENT shahri
+
+Name: Temurbek Maxmasalayev
+
+age: 31
+
+Industry name: IMKON
+
+About business: Korxona maktab o‘quvchilariga matematika va ingliz tili fanlarini o‘qitish, shuningdek, ularni Prezident, Muhammad al-Xorazmiy, Mirzo Ulug‘bek va boshqa ixtisoslashtirilgan maktablarga tayyorlash yo‘nalishida faoliyat yuritadi. Markaz zamonaviy ta'lim metodikalari va innovatsion yondashuvlar asosida sifatli ta'lim xizmatlarini taqdim etadi. Hozirda kompaniyada 50 nafardan ortiq xodim faoliyat yuritadi, 3 ta filial ishlamoqda hamda 4-filialda ta'mirlash ishlari olib borilmoqda. Mazkur filial sentyabr oyidan o‘quvchilar uchun o‘z faoliyatini boshlashi rejalashtirilgan.
+
+Maqsad: Zamonaviy texnologiyalar va xalqaro standartlarga mos ta'lim dasturlarini joriy etish orqali ta'lim sifatini yangi bosqichga olib chiqish hamda O‘zbekiston bo‘ylab filiallar tarmog‘ini kengaytirish.
+Kuchli onlayn platforma va mobil ilovani yaratish, sun'iy intellekt (AI) asosidagi shaxsiy o‘quv tizimlarini ishlab chiqish, malakali ustozlarni jalb qilish va tayyorlash hamda HR, CRM, KPI va marketing jarayonlarini tizimlashtirish orqali millionlab yoshlarning hayotini o‘zgartiradigan global EdTech kompaniyasini barpo etish.
+
+Yuridik name:  “IMKON-LC 2022” MCHJ

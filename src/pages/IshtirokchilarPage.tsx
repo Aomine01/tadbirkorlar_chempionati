@@ -431,51 +431,69 @@ const IshtirokchilarPage = () => {
   const [visibleCount, setVisibleCount] = useState(12);
 
   useEffect(() => {
-    supabase
-      .from("applications")
-      .select("*, profiles(full_name, phone_number)")
-      .eq("status", "approved")
-      .eq("is_deleted", false)          // exclude soft-deleted applications
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        const dbApps = (data ?? []).map((app: any) => {
-          // Parse product_image_urls if stored as a JSON string
-          let gallery: string[] = [];
-          if (app.product_image_urls) {
-            if (Array.isArray(app.product_image_urls)) {
-              gallery = app.product_image_urls;
-            } else if (typeof app.product_image_urls === "string") {
-              try {
-                gallery = JSON.parse(app.product_image_urls);
-              } catch {
-                gallery = [app.product_image_urls];
+    const fetchApps = () => {
+      supabase
+        .from("applications")
+        .select("*, profiles(full_name, phone_number)")
+        .eq("status", "approved")
+        .eq("is_deleted", false)          // exclude soft-deleted applications
+        .order("created_at", { ascending: false })
+        .then(({ data }) => {
+          const dbApps = (data ?? []).map((app: any) => {
+            // Parse product_image_urls if stored as a JSON string
+            let gallery: string[] = [];
+            if (app.product_image_urls) {
+              if (Array.isArray(app.product_image_urls)) {
+                gallery = app.product_image_urls;
+              } else if (typeof app.product_image_urls === "string") {
+                try {
+                  gallery = JSON.parse(app.product_image_urls);
+                } catch {
+                  gallery = [app.product_image_urls];
+                }
               }
             }
-          }
 
-          // Parse embedded metadata from description (works around RLS profiles query restriction)
-          const rawDescription = app.business_description || "";
-          const founderMatch = rawDescription.match(/\[Founder:\s*([^\]]+)\]/i);
-          const genderMatch = rawDescription.match(/\[Gender:\s*(male|female)\]/i);
-          const phoneMatch = rawDescription.match(/\[Phone:\s*([^\]]+)\]/i);
+            // Parse embedded metadata from description (works around RLS profiles query restriction)
+            const rawDescription = app.business_description || "";
+            const founderMatch = rawDescription.match(/\[Founder:\s*([^\]]+)\]/i);
+            const genderMatch = rawDescription.match(/\[Gender:\s*(male|female)\]/i);
+            const phoneMatch = rawDescription.match(/\[Phone:\s*([^\]]+)\]/i);
 
-          const full_name = founderMatch ? founderMatch[1].trim() : (app.profiles?.full_name || app.brand_name);
-          const gender = genderMatch ? (genderMatch[1].toLowerCase() as "male" | "female") : (app.gender || "male");
-          const phone = phoneMatch ? phoneMatch[1].trim() : (app.profiles?.phone_number || app.phone || "");
+            const full_name = founderMatch ? founderMatch[1].trim() : (app.profiles?.full_name || app.brand_name);
+            const gender = genderMatch ? (genderMatch[1].toLowerCase() as "male" | "female") : (app.gender || "male");
+            const phone = phoneMatch ? phoneMatch[1].trim() : (app.profiles?.phone_number || app.phone || "");
 
-          return {
-            ...app,
-            full_name,
-            gender,
-            phone,
-            gallery
-          };
+            return {
+              ...app,
+              full_name,
+              gender,
+              phone,
+              gallery
+            };
+          });
+          
+          // Combine static premium local participants with Supabase database applications
+          setApplications([...LOCAL_PARTICIPANTS, ...dbApps]);
+          setLoading(false);
         });
-        
-        // Combine static premium local participants with Supabase database applications
-        setApplications([...LOCAL_PARTICIPANTS, ...dbApps]);
-        setLoading(false);
-      });
+    };
+
+    fetchApps();
+
+    // Real-time subscription: auto-refresh when admin approves/changes application status
+    const channel = supabase
+      .channel("ishtirokchilar-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "applications" },
+        () => fetchApps()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Reset pagination when region filter changes
