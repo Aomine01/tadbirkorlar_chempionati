@@ -1,15 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, Lightbulb, Building2, Rocket } from "lucide-react";
+import { X, Building2, Rocket } from "lucide-react";
 
 const categories = [
-  {
-    key: "ideas",
-    title: "G'oya",
-    description:
-      "Sizda hali amalga oshirilmagan, lekin kuchli potensialga ega g'oya bor.",
-    icon: Lightbulb,
-  },
   {
     key: "business",
     title: "An'anaviy biznes",

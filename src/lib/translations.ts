@@ -116,13 +116,13 @@ export const translations: Translations = {
     // Hero
     "hero.title1": "YOSH TADBIRKORLAR",
     "hero.title2": "CHEMPIONATI",
-    "hero.subtitle": "Startapingiz, biznesingiz yoki g'oyangizni taqdim eting va investitsiya uchun kurashing",
+    "hero.subtitle": "Startapingiz yoki biznesingizni taqdim eting va investitsiya uchun kurashing",
     "hero.button": "Ariza topshirish",
     // About
     "about.label": "Chempionat haqida",
     "about.heading1": "CHEMPIONATDA",
     "about.heading2": "NIMALAR KUTILMOQDA",
-    "about.text": "Yurtboshimizning PQ-59 sonli qaroriga asosan tashkil qilingan va har yili o'tkaziladia tanlov bo'lib, 18 yoshdan 30 yoshgacha bo'lgan an'anaviy biznes, startap va g'oyaga ega yoshlar ishtirok etishi mumkin. Tanlov yakunida 100 tagacha biznes va startap loyihalarning har biriga 1 milliard soʻmgacha investitsiya kiritiladi, ularni brendga aylantirish uchun moliyaviy va marketing xizmatlari boʻyicha ekspertlarning bazaviy hisoblash miqdorining 100 baravarigacha miqdorda xarajatlari toʻlab beriladi.",
+    "about.text": "Yurtboshimizning PQ-59 sonli qaroriga asosan tashkil qilingan va har yili o'tkaziladia tanlov bo'lib, 18 yoshdan 30 yoshgacha bo'lgan an'anaviy biznes va startapga ega yoshlar ishtirok etishi mumkin. Tanlov yakunida 100 tagacha biznes va startap loyihalarning har biriga 1 milliard soʻmgacha investitsiya kiritiladi, ularni brendga aylantirish uchun moliyaviy va marketing xizmatlari boʻyicha ekspertlarning bazaviy hisoblash miqdorining 100 baravarigacha miqdorda xarajatlari toʻlab beriladi.",
     // Stats
     "stats.scrollText": "INVESTITSIYA ORQALI - ENG KUCHLI G'OYALAR, ENG JASUR TADBIRKORLAR VA ULARDAN O'SIB CHIQADIGAN DUNYO MIQYOSIDAGI O'ZBEK BRENDLARINI QO'LLAB-QUVVATLAYMIZ",
     "stats.counter1.label": "Yo'nalish",
@@ -159,7 +159,7 @@ export const translations: Translations = {
     "positive.card6.desc": "Chempionat gʻoliblari nufuzli xorijiy akseleratorlar va kompaniyalarga amaliyot oʻtash dasturlariga yuboriladi",
     // Categories
     "cat.label": "Chempionat yo'nalishlari",
-    "cat.heading": "3ta yo'nalish bo'yicha ariza \nqabul qilamiz",
+    "cat.heading": "2ta yo'nalish bo'yicha ariza \nqabul qilamiz",
     "cat.button": "Ariza topshirish",
     "cat.biz.title": "An'anaviy biznes",
     "cat.biz.desc": "Sizda allaqachon ishlayotgan biznes bor. Uni kengaytiring, yangi darajaga olib chiqing va O'zbekistondagi yirik kompaniyalardan biriga aylaning.",

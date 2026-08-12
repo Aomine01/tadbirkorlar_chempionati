@@ -22,7 +22,6 @@ const Footer = () => {
 
   const applyLinks: { labelKey: TranslationKey; key: string }[] = [
     { labelKey: "footer.startup", key: "startup" },
-    { labelKey: "footer.ideas", key: "ideas" },
     { labelKey: "footer.business", key: "business" },
   ];
 

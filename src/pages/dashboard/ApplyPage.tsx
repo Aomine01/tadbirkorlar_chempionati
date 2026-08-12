@@ -30,7 +30,6 @@ const UZBEKISTAN_REGIONS = [
 ];
 
 const CATEGORIES = [
-  { value: "ideas", label: "G'oya", desc: "Kuchli potensialga ega yangi g'oya" },
   { value: "startup", label: "Startap", desc: "Tez o'suvchi texnologik biznes" },
   { value: "business", label: "An'anaviy Biznes", desc: "Allaqachon ishlayotgan biznes" },
 ] as const;
@@ -52,7 +51,7 @@ const step1Schema = z.object({
 });
 
 const step2Schema = z.object({
-  category: z.enum(["ideas", "startup", "business"], {
+  category: z.enum(["startup", "business"], {
     message: "Yo'nalishni tanlang",
   }),
   brand_name: z.string().min(2, "Brand nomini kiriting"),
@@ -327,7 +326,7 @@ interface FormData {
   region: string;
   gender: "male" | "female";
   // Step 2
-  category: "ideas" | "startup" | "business";
+  category: "startup" | "business";
   brand_name: string;
   legal_name: string;
   business_description: string;

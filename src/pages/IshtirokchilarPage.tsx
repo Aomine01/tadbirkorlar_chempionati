@@ -30,7 +30,6 @@ interface ExtendedApplication extends Application {
 /* ─── Category labels ──────────────────────────────── */
 
 const CATEGORY_LABELS: Record<string, string> = {
-  ideas: "G'oya",
   startup: "Startap",
   business: "Biznes",
 };

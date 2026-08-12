@@ -54,9 +54,8 @@ const STATUS_CONFIG = {
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
-  ideas: "G'oya",
-  startup: "Startap",
   business: "An'anaviy Biznes",
+  startup: "Startap",
 };
 
 /* ─── Status Timeline ──────────────────────────────── */

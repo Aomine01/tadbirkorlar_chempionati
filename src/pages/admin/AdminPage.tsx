@@ -233,7 +233,6 @@ function generatePseudoPassport(idStr: string): string {
 const CATEGORY_MAP: Record<string, string> = {
   business: "An'anaviy Biznes",
   startup: "Startap",
-  ideas: "G'oya",
 };
 
 /* ─── Main Admin Component ────────────────────────────────────── */
@@ -2070,7 +2069,6 @@ export default function AdminPage() {
                       <option value="all" className={isLight ? "bg-white text-slate-800" : "bg-[#0a0c10] text-white"}>Kategoriya (Barchasi)</option>
                       <option value="business" className={isLight ? "bg-white text-slate-800" : "bg-[#0a0c10] text-white"}>An'anaviy Biznes</option>
                       <option value="startup" className={isLight ? "bg-white text-slate-800" : "bg-[#0a0c10] text-white"}>Startap</option>
-                      <option value="ideas" className={isLight ? "bg-white text-slate-800" : "bg-[#0a0c10] text-white"}>G'oya</option>
                     </select>
                     <SlidersHorizontal size={14} className={`absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${isLight ? "text-slate-400" : "text-white/40"}`} />
                   </div>

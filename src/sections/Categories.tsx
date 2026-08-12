@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Lightbulb, Building2, Rocket } from "lucide-react";
+import { Building2, Rocket } from "lucide-react";
 import Container from "../components/Container";
 import { useTheme } from "../contexts/ThemeContext";
 import { useLanguage } from "../contexts/LanguageContext";
@@ -8,7 +8,6 @@ import type { TranslationKey } from "../lib/translations";
 const cardDefs: { key: string; icon: typeof Building2; titleKey: TranslationKey; descKey: TranslationKey }[] = [
   { key: "business", icon: Building2, titleKey: "cat.biz.title", descKey: "cat.biz.desc" },
   { key: "startup", icon: Rocket, titleKey: "cat.startup.title", descKey: "cat.startup.desc" },
-  { key: "ideas", icon: Lightbulb, titleKey: "cat.idea.title", descKey: "cat.idea.desc" },
 ];
 
 const Categories = () => {
