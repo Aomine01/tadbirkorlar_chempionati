@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, X } from "lucide-react";
+import { ArrowRight, X, Search, MapPin, RotateCcw } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -11,6 +11,31 @@ import largeCardMen from "../assets/img/largecardmen.png";
 import largeCardFemale from "../assets/img/largcardfemale.png";
 import miniMaleLight from "../assets/imglight/minimalelight.png";
 import miniFemaleLight from "../assets/imglight/minifemalelight.png";
+
+/* ─── Region Normalizer ───────────────────────────────────────── */
+function normalizeRegionName(regionStr: string): string {
+  if (!regionStr) return "Toshkent shahri";
+  let norm = regionStr.trim().toUpperCase().replace(/’|‘|`/g, "'");
+
+  if (norm.includes("QORAQALPOG") || norm.includes("QORAQOLPOG") || norm.includes("KARAKALPAK")) {
+    return "Qoraqalpog'iston Respublikasi";
+  }
+  if (norm.includes("TOSHKENT SHAHRI")) return "Toshkent shahri";
+  if (norm.includes("TOSHKENT VILOYATI")) return "Toshkent viloyati";
+  if (norm.includes("ANDIJON")) return "Andijon viloyati";
+  if (norm.includes("BUXORO")) return "Buxoro viloyati";
+  if (norm.includes("FARG")) return "Farg'ona viloyati";
+  if (norm.includes("JIZZAX")) return "Jizzax viloyati";
+  if (norm.includes("XORAZM")) return "Xorazm viloyati";
+  if (norm.includes("NAMANGAN")) return "Namangan viloyati";
+  if (norm.includes("NAVOIY")) return "Navoiy viloyati";
+  if (norm.includes("QASHQADARYO")) return "Qashqadaryo viloyati";
+  if (norm.includes("SAMARQAND")) return "Samarqand viloyati";
+  if (norm.includes("SIRDARYO")) return "Sirdaryo viloyati";
+  if (norm.includes("SURXONDARYO")) return "Surxondaryo viloyati";
+
+  return regionStr.charAt(0).toUpperCase() + regionStr.slice(1).toLowerCase();
+}
 
 /* ─── Supabase Image Helper ──────────────────────────── */
 function imgUrl(url: string | null | undefined): string {
@@ -423,11 +448,7 @@ const ParticipantDetailModal = ({
 const IshtirokchilarPage = () => {
   const [applications, setApplications] = useState<ExtendedApplication[]>([]);
   const [loading, setLoading] = useState(true);
-  const [regionFilter, setRegionFilter] = useState<string>("all");
   const [selectedApp, setSelectedApp] = useState<ExtendedApplication | null>(null);
-  
-  // Weak device optimization: pagination count
-  const [visibleCount, setVisibleCount] = useState(12);
 
   useEffect(() => {
     const fetchApps = () => {
@@ -465,6 +486,7 @@ const IshtirokchilarPage = () => {
 
             return {
               ...app,
+              region: normalizeRegionName(app.region),
               full_name,
               gender,
               phone,
@@ -495,14 +517,22 @@ const IshtirokchilarPage = () => {
     };
   }, []);
 
-  // Reset pagination when region filter changes
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [regionFilter, setRegionFilter] = useState<string>("all");
+  
+  // Weak device optimization: pagination count
+  const [visibleCount, setVisibleCount] = useState(12);
+
+  // Reset pagination when filters change
   useEffect(() => {
     setVisibleCount(12);
-  }, [regionFilter]);
+  }, [regionFilter, searchQuery, categoryFilter]);
 
   // Unique regions with participant counts for the viloyat filter
   const regionCounts = applications.reduce<Record<string, number>>((acc, a) => {
-    acc[a.region] = (acc[a.region] ?? 0) + 1;
+    const reg = a.region || "Toshkent shahri";
+    acc[reg] = (acc[reg] ?? 0) + 1;
     return acc;
   }, {});
   const uniqueRegions = Object.entries(regionCounts).sort((a, b) => b[1] - a[1]).map(([r]) => r);
@@ -570,50 +600,142 @@ const IshtirokchilarPage = () => {
             Chempionatga qabul qilingan ishtirokchilar — kelajakning yosh tadbirkorlari
           </p>
 
-          {/* Viloyat filter */}
+          {/* Redesigned User-Friendly Filter Control Bar */}
           {!loading && applications.length > 0 && (
-            <div className="mt-6 md:mt-8">
-              <div className="flex overflow-x-auto pb-3 gap-2 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 sm:pb-0 sm:flex-wrap items-center">
-                {/* All button */}
-                <button
-                  onClick={() => setRegionFilter("all")}
-                  className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
-                    regionFilter === "all"
-                      ? "bg-[#00A8FF]/20 border border-[#00A8FF]/30 text-[#00A8FF]"
-                      : "border border-white/10 text-white/40 hover:text-white hover:border-white/20"
-                  }`}
-                >
-                  Barchasi
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                    regionFilter === "all" ? "bg-[#00A8FF]/20 text-[#00A8FF]" : "bg-white/8 text-white/30"
-                  }`}>
-                    {applications.length}
-                  </span>
-                </button>
+            <div className="mt-8 flex flex-col gap-4">
+              <div className="p-3 sm:p-4 rounded-2xl border border-white/10 bg-[#0a0a0c]/80 backdrop-blur-md shadow-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+                
+                {/* Search Input */}
+                <div className="relative flex-1">
+                  <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
+                  <input
+                    type="text"
+                    placeholder="F.I.O yoki Brend nomi..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-9 py-2.5 rounded-xl border border-white/10 bg-white/5 text-xs text-white placeholder-white/40 outline-none focus:border-[#00A8FF]/60 focus:bg-white/10 transition-all font-medium"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white cursor-pointer"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
 
-                {/* One pill per viloyat, sorted by participant count */}
-                {uniqueRegions.map((region) => (
+                {/* Category Switcher */}
+                <div className="flex items-center p-1 rounded-xl border border-white/10 bg-white/5 shrink-0 self-start md:self-auto">
                   <button
-                    key={region}
-                    onClick={() => setRegionFilter(regionFilter === region ? "all" : region)}
-                    className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
-                      regionFilter === region
-                        ? "bg-[#00A8FF]/20 border border-[#00A8FF]/30 text-[#00A8FF]"
-                        : "border border-white/10 text-white/40 hover:text-white hover:border-white/20"
+                    onClick={() => setCategoryFilter("all")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                      categoryFilter === "all"
+                        ? "bg-[#00A8FF] text-white shadow-md"
+                        : "text-white/60 hover:text-white"
+                    }`}
+                    style={{ fontFamily: "var(--font-button)" }}
+                  >
+                    Barchasi
+                  </button>
+                  <button
+                    onClick={() => setCategoryFilter("business")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                      categoryFilter === "business"
+                        ? "bg-[#00A8FF] text-white shadow-md"
+                        : "text-white/60 hover:text-white"
+                    }`}
+                    style={{ fontFamily: "var(--font-button)" }}
+                  >
+                    Biznes
+                  </button>
+                  <button
+                    onClick={() => setCategoryFilter("startup")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                      categoryFilter === "startup"
+                        ? "bg-[#00A8FF] text-white shadow-md"
+                        : "text-white/60 hover:text-white"
+                    }`}
+                    style={{ fontFamily: "var(--font-button)" }}
+                  >
+                    Startap
+                  </button>
+                </div>
+
+                {/* Viloyat Select Dropdown */}
+                <div className="relative shrink-0 min-w-[220px]">
+                  <MapPin size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#00A8FF] pointer-events-none" />
+                  <select
+                    value={regionFilter}
+                    onChange={(e) => setRegionFilter(e.target.value)}
+                    className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-white/10 bg-[#0a0a0c] text-xs text-white outline-none cursor-pointer focus:border-[#00A8FF]/60 appearance-none font-bold tracking-wide"
+                  >
+                    <option value="all">Barcha Hududlar ({applications.length})</option>
+                    {uniqueRegions.map((region) => (
+                      <option key={region} value={region}>
+                        {region} ({regionCounts[region]})
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-white/40 text-[10px]">
+                    ▼
+                  </div>
+                </div>
+              </div>
+
+              {/* Horizontal Scroll Pill Bar + Reset Button */}
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex overflow-x-auto py-1 gap-2 no-scrollbar items-center max-w-full">
+                  <button
+                    onClick={() => setRegionFilter("all")}
+                    className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${
+                      regionFilter === "all"
+                        ? "bg-[#00A8FF]/20 border-[#00A8FF]/40 text-[#00A8FF]"
+                        : "border-white/10 text-white/50 hover:text-white hover:border-white/20 bg-white/5"
                     }`}
                   >
-                    {region}
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                      regionFilter === region ? "bg-[#00A8FF]/20 text-[#00A8FF]" : "bg-white/8 text-white/30"
-                    }`}>
-                      {regionCounts[region]}
+                    Barcha hududlar
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-white/70 font-mono">
+                      {applications.length}
                     </span>
                   </button>
-                ))}
 
-                <span className="ml-auto text-xs text-white/20" style={{ fontFamily: "var(--font-button)" }}>
-                  {filtered.length} ta ishtirokchi
-                </span>
+                  {uniqueRegions.map((region) => (
+                    <button
+                      key={region}
+                      onClick={() => setRegionFilter(regionFilter === region ? "all" : region)}
+                      className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${
+                        regionFilter === region
+                          ? "bg-[#00A8FF]/20 border-[#00A8FF]/40 text-[#00A8FF]"
+                          : "border-white/10 text-white/50 hover:text-white hover:border-white/20 bg-white/5"
+                      }`}
+                    >
+                      {region}
+                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-white/70 font-mono">
+                        {regionCounts[region]}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="shrink-0 ml-auto flex items-center gap-3">
+                  <span className="hidden sm:inline text-xs text-white/40 font-mono">
+                    {filtered.length} ta ishtirokchi
+                  </span>
+                  {(searchQuery || categoryFilter !== "all" || regionFilter !== "all") && (
+                    <button
+                      onClick={() => {
+                        setSearchQuery("");
+                        setCategoryFilter("all");
+                        setRegionFilter("all");
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-400 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 transition-all cursor-pointer"
+                    >
+                      <RotateCcw size={12} />
+                      Tozalash
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           )}
