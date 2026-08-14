@@ -14,31 +14,38 @@ import {
   Shield,
   CalendarDays,
   LayoutList,
+  AlertTriangle,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
 import type { Application } from "../../types/database";
 import HeroImage from "../../assets/img/hero-image.png";
+import VideoPlayer from "../../components/VideoPlayer";
+
+const SORRY_VIDEO_URL = "https://orxgpsqmadgfkmeqkvpy.supabase.co/storage/v1/object/public/participant-media/videos/sorrypage.mp4";
+
+
+/* ─── Status config ────────────────────────────────── */
 
 /* ─── Status config ────────────────────────────────── */
 
 const STATUS_CONFIG = {
   submitted: {
-    label: "Ariza qabul qilindi",
+    label: "1-bosqich: Umumiy ma'lumotlar",
     color: "#00A8FF",
     icon: FileText,
     bg: "bg-[#00A8FF]/10",
     border: "border-[#00A8FF]/20",
   },
   under_review: {
-    label: "Ko'rib chiqilmoqda",
+    label: "2-bosqich: Moliyaviy ko'rsatkichlar",
     color: "#F59E0B",
     icon: Clock,
     bg: "bg-amber-500/10",
     border: "border-amber-500/20",
   },
   approved: {
-    label: "Tasdiqlandi",
+    label: "3-bosqich: Oflayn suhbat",
     color: "#10B981",
     icon: CheckCircle2,
     bg: "bg-emerald-500/10",
@@ -60,33 +67,34 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 /* ─── Status Timeline ──────────────────────────────── */
 
-const steps = ["submitted", "under_review", "approved"] as const;
-type TimelineStatus = (typeof steps)[number] | "rejected";
+const steps = [
+  { key: "submitted", stepNum: "1-bosqich", title: "Umumiy ma'lumotlar" },
+  { key: "under_review", stepNum: "2-bosqich", title: "Moliyaviy ko'rsatkichlar" },
+  { key: "approved", stepNum: "3-bosqich", title: "Oflayn suhbat" },
+] as const;
+
+type TimelineStatus = "submitted" | "under_review" | "approved" | "rejected";
 
 const Timeline = ({ status }: { status: TimelineStatus }) => {
   const isRejectedStatus = status === "rejected";
-  const rejectedAt = isRejectedStatus
-    ? steps.findIndex((s) =>
-        s === "under_review" ? true : s === "submitted"
-      )
-    : -1;
+  const rejectedAt = isRejectedStatus ? 1 : -1;
 
-  const currentIdx = isRejectedStatus ? 1 : steps.indexOf(status as (typeof steps)[number]);
+  const currentIdx = isRejectedStatus ? 1 : steps.findIndex((s) => s.key === status);
 
   return (
-    <div className="flex items-center gap-0 w-full">
-      {steps.map((step, i) => {
-        const cfg = STATUS_CONFIG[step];
+    <div className="flex items-center gap-0 w-full pt-2">
+      {steps.map((stepObj, i) => {
+        const cfg = STATUS_CONFIG[stepObj.key as keyof typeof STATUS_CONFIG];
         const isActive = i <= currentIdx && !isRejectedStatus;
-        const isCurrent = isRejectedStatus ? i === rejectedAt + 1 : i === currentIdx;
+        const isCurrent = isRejectedStatus ? i === rejectedAt : i === currentIdx;
 
         return (
-          <div key={step} className="flex items-center flex-1 last:flex-none">
+          <div key={stepObj.key} className="flex items-center flex-1 last:flex-none">
             <div className="flex flex-col items-center gap-1.5">
               <div
                 className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${
                   isRejectedStatus && isCurrent
-                    ? "border-red-500 bg-red-500/20"
+                    ? "border-red-500 bg-red-500/20 shadow-lg shadow-red-500/20"
                     : isActive
                     ? `border-[${cfg.color}]`
                     : "border-white/15 bg-white/5"
@@ -105,17 +113,27 @@ const Timeline = ({ status }: { status: TimelineStatus }) => {
                   <div className="w-2 h-2 rounded-full bg-white/20" />
                 )}
               </div>
-              <span className="text-[10px] text-white/40 text-center leading-tight max-w-[70px]">
-                {cfg.label}
-              </span>
+              <div className="flex flex-col items-center text-center max-w-[110px] sm:max-w-[130px]">
+                <span
+                  className={`text-[11px] font-bold tracking-tight ${
+                    isActive ? "text-white" : "text-white/40"
+                  }`}
+                  style={{ fontFamily: "var(--font-button)" }}
+                >
+                  {stepObj.stepNum}
+                </span>
+                <span className="text-[10px] text-white/50 leading-tight">
+                  {stepObj.title}
+                </span>
+              </div>
             </div>
             {i < steps.length - 1 && (
               <div
-                className="flex-1 h-px mx-1 mb-5 transition-all duration-500"
+                className="flex-1 h-px mx-1.5 mb-8 transition-all duration-500"
                 style={{
                   background:
                     isActive && i < currentIdx
-                      ? STATUS_CONFIG[steps[i]].color
+                      ? STATUS_CONFIG[steps[i].key as keyof typeof STATUS_CONFIG].color
                       : "rgba(255,255,255,0.1)",
                 }}
               />
@@ -451,29 +469,79 @@ const DashboardPage = () => {
               ) : (
                 /* ── Application exists ── */
                 <div className="flex flex-col gap-6">
-                  {/* Phase 2 invitation banner */}
-                  <div className="rounded-2xl border border-[#00A8FF]/40 bg-[#00A8FF]/10 p-6 backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2 text-[#00A8FF] font-semibold text-xs tracking-wide">
-                        <Award size={16} />
-                        <span>2-Bosqich taklifnomasi</span>
+                  {/* Phase 2 invitation banner (shown when in 1-bosqich / under_review) */}
+                  {application.status === "under_review" && (
+                    <div className="rounded-2xl border border-[#00A8FF]/40 bg-[#00A8FF]/10 p-6 backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl animate-fade-in">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2 text-[#00A8FF] font-semibold text-xs tracking-wide">
+                          <Award size={16} />
+                          <span>2-BOSQICH TAKLIFNOMASI</span>
+                        </div>
+                        <h3 className="text-xl font-bold text-white tracking-tight">
+                          Moliyaviy va Biznes Tahlili So'rovnomasi
+                        </h3>
+                        <p className="text-xs text-white/70 max-w-lg">
+                          Tabriklaymiz! Arizangiz 1-bosqichdan muvaffaqiyatli o'tdi. Qo'shimcha biznes va moliyaviy ma'lumotlarni topshirish uchun so'rovnomani to'ldiring.
+                        </p>
                       </div>
-                      <h3 className="text-xl font-bold text-white tracking-tight">
-                        Moliyaviy va Biznes Tahlili So'rovnomasi
-                      </h3>
-                      <p className="text-xs text-white/70 max-w-lg">
-                        2-bosqich ishtirokchilarining moliyaviy va biznes ko'rsatkichlarini tahlil qilish hamda hujjatlarni topshirish uchun so'rovnomani to'ldiring.
-                      </p>
+                      <Link
+                        to="/phase2-form"
+                        className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold bg-white text-[#0a0f2c] hover:bg-white/90 transition-all duration-300 shadow-lg active:scale-[0.97] shrink-0"
+                        style={{ fontFamily: "var(--font-button)" }}
+                      >
+                        <span>So'rovnomani to'ldirish</span>
+                        <ArrowRight size={16} />
+                      </Link>
                     </div>
-                    <Link
-                      to="/phase2-form"
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold bg-white text-[#0a0f2c] hover:bg-white/90 transition-all duration-300 shadow-lg active:scale-[0.97] shrink-0"
-                      style={{ fontFamily: "var(--font-button)" }}
-                    >
-                      <span>So'rovnomani to'ldirish</span>
-                      <ArrowRight size={16} />
-                    </Link>
-                  </div>
+                  )}
+
+                  {/* Phase 3 finalist banner (shown when approved for offline pitching interview) */}
+                  {application.status === "approved" && (
+                    <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-6 backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl animate-fade-in">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs tracking-wide">
+                          <Award size={16} />
+                          <span>3-BOSQICH: OFLAYN SUHBAT VA PITCHING</span>
+                        </div>
+                        <h3 className="text-xl font-bold text-white tracking-tight">
+                          Tabriklaymiz! Siz Finalistsiz
+                        </h3>
+                        <p className="text-xs text-white/80 max-w-xl leading-relaxed">
+                          Siz 2-bosqich moliyaviy va biznes tahlilidan muvaffaqiyatli o'tdingiz va 3-bosqich (Oflayn suhbat va Pitching) ga saralandingiz! Tashkilotchilar suhbat vaqti hamda joyini belgilash uchun tez orada siz bilan bog'lanishadi.
+                        </p>
+                      </div>
+                      <div className="px-5 py-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold uppercase tracking-wider shrink-0" style={{ fontFamily: "var(--font-button)" }}>
+                        Suhbat kutilmoqda
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Rejected status video & encouragement section */}
+                  {application.status === "rejected" && (
+                    <div className="rounded-2xl border border-rose-500/30 bg-rose-500/5 p-6 backdrop-blur-md flex flex-col gap-6 shadow-xl animate-fade-in">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center shrink-0">
+                          <AlertTriangle className="w-5 h-5 text-rose-400" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+                            Hurmatli Ishtirokchi!
+                          </h3>
+                          <p className="text-xs sm:text-sm text-white/70 mt-1 max-w-2xl leading-relaxed">
+                            Afsuski, ushbu bosqichda arizangiz saralashdan o'tmadi. Loyihangizni yanada rivojlantirish va kelgusi imkoniyatlar haqida batafsil ma'lumot olish uchun quyidagi video murojaatni tomosha qiling.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Video Player */}
+                      <VideoPlayer
+                        src={SORRY_VIDEO_URL}
+                        title="Tashkiliy Qo'mita Murojaati"
+                        subtitle="Yosh Tadbirkorlar Chempionati 2026"
+                        className="w-full aspect-video rounded-xl"
+                      />
+                    </div>
+                  )}
 
                   {/* Status card */}
                   {(() => {

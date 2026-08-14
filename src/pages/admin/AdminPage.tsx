@@ -2,37 +2,26 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
   ChevronDown,
-  Search,
   ArrowLeft,
   XCircle,
   AlertCircle,
   FileText,
   LogOut,
-  Calendar,
-  Check,
   X,
-  RefreshCw,
-  Send,
   Shield,
-  Info,
   Sun,
   Moon,
-  Image as ImageIcon,
-  MapPin,
-  Maximize2,
   Sparkles,
   CheckCircle2,
   Layers,
-  SlidersHorizontal,
   UserCheck,
-  Clock,
   Inbox,
-  RotateCcw,
   Menu,
   Building2,
   Rocket,
   FileCheck,
   Download,
+  Award,
 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -122,9 +111,9 @@ export const STATUS_LIST: StatusConfig[] = [
 ];
 
 export const STEPPER_STAGES = [
-  "Ko'rib chiqilmoqda",
-  "Saralash jarayonida",
-  "Natija tasdiqlandi",
+  "1-bosqich: Umumiy ma'lumotlar",
+  "2-bosqich: Moliyaviy ko'rsatkichlar",
+  "3-bosqich: Oflayn suhbat",
 ];
 
 /* ─── Interfaces ─────────────────────────────────────────────── */
@@ -242,13 +231,13 @@ export default function AdminPage() {
   const isLight = theme === "light";
 
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [activePhase, setActivePhase] = useState<"moderation" | "1-bosqich" | "2-bosqich">("moderation");
+  const [activePhase, setActivePhase] = useState<"moderation" | "1-bosqich" | "2-bosqich" | "3-bosqich">("moderation");
   const [arizalarOpen, setArizalarOpen] = useState(true);
   const [selectedStatusKey, setSelectedStatusKey] = useState<StatusKey>("korib_chiqilmoqda");
 
-  // Selected applicant for Detail View
+  // Selected applicant for Detail View & Detail Tab ("1-bosqich" vs "2-bosqich")
   const [selectedApplicant, setSelectedApplicant] = useState<ApplicantItem | null>(null);
-  const [activeMainImg, setActiveMainImg] = useState<string | null>(null);
+  const [detailTab, setDetailTab] = useState<"1-bosqich" | "2-bosqich">("1-bosqich");
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
 
   // Applicants data
@@ -257,19 +246,61 @@ export default function AdminPage() {
 
   // Phase 2 Applications data
   const [phase2Apps, setPhase2Apps] = useState<Phase2ApplicationItem[]>([]);
-  const [selectedPhase2App, setSelectedPhase2App] = useState<Phase2ApplicationItem | null>(null);
   const [loadingPhase2, setLoadingPhase2] = useState(false);
-
-  // Filters state
-  const [searchName, setSearchName] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [regionFilter, setRegionFilter] = useState("all");
-  const [dateFilter, setDateFilter] = useState("");
 
   // Rejection Dialog State
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [rejectError, setRejectError] = useState("");
+
+  // Bulk Selection & Phase 2 Migration State
+  const [selectedAppIds, setSelectedAppIds] = useState<string[]>([]);
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+
+  const handleToggleSelectApp = (fullId: string) => {
+    setSelectedAppIds((prev) =>
+      prev.includes(fullId) ? prev.filter((id) => id !== fullId) : [...prev, fullId]
+    );
+  };
+
+  const handleToggleSelectAll = (appsList: ApplicantItem[]) => {
+    const allIds = appsList.map((a) => a.fullId);
+    const isAllSelected = allIds.length > 0 && allIds.every((id) => selectedAppIds.includes(id));
+    if (isAllSelected) {
+      setSelectedAppIds((prev) => prev.filter((id) => !allIds.includes(id)));
+    } else {
+      setSelectedAppIds((prev) => Array.from(new Set([...prev, ...allIds])));
+    }
+  };
+
+  const handleBulkMigrateToPhase2 = async () => {
+    if (selectedAppIds.length === 0) return;
+    setIsBulkProcessing(true);
+    try {
+      const { error } = await supabase
+        .from("applications")
+        .update({ status: "approved" } as any)
+        .in("id", selectedAppIds);
+
+      if (!error) {
+        setApplicants((prev) =>
+          prev.map((app) =>
+            selectedAppIds.includes(app.fullId)
+              ? { ...app, status: "tasdiqlangan" as StatusKey }
+              : app
+          )
+        );
+        setSelectedAppIds([]);
+      } else {
+        console.error("Error bulk migrating:", error);
+      }
+    } catch (err) {
+      console.error("Bulk migration failed:", err);
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
 
   // Load ALL Phase 1 applications
   const loadActualApplications = useCallback(async () => {
@@ -412,55 +443,6 @@ export default function AdminPage() {
     };
   }, [loadActualApplications, loadPhase2Applications]);
 
-  const uniqueRegions = useMemo(() => {
-    const set = new Set<string>();
-    applicants.forEach((a) => {
-      if (a.region) set.add(a.region);
-    });
-    return Array.from(set).sort();
-  }, [applicants]);
-
-  const galleryItems = useMemo(() => {
-    if (!selectedApplicant) return [];
-    const items: Array<{ url: string; label: string }> = [];
-    const seen = new Set<string>();
-
-    const getCleanKey = (urlStr: string) => {
-      try {
-        const u = new URL(urlStr);
-        return (u.origin + u.pathname).toLowerCase().replace(/\/$/, "");
-      } catch {
-        return urlStr.split("?")[0].toLowerCase().replace(/\/$/, "");
-      }
-    };
-
-    if (selectedApplicant.productImageUrl) {
-      const key = getCleanKey(selectedApplicant.productImageUrl);
-      seen.add(key);
-      items.push({ url: selectedApplicant.productImageUrl, label: "Rasm 1" });
-    }
-
-    selectedApplicant.productImageUrls.forEach((url) => {
-      if (url) {
-        const key = getCleanKey(url);
-        if (!seen.has(key)) {
-          seen.add(key);
-          items.push({ url, label: `Rasm ${items.length + 1}` });
-        }
-      }
-    });
-
-    if (selectedApplicant.avatarUrl) {
-      const key = getCleanKey(selectedApplicant.avatarUrl);
-      if (!seen.has(key)) {
-        seen.add(key);
-        items.push({ url: selectedApplicant.avatarUrl, label: `Rasm ${items.length + 1}` });
-      }
-    }
-
-    return items;
-  }, [selectedApplicant]);
-
   const statusCounts = useMemo(() => {
     const counts: Record<StatusKey, number> = {
       yangi_ariza: 0,
@@ -478,28 +460,21 @@ export default function AdminPage() {
   }, [applicants]);
 
   const filteredApplicants = useMemo(() => {
-    return applicants.filter((app) => {
-      if (app.status !== selectedStatusKey) return false;
-      if (searchName.trim()) {
-        const query = searchName.toLowerCase().trim();
-        const matchFio = app.fio.toLowerCase().includes(query);
-        const matchBrand = app.brandName.toLowerCase().includes(query);
-        if (!matchFio && !matchBrand) return false;
-      }
-      if (categoryFilter !== "all" && app.category !== categoryFilter) return false;
-      if (regionFilter !== "all" && app.region !== regionFilter) return false;
-      if (dateFilter && !app.date.includes(dateFilter)) return false;
-      return true;
-    });
-  }, [applicants, selectedStatusKey, searchName, categoryFilter, regionFilter, dateFilter]);
+    return applicants.filter((app) => app.status === selectedStatusKey);
+  }, [applicants, selectedStatusKey]);
 
   const moderationApps = useMemo(() => applicants.filter((a) => a.status === "yangi_ariza"), [applicants]);
   const approvedApps = useMemo(() => applicants.filter((a) => a.status === "tasdiqlangan"), [applicants]);
 
-  const handleSelectApplicant = (app: ApplicantItem) => {
+  const handleSelectApplicant = (app: ApplicantItem, initialTab?: "1-bosqich" | "2-bosqich") => {
     setSelectedApplicant(app);
-    const initialImg = app.productImageUrl || (app.productImageUrls.length > 0 ? app.productImageUrls[0] : app.avatarUrl);
-    setActiveMainImg(initialImg);
+    if (initialTab) {
+      setDetailTab(initialTab);
+    } else if (activePhase === "2-bosqich") {
+      setDetailTab("2-bosqich");
+    } else {
+      setDetailTab("1-bosqich");
+    }
   };
 
   const handleUpdateStatus = async (appId: string, newStatus: StatusKey, comment?: string) => {
@@ -536,9 +511,18 @@ export default function AdminPage() {
     }
   };
 
+  const handleApproveModeration = async (appId: string) => {
+    await handleUpdateStatus(appId, "korib_chiqilmoqda");
+    setSelectedApplicant(null);
+  };
+
+  const handleApprovePhase2ToPhase3 = async (appId: string) => {
+    await handleUpdateStatus(appId, "tasdiqlangan");
+    setSelectedApplicant(null);
+  };
+
   const handleApprove = async (appId: string) => {
     await handleUpdateStatus(appId, "tasdiqlangan");
-    // After approval, navigate back to moderation list
     setSelectedApplicant(null);
   };
 
@@ -722,11 +706,42 @@ export default function AdminPage() {
                 className="font-bold tracking-wider uppercase"
                 style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
               >
-                2-Bosqich (Tahlil)
+                2-Bosqich (Moliyaviy)
               </span>
             </div>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
               {phase2Apps.length} TA
+            </span>
+          </button>
+
+          {/* ── 3-BOSQICH (Oflayn suhbat) ── */}
+          <button
+            onClick={() => {
+              setActivePhase("3-bosqich");
+              setSelectedApplicant(null);
+              setMobileDrawerOpen(false);
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+              activePhase === "3-bosqich"
+                ? isLight
+                  ? "bg-emerald-50 text-emerald-600 shadow-xs"
+                  : "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-xs"
+                : isLight
+                ? "text-slate-700 hover:bg-slate-50"
+                : "text-white/70 hover:bg-white/5"
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Award size={16} className={activePhase === "3-bosqich" ? "text-emerald-400" : isLight ? "text-slate-400" : "text-white/40"} />
+              <span
+                className="font-bold tracking-wider uppercase"
+                style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
+              >
+                3-Bosqich (Oflayn suhbat)
+              </span>
+            </div>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              {approvedApps.length} TA
             </span>
           </button>
         </nav>
@@ -874,548 +889,477 @@ export default function AdminPage() {
         </aside>
 
         <main className="flex-1 p-3 sm:p-6 lg:p-8 overflow-y-auto no-scrollbar max-w-7xl mx-auto w-full">
-          {activePhase === "moderation" ? (
-            /* ═══════════════════════════════════════════════════════════ */
-            /* MODERATION VIEW — Yangi Arizalar (submitted)               */
-            /* ═══════════════════════════════════════════════════════════ */
-            selectedApplicant ? (
-              /* MODERATION DETAIL VIEW */
-              <div className="flex flex-col gap-6 animate-fade-in">
-                <div
-                  className={`rounded-2xl border p-4 sm:p-6 backdrop-blur-md shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                    isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => setSelectedApplicant(null)}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#00A8FF] text-white text-xs font-bold shadow-md uppercase tracking-wider cursor-pointer"
-                      style={{ fontFamily: "var(--font-zuume)" }}
-                    >
-                      <ArrowLeft size={15} />
-                      <span>Orqaga</span>
-                    </button>
-                    <div>
-                      <h2
-                        className={`text-xl sm:text-2xl font-bold uppercase tracking-wider ${
-                          isLight ? "text-slate-900" : "text-white"
-                        }`}
-                        style={{ fontFamily: "var(--font-zuume)" }}
-                      >
-                        {selectedApplicant.fio}
-                      </h2>
-                      <p className={`text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>{selectedApplicant.brandName}</p>
-                    </div>
-                  </div>
+          {/* ═════════════════════════════════════════════════════════════ */}
+          {/* UNIFIED APPLICANT DETAIL VIEW (Shared across all 3 steps)     */}
+          {/* ═════════════════════════════════════════════════════════════ */}
+          {selectedApplicant ? (
+            (() => {
+              const matchingP2 = phase2Apps.find(
+                (p) =>
+                  p.application_id === selectedApplicant.fullId ||
+                  p.user_id === selectedApplicant.fullId ||
+                  (p.company_name &&
+                    selectedApplicant.brandName &&
+                    p.company_name.toLowerCase().trim() === selectedApplicant.brandName.toLowerCase().trim())
+              );
 
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      onClick={() => handleApprove(selectedApplicant.fullId)}
-                      className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold text-xs shadow-md transition-all cursor-pointer hover:shadow-lg active:scale-95 flex items-center gap-2 border border-emerald-400/30"
-                    >
-                      <CheckCircle2 size={15} />
-                      <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>Tasdiqlash va Ishtirokchiga qo'shish</span>
-                    </button>
-
-                    <button
-                      onClick={() => handleUpdateStatus(selectedApplicant.fullId, "korib_chiqilmoqda")}
-                      className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-semibold text-xs shadow-md transition-all cursor-pointer hover:shadow-lg active:scale-95 flex items-center gap-2 border border-sky-400/30"
-                    >
-                      <SlidersHorizontal size={14} />
-                      <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>Ko'rib chiqishga o'tkazish</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setRejectModalOpen(true);
-                        setRejectReason(selectedApplicant.rejectionComment || "");
-                      }}
-                      className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white font-semibold text-xs shadow-md transition-all cursor-pointer hover:shadow-lg active:scale-95 flex items-center gap-2 border border-rose-400/30"
-                    >
-                      <XCircle size={14} />
-                      <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>Rad etish</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Applicant Info Card */}
-                <div
-                  className={`rounded-2xl border p-5 sm:p-6 backdrop-blur-md shadow-xl grid grid-cols-1 md:grid-cols-2 gap-y-3.5 gap-x-8 text-xs sm:text-sm ${
-                    isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
-                  }`}
-                >
-                  <div className={`col-span-2 flex items-center gap-3 pb-3 mb-1 border-b ${isLight ? "border-slate-100" : "border-white/10"}`}>
-                    <div className="w-14 h-14 rounded-2xl overflow-hidden bg-slate-900 shrink-0 border border-white/15">
-                      {selectedApplicant.avatarUrl ? (
-                        <img src={selectedApplicant.avatarUrl} alt={selectedApplicant.fio} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-violet-500/20 text-violet-400 font-bold text-xl">
-                          {selectedApplicant.fio.charAt(0)}
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <h3 className={`text-base font-extrabold uppercase tracking-wide ${isLight ? "text-slate-900" : "text-white"}`} style={{ fontFamily: "var(--font-zuume)" }}>
-                        {selectedApplicant.fio}
-                      </h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-violet-500/15 text-violet-400 border border-violet-500/30 uppercase">
-                          Yangi Ariza
-                        </span>
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#00A8FF]/15 text-[#00A8FF] border border-[#00A8FF]/30">
-                          {selectedApplicant.categoryLabel}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {[
-                    { label: "Brend Nomi", val: selectedApplicant.brandName },
-                    { label: "Kategoriya", val: selectedApplicant.categoryLabel },
-                    { label: "Viloyat / Hudud", val: selectedApplicant.region },
-                    { label: "Telefon", val: selectedApplicant.phone },
-                    { label: "Jins", val: selectedApplicant.gender },
-                    { label: "Sana", val: selectedApplicant.date },
-                  ].map(({ label, val }) => (
-                    <div key={label} className={`flex items-center justify-between py-2 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
-                      <span className={isLight ? "font-medium text-slate-500" : "font-medium text-white/50"}>{label}</span>
-                      <span className={`font-bold text-right ${isLight ? "text-slate-900" : "text-white"}`}>{val}</span>
-                    </div>
-                  ))}
-
-                  <div className={`col-span-2 flex flex-col gap-1.5 py-3 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
-                    <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/50"}`}>Biznes Tavsifi</span>
-                    <p className={`text-xs leading-relaxed p-3 rounded-xl ${isLight ? "bg-slate-50" : "bg-white/5"}`}>{selectedApplicant.businessDescription}</p>
-                  </div>
-
-                  {selectedApplicant.goals.length > 0 && (
-                    <div className={`col-span-2 flex flex-col gap-1.5 py-3 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
-                      <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/50"}`}>Maqsadlar</span>
-                      <ul className="flex flex-col gap-1">
-                        {selectedApplicant.goals.map((g, i) => (
-                          <li key={i} className={`text-xs flex gap-2 ${isLight ? "text-slate-700" : "text-white/70"}`}>
-                            <span className="text-emerald-400 shrink-0">•</span>{g}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Product Images */}
-                  {(selectedApplicant.productImageUrl || selectedApplicant.productImageUrls.length > 0) && (
-                    <div className="col-span-2 flex flex-col gap-2 py-3">
-                      <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/50"}`}>Mahsulot Rasmlari</span>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        {[selectedApplicant.productImageUrl, ...selectedApplicant.productImageUrls]
-                          .filter((url, i, arr) => url && arr.indexOf(url) === i)
-                          .map((url, i) => (
-                            <div
-                              key={i}
-                              onClick={() => setLightboxImg(url)}
-                              className="aspect-video rounded-xl overflow-hidden border border-white/10 cursor-pointer hover:border-[#00A8FF]/40 transition-colors"
-                            >
-                              <img src={url!} alt={`Rasm ${i + 1}`} className="w-full h-full object-cover" />
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              /* MODERATION LIST VIEW */
-              <div className="flex flex-col gap-6 animate-fade-in">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2
-                      className={`text-2xl sm:text-4xl font-bold uppercase tracking-wider ${
-                        isLight ? "text-slate-900" : "text-white"
-                      }`}
-                      style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.03em" }}
-                    >
-                      Moderatsiya
-                    </h2>
-                    <p className={`text-xs mt-1 ${isLight ? "text-slate-500" : "text-white/50"}`}>
-                      Yangi kelgan arizalarni ko'rib chiqing va tasdiqlang
-                    </p>
-                  </div>
-                  <span
-                    className={`px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
-                      statusCounts.yangi_ariza > 0
-                        ? "bg-violet-500/15 text-violet-400 border-violet-500/30"
-                        : isLight
-                        ? "bg-blue-50 text-[#00A8FF] border-blue-200/60"
-                        : "bg-[#00A8FF]/10 text-[#00A8FF] border-[#00A8FF]/30"
-                    }`}
-                    style={{ fontFamily: "var(--font-zuume)" }}
-                  >
-                    {statusCounts.yangi_ariza} ta yangi
-                  </span>
-                </div>
-
-                {loadingApps ? (
-                  <div className="py-20 flex flex-col items-center justify-center gap-3">
-                    <div className="w-8 h-8 border-3 border-violet-500 border-t-transparent rounded-full animate-spin" />
-                    <span className={`text-xs font-semibold ${isLight ? "text-slate-500" : "text-white/60"}`}>Yuklanmoqda...</span>
-                  </div>
-                ) : moderationApps.length === 0 ? (
+              return (
+                <div className="flex flex-col gap-6 animate-fade-in">
+                  {/* Top Action Header Bar */}
                   <div
-                    className={`rounded-2xl border p-12 text-center backdrop-blur-md shadow-xl flex flex-col items-center gap-4 ${
+                    className={`rounded-2xl border p-4 sm:p-6 backdrop-blur-md shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
                       isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
                     }`}
                   >
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${isLight ? "bg-slate-100" : "bg-white/5"}`}>
-                      <CheckCircle2 size={32} className="text-emerald-400" />
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setSelectedApplicant(null)}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#00A8FF] text-white text-xs font-bold shadow-md uppercase tracking-wider cursor-pointer hover:bg-[#0090FF]"
+                        style={{ fontFamily: "var(--font-zuume)" }}
+                      >
+                        <ArrowLeft size={15} />
+                        <span>Orqaga</span>
+                      </button>
+                      <div>
+                        <h2
+                          className={`text-xl sm:text-2xl font-bold uppercase tracking-wider ${
+                            isLight ? "text-slate-900" : "text-white"
+                          }`}
+                          style={{ fontFamily: "var(--font-zuume)" }}
+                        >
+                          {selectedApplicant.fio}
+                        </h2>
+                        <p className={`text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>{selectedApplicant.brandName}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className={`text-sm font-bold ${isLight ? "text-slate-700" : "text-white/80"}`} style={{ fontFamily: "var(--font-zuume)" }}>
-                        Yangi arizalar yo'q
-                      </p>
-                      <p className={`text-xs mt-1 ${isLight ? "text-slate-400" : "text-white/40"}`}>
-                        Hamma arizalar ko'rib chiqilgan
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    className={`rounded-2xl border shadow-xl backdrop-blur-md overflow-hidden transition-colors ${
-                      isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/95 border-white/10"
-                    }`}
-                  >
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left border-collapse min-w-[650px]">
-                        <thead>
-                          <tr
-                            className={`border-b text-xs font-bold uppercase tracking-wider ${
-                              isLight ? "bg-slate-50/90 border-slate-200 text-slate-700" : "bg-white/5 border-white/10 text-white/70"
-                            }`}
-                            style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
-                          >
-                            <th className="py-4 px-4 w-12 text-center">#</th>
-                            <th className="py-4 px-4">Arizachi F.I.O & Brend</th>
-                            <th className="py-4 px-4">Kategoriya</th>
-                            <th className="py-4 px-4">Viloyat</th>
-                            <th className="py-4 px-4">Sana</th>
-                            <th className="py-4 px-4 text-center">Amallar</th>
-                          </tr>
-                        </thead>
-                        <tbody className={`divide-y text-xs ${isLight ? "divide-slate-200/60 text-slate-800" : "divide-white/5 text-white/90"}`}>
-                          {moderationApps.map((item, index) => (
-                            <tr key={item.id} className={`transition-all ${isLight ? "hover:bg-violet-50/60" : "hover:bg-violet-500/5"}`}>
-                              <td className={`py-4 px-4 text-center font-mono text-xs font-semibold ${isLight ? "text-slate-400" : "text-white/40"}`}>{index + 1}</td>
-                              <td className="py-4 px-4">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-900 shrink-0 border border-white/15">
-                                    {item.avatarUrl ? (
-                                      <img src={item.avatarUrl} alt={item.fio} className="w-full h-full object-cover" />
-                                    ) : (
-                                      <div className="w-full h-full flex items-center justify-center bg-violet-500/20 text-violet-400 font-bold text-sm">
-                                        {item.fio.charAt(0)}
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="flex flex-col gap-0.5">
-                                    <span className={`text-sm font-extrabold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>{item.fio}</span>
-                                    <span className={`text-xs font-semibold ${isLight ? "text-slate-500" : "text-violet-400/80"}`}>{item.brandName}</span>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="py-4 px-4">
-                                <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-[#00A8FF]/10 text-[#00A8FF] border border-[#00A8FF]/20">
-                                  {item.categoryLabel}
-                                </span>
-                              </td>
-                              <td className={`py-4 px-4 font-semibold text-xs ${isLight ? "text-slate-700" : "text-white/80"}`}>{item.region}</td>
-                              <td className={`py-4 px-4 font-mono text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>{item.date}</td>
-                              <td className="py-4 px-4">
-                                <div className="flex items-center gap-2 justify-center">
-                                  <button
-                                    onClick={() => handleSelectApplicant(item)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
-                                      isLight ? "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100" : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
-                                    }`}
-                                  >
-                                    Ko'rish
-                                  </button>
-                                  <button
-                                    onClick={() => handleApprove(item.fullId)}
-                                    className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
-                                  >
-                                    <Check size={13} />
-                                    Tasdiqlash
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setSelectedApplicant(item);
-                                      setRejectModalOpen(true);
-                                      setRejectReason("");
-                                    }}
-                                    className="px-3 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 text-xs font-bold transition-all cursor-pointer border border-rose-500/30 flex items-center gap-1.5"
-                                  >
-                                    <X size={13} />
-                                    Rad
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      {selectedApplicant.status === "yangi_ariza" ? (
+                        <button
+                          onClick={() => handleApproveModeration(selectedApplicant.fullId)}
+                          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold text-xs shadow-md transition-all cursor-pointer hover:shadow-lg active:scale-95 flex items-center gap-2 border border-emerald-400/30"
+                          title="1-Bosqichga o'tkazish va Ishtirokchilar ro'yxatiga qo'shish"
+                        >
+                          <CheckCircle2 size={15} />
+                          <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>1-Bosqichga o'tkazish</span>
+                        </button>
+                      ) : selectedApplicant.status === "tasdiqlangan" ? (
+                        <span className="px-4 py-2.5 rounded-xl bg-emerald-500/20 text-emerald-400 font-bold text-xs border border-emerald-500/30 flex items-center gap-2">
+                          <Award size={16} />
+                          <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>3-Bosqich Ishtirokchisi</span>
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleApprovePhase2ToPhase3(selectedApplicant.fullId)}
+                          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold text-xs shadow-md transition-all cursor-pointer hover:shadow-lg active:scale-95 flex items-center gap-2 border border-emerald-400/30"
+                          title="3-Bosqich Oflayn suhbatiga o'tkazish"
+                        >
+                          <Sparkles size={15} />
+                          <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>3-Bosqichga o'tkazish</span>
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => {
+                          setRejectModalOpen(true);
+                          setRejectReason(selectedApplicant.rejectionComment || "");
+                        }}
+                        className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white font-semibold text-xs shadow-md transition-all cursor-pointer hover:shadow-lg active:scale-95 flex items-center gap-2 border border-rose-400/30"
+                      >
+                        <XCircle size={14} />
+                        <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>Rad etish</span>
+                      </button>
                     </div>
                   </div>
-                )}
-              </div>
-            )
-          ) : activePhase === "2-bosqich" ? (
-            loadingPhase2 ? (
-              <div className="py-20 flex flex-col items-center justify-center gap-3">
-                <div className="w-8 h-8 border-3 border-[#00A8FF] border-t-transparent rounded-full animate-spin" />
-                <span className={`text-xs font-semibold ${isLight ? "text-slate-500" : "text-white/60"}`}>
-                  2-Bosqich arizalari yuklanmoqda...
-                </span>
-              </div>
-            ) : selectedPhase2App ? (
-              /* PHASE 2 APPLICANT DETAIL INSPECTION VIEW */
-              <div className="flex flex-col gap-6 animate-fade-in">
-                <div
-                  className={`rounded-2xl border p-5 sm:p-6 backdrop-blur-md shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                    isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
+
+                  {/* ── 2 SWITCHER BUTTONS FOR 1-BOSQICH AND 2-BOSQICH MA'LUMOTLARI ── */}
+                  <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/5 border border-white/10 w-fit">
                     <button
-                      onClick={() => setSelectedPhase2App(null)}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#00A8FF] text-white text-xs font-bold shadow-md uppercase tracking-wider cursor-pointer"
-                      style={{ fontFamily: "var(--font-zuume)" }}
+                      onClick={() => setDetailTab("1-bosqich")}
+                      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        detailTab === "1-bosqich"
+                          ? "bg-[#00A8FF] text-white shadow-lg shadow-[#00A8FF]/30"
+                          : isLight ? "text-slate-600 hover:bg-slate-100" : "text-white/60 hover:text-white hover:bg-white/5"
+                      }`}
+                      style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.03em" }}
                     >
-                      <ArrowLeft size={15} />
-                      <span>Orqaga</span>
+                      <FileText size={15} />
+                      <span>1-BOSQICH MA'LUMOTLARI (UMUMIY)</span>
                     </button>
 
-                    <h2
-                      className={`text-xl sm:text-2xl font-bold uppercase tracking-wider ${
-                        isLight ? "text-slate-900" : "text-white"
+                    <button
+                      onClick={() => setDetailTab("2-bosqich")}
+                      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        detailTab === "2-bosqich"
+                          ? "bg-[#00A8FF] text-white shadow-lg shadow-[#00A8FF]/30"
+                          : isLight ? "text-slate-600 hover:bg-slate-100" : "text-white/60 hover:text-white hover:bg-white/5"
                       }`}
-                      style={{ fontFamily: "var(--font-zuume)" }}
+                      style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.03em" }}
                     >
-                      2-Bosqich Tahlil Kartasi
-                    </h2>
+                      <Sparkles size={15} />
+                      <span>2-BOSQICH MA'LUMOTLARI (MOLIYAVIY)</span>
+                      {matchingP2 && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500 text-white font-mono font-bold">
+                          TO'LDIRILGAN
+                        </span>
+                      )}
+                    </button>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 rounded-full text-xs font-bold uppercase bg-[#00A8FF]/15 text-[#00A8FF] border border-[#00A8FF]/30">
-                      {selectedPhase2App.category === "startup" ? "Startap / Innovatsiya" : "An'anaviy Biznes"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* General Info Card */}
-                <div
-                  className={`rounded-2xl border p-6 backdrop-blur-md shadow-xl flex flex-col gap-5 ${
-                    isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
-                  }`}
-                >
-                  <div className="flex items-center justify-between border-b pb-3 border-slate-200 dark:border-white/10">
-                    <h3 className="text-base font-bold uppercase tracking-wider flex items-center gap-2" style={{ fontFamily: "var(--font-zuume)" }}>
-                      <Building2 size={18} className="text-[#00A8FF]" />
-                      <span>{selectedPhase2App.company_name} — Umumiy Ma'lumotlar</span>
-                    </h3>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs sm:text-sm">
-                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-white/5">
-                      <span className="text-slate-400">Tashkiliy-huquqiy shakli:</span>
-                      <span className="font-bold">{selectedPhase2App.legal_structure}</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-white/5">
-                      <span className="text-slate-400">Ro'yxatdan o'tgan sana:</span>
-                      <span className="font-bold">{selectedPhase2App.registration_date || "Kiritilmagan"}</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-white/5">
-                      <span className="text-slate-400">Doimiy xodimlar soni:</span>
-                      <span className="font-bold">{selectedPhase2App.permanent_employees_count} kishi</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-white/5">
-                      <span className="text-slate-400">So'ralayotgan investitsiya:</span>
-                      <span className="font-extrabold text-[#00A8FF]">
-                        {selectedPhase2App.requested_investment_amount?.toLocaleString("ru-RU")} UZS
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5 text-xs">
-                    <span className="font-bold uppercase tracking-wider text-slate-400">Egalik tuzilmasi:</span>
-                    <p className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 leading-relaxed">{selectedPhase2App.ownership_structure}</p>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5 text-xs">
-                    <span className="font-bold uppercase tracking-wider text-slate-400">Investitsiya natijalaridan kutilayotgan samaradorlik:</span>
-                    <p className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 leading-relaxed">{selectedPhase2App.expected_outcomes}</p>
-                  </div>
-                </div>
-
-                {/* Section A or B Dynamic Detailed Data Card */}
-                <div
-                  className={`rounded-2xl border p-6 backdrop-blur-md shadow-xl flex flex-col gap-5 ${
-                    isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
-                  }`}
-                >
-                  {selectedPhase2App.category === "startup" ? (
-                    <>
-                      <h3 className="text-base font-bold uppercase tracking-wider flex items-center gap-2 text-amber-400" style={{ fontFamily: "var(--font-zuume)" }}>
-                        <Rocket size={18} />
-                        <span>B-Bo'lim — Startap / Innovatsiyalar Tahlili</span>
-                      </h3>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs sm:text-sm">
-                        <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
-                          <span className="text-slate-400 font-bold uppercase text-[10px]">Mahsulot Bosqichi (B1):</span>
-                          <span className="font-bold text-amber-400">{selectedPhase2App.section_b_data?.product_stage || "N/A"}</span>
+                  {/* ── TAB CONTENT: 1-BOSQICH MA'LUMOTLARI ── */}
+                  {detailTab === "1-bosqich" && (
+                    <div
+                      className={`rounded-2xl border p-5 sm:p-6 backdrop-blur-md shadow-xl grid grid-cols-1 md:grid-cols-2 gap-y-3.5 gap-x-8 text-xs sm:text-sm ${
+                        isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
+                      }`}
+                    >
+                      <div className={`col-span-2 flex items-center gap-3 pb-3 mb-1 border-b ${isLight ? "border-slate-100" : "border-white/10"}`}>
+                        <div className="w-14 h-14 rounded-2xl overflow-hidden bg-slate-900 shrink-0 border border-white/15">
+                          {selectedApplicant.avatarUrl ? (
+                            <img src={selectedApplicant.avatarUrl} alt={selectedApplicant.fio} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-violet-500/20 text-violet-400 font-bold text-xl">
+                              {selectedApplicant.fio.charAt(0)}
+                            </div>
+                          )}
                         </div>
-
-                        <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
-                          <span className="text-slate-400 font-bold uppercase text-[10px]">Biznes Modeli / Monetizatsiya (B2):</span>
-                          <span className="font-semibold">{selectedPhase2App.section_b_data?.business_model || "N/A"}</span>
-                        </div>
-
-                        <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
-                          <span className="text-slate-400 font-bold uppercase text-[10px]">Hozirgi Traksiya (MAU/MRR) (B3):</span>
-                          <span className="font-semibold">{selectedPhase2App.section_b_data?.current_traction_mau_mrr || "N/A"}</span>
-                        </div>
-
-                        <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
-                          <span className="text-slate-400 font-bold uppercase text-[10px]">12 Oy Kutilayotgan Traksiya (B4):</span>
-                          <span className="font-semibold">{selectedPhase2App.section_b_data?.expected_traction_12m || "N/A"}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-1 text-xs">
-                        <span className="font-bold uppercase tracking-wider text-slate-400">Maqsadli Bozor Hajmi TAM/SAM/SOM (B5):</span>
-                        <p className="p-3 rounded-xl bg-white/5">{selectedPhase2App.section_b_data?.target_market_size || "N/A"}</p>
-                      </div>
-
-                      <div className="flex flex-col gap-1 text-xs">
-                        <span className="font-bold uppercase tracking-wider text-slate-400">Raqobatdoshlik va IP/Patent (B7):</span>
-                        <p className="p-3 rounded-xl bg-white/5">{selectedPhase2App.section_b_data?.competitive_advantage_ip || "N/A"}</p>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <h3 className="text-base font-bold uppercase tracking-wider flex items-center gap-2 text-[#00A8FF]" style={{ fontFamily: "var(--font-zuume)" }}>
-                        <Building2 size={18} />
-                        <span>A-Bo'lim — An'anaviy Biznes Tahlili</span>
-                      </h3>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs sm:text-sm">
-                        <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
-                          <span className="text-slate-400 font-bold uppercase text-[10px]">12 Oylik Tushum Dinamikasi (A1):</span>
-                          <span className="font-semibold">{selectedPhase2App.section_a_data?.revenue_12m_dynamics || "N/A"}</span>
-                        </div>
-
-                        <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
-                          <span className="text-slate-400 font-bold uppercase text-[10px]">Kutilayotgan Yillik Tushum (A2):</span>
-                          <span className="font-semibold text-emerald-400">{selectedPhase2App.section_a_data?.expected_revenue_12m || "N/A"}</span>
-                        </div>
-
-                        <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
-                          <span className="text-slate-400 font-bold uppercase text-[10px]">Joriy Qarzlar (A5):</span>
-                          <span className="font-semibold">{selectedPhase2App.section_a_data?.current_debts_and_payments || "N/A"}</span>
-                        </div>
-
-                        <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
-                          <span className="text-slate-400 font-bold uppercase text-[10px]">Aktivlar va Garov Imkoniyati (A6):</span>
-                          <span className="font-semibold">{selectedPhase2App.section_a_data?.assets_and_collateral || "N/A"}</span>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {/* Uploaded Documents Viewer Card */}
-                <div
-                  className={`rounded-2xl border p-6 backdrop-blur-md shadow-xl flex flex-col gap-4 ${
-                    isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
-                  }`}
-                >
-                  <h3 className="text-base font-bold uppercase tracking-wider flex items-center gap-2" style={{ fontFamily: "var(--font-zuume)" }}>
-                    <FileCheck size={18} className="text-emerald-500" />
-                    <span>Biriktirilgan Hujjatlar ({selectedPhase2App.uploaded_documents?.length || 0} ta)</span>
-                  </h3>
-
-                  {selectedPhase2App.uploaded_documents?.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {selectedPhase2App.uploaded_documents.map((doc, idx) => (
-                        <div
-                          key={idx}
-                          className="p-3.5 rounded-xl border border-white/10 bg-white/5 flex items-center justify-between text-xs"
-                        >
-                          <div className="flex items-center gap-2.5 truncate pr-2">
-                            <FileText size={16} className="text-[#00A8FF] shrink-0" />
-                            <span className="font-semibold truncate">{doc.file_name}</span>
+                        <div>
+                          <h3 className={`text-base font-extrabold uppercase tracking-wide ${isLight ? "text-slate-900" : "text-white"}`} style={{ fontFamily: "var(--font-zuume)" }}>
+                            {selectedApplicant.fio}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#00A8FF]/15 text-[#00A8FF] border border-[#00A8FF]/30 uppercase">
+                              {selectedApplicant.status.replace("_", " ")}
+                            </span>
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-violet-500/15 text-violet-400 border border-violet-500/30">
+                              {selectedApplicant.categoryLabel}
+                            </span>
                           </div>
-                          <a
-                            href={doc.file_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="px-3 py-1.5 rounded-lg bg-[#00A8FF] text-white font-bold flex items-center gap-1.5 hover:bg-[#0090FF]"
-                          >
-                            <Download size={13} />
-                            <span>Yuklab Olish</span>
-                          </a>
+                        </div>
+                      </div>
+
+                      {[
+                        { label: "Brend Nomi", val: selectedApplicant.brandName },
+                        { label: "Yuridik Nomi", val: selectedApplicant.legalName },
+                        { label: "Kategoriya", val: selectedApplicant.categoryLabel },
+                        { label: "Viloyat / Hudud", val: selectedApplicant.region },
+                        { label: "Yosh", val: `${selectedApplicant.age} yosh` },
+                        { label: "Jins", val: selectedApplicant.gender },
+                        { label: "Telefon", val: selectedApplicant.phone },
+                        { label: "Tug'ilgan sana", val: selectedApplicant.birthDate },
+                        { label: "JSHSHIR", val: selectedApplicant.jshshir },
+                        { label: "Pasport seriyasi", val: selectedApplicant.passport },
+                        { label: "Sana", val: selectedApplicant.date },
+                      ].map(({ label, val }) => (
+                        <div key={label} className={`flex items-center justify-between py-2 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
+                          <span className={isLight ? "font-medium text-slate-500" : "font-medium text-white/50"}>{label}</span>
+                          <span className={`font-bold text-right ${isLight ? "text-slate-900" : "text-white"}`}>{val}</span>
                         </div>
                       ))}
+
+                      <div className={`col-span-2 flex flex-col gap-1.5 py-3 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
+                        <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/50"}`}>Biznes Tavsifi</span>
+                        <p className={`text-xs leading-relaxed p-3 rounded-xl ${isLight ? "bg-slate-50" : "bg-white/5"}`}>{selectedApplicant.businessDescription}</p>
+                      </div>
+
+                      {selectedApplicant.goals.length > 0 && (
+                        <div className={`col-span-2 flex flex-col gap-1.5 py-3 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
+                          <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/50"}`}>Maqsadlar</span>
+                          <ul className="flex flex-col gap-1">
+                            {selectedApplicant.goals.map((g, i) => (
+                              <li key={i} className={`text-xs flex gap-2 ${isLight ? "text-slate-700" : "text-white/70"}`}>
+                                <span className="text-emerald-400 shrink-0">•</span>{g}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Product Images Gallery */}
+                      {(selectedApplicant.productImageUrl || selectedApplicant.productImageUrls.length > 0) && (
+                        <div className="col-span-2 flex flex-col gap-2 py-3">
+                          <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/50"}`}>Mahsulot Rasmlari</span>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            {[selectedApplicant.productImageUrl, ...selectedApplicant.productImageUrls]
+                              .filter((url, i, arr) => url && arr.indexOf(url) === i)
+                              .map((url, i) => (
+                                <div
+                                  key={i}
+                                  onClick={() => setLightboxImg(url)}
+                                  className="aspect-video rounded-xl overflow-hidden border border-white/10 cursor-pointer hover:border-[#00A8FF]/40 transition-colors"
+                                >
+                                  <img src={url!} alt={`Rasm ${i + 1}`} className="w-full h-full object-cover" />
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <p className="text-xs text-slate-400">Ushbu nomzod tomonidan alohida fayl biriktirilmagan</p>
+                  )}
+
+                  {/* ── TAB CONTENT: 2-BOSQICH MA'LUMOTLARI ── */}
+                  {detailTab === "2-bosqich" && (
+                    matchingP2 ? (
+                      <div className="flex flex-col gap-6">
+                        {/* General Info Card */}
+                        <div
+                          className={`rounded-2xl border p-6 backdrop-blur-md shadow-xl flex flex-col gap-5 ${
+                            isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between border-b pb-3 border-slate-200 dark:border-white/10">
+                            <h3 className="text-base font-bold uppercase tracking-wider flex items-center gap-2" style={{ fontFamily: "var(--font-zuume)" }}>
+                              <Building2 size={18} className="text-[#00A8FF]" />
+                              <span>{matchingP2.company_name} — 2-Bosqich Moliyaviy Tahlili</span>
+                            </h3>
+                            <span className="px-3 py-1 rounded-full text-xs font-bold uppercase bg-[#00A8FF]/15 text-[#00A8FF] border border-[#00A8FF]/30">
+                              {matchingP2.category === "startup" ? "Startap / Innovatsiya" : "An'anaviy Biznes"}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs sm:text-sm">
+                            <div className="flex justify-between py-2 border-b border-slate-100 dark:border-white/5">
+                              <span className="text-slate-400">Tashkiliy-huquqiy shakli:</span>
+                              <span className="font-bold">{matchingP2.legal_structure}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-slate-100 dark:border-white/5">
+                              <span className="text-slate-400">Ro'yxatdan o'tgan sana:</span>
+                              <span className="font-bold">{matchingP2.registration_date || "Kiritilmagan"}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-slate-100 dark:border-white/5">
+                              <span className="text-slate-400">Doimiy xodimlar soni:</span>
+                              <span className="font-bold">{matchingP2.permanent_employees_count} kishi</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b border-slate-100 dark:border-white/5">
+                              <span className="text-slate-400">So'ralayotgan investitsiya:</span>
+                              <span className="font-extrabold text-[#00A8FF]">
+                                {matchingP2.requested_investment_amount?.toLocaleString("ru-RU")} UZS
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-1.5 text-xs">
+                            <span className="font-bold uppercase tracking-wider text-slate-400">Egalik tuzilmasi:</span>
+                            <p className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 leading-relaxed">{matchingP2.ownership_structure}</p>
+                          </div>
+
+                          <div className="flex flex-col gap-1.5 text-xs">
+                            <span className="font-bold uppercase tracking-wider text-slate-400">Investitsiya natijalaridan kutilayotgan samaradorlik:</span>
+                            <p className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 leading-relaxed">{matchingP2.expected_outcomes}</p>
+                          </div>
+                        </div>
+
+                        {/* Section A or B Dynamic Detailed Data Card */}
+                        <div
+                          className={`rounded-2xl border p-6 backdrop-blur-md shadow-xl flex flex-col gap-5 ${
+                            isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
+                          }`}
+                        >
+                          {matchingP2.category === "startup" ? (
+                            <>
+                              <h3 className="text-base font-bold uppercase tracking-wider flex items-center gap-2 text-amber-400" style={{ fontFamily: "var(--font-zuume)" }}>
+                                <Rocket size={18} />
+                                <span>B-Bo'lim — Startap / Innovatsiyalar Tahlili</span>
+                              </h3>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs sm:text-sm">
+                                <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
+                                  <span className="text-slate-400 font-bold uppercase text-[10px]">Mahsulot Bosqichi (B1):</span>
+                                  <span className="font-bold text-amber-400">{matchingP2.section_b_data?.product_stage || "N/A"}</span>
+                                </div>
+
+                                <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
+                                  <span className="text-slate-400 font-bold uppercase text-[10px]">Biznes Modeli / Monetizatsiya (B2):</span>
+                                  <span className="font-semibold">{matchingP2.section_b_data?.business_model || "N/A"}</span>
+                                </div>
+
+                                <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
+                                  <span className="text-slate-400 font-bold uppercase text-[10px]">Hozirgi Traksiya (MAU/MRR) (B3):</span>
+                                  <span className="font-semibold">{matchingP2.section_b_data?.current_traction_mau_mrr || "N/A"}</span>
+                                </div>
+
+                                <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
+                                  <span className="text-slate-400 font-bold uppercase text-[10px]">12 Oy Kutilayotgan Traksiya (B4):</span>
+                                  <span className="font-semibold">{matchingP2.section_b_data?.expected_traction_12m || "N/A"}</span>
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <h3 className="text-base font-bold uppercase tracking-wider flex items-center gap-2 text-[#00A8FF]" style={{ fontFamily: "var(--font-zuume)" }}>
+                                <Building2 size={18} />
+                                <span>A-Bo'lim — An'anaviy Biznes Tahlili</span>
+                              </h3>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs sm:text-sm">
+                                <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
+                                  <span className="text-slate-400 font-bold uppercase text-[10px]">12 Oylik Tushum Dinamikasi (A1):</span>
+                                  <span className="font-semibold">{matchingP2.section_a_data?.revenue_12m_dynamics || "N/A"}</span>
+                                </div>
+
+                                <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
+                                  <span className="text-slate-400 font-bold uppercase text-[10px]">Kutilayotgan Yillik Tushum (A2):</span>
+                                  <span className="font-semibold text-emerald-400">{matchingP2.section_a_data?.expected_revenue_12m || "N/A"}</span>
+                                </div>
+
+                                <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
+                                  <span className="text-slate-400 font-bold uppercase text-[10px]">Joriy Qarzlar (A5):</span>
+                                  <span className="font-semibold">{matchingP2.section_a_data?.current_debts_and_payments || "N/A"}</span>
+                                </div>
+
+                                <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
+                                  <span className="text-slate-400 font-bold uppercase text-[10px]">Aktivlar va Garov Imkoniyati (A6):</span>
+                                  <span className="font-semibold">{matchingP2.section_a_data?.assets_and_collateral || "N/A"}</span>
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Uploaded Documents Viewer Card */}
+                        <div
+                          className={`rounded-2xl border p-6 backdrop-blur-md shadow-xl flex flex-col gap-4 ${
+                            isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
+                          }`}
+                        >
+                          <h3 className="text-base font-bold uppercase tracking-wider flex items-center gap-2" style={{ fontFamily: "var(--font-zuume)" }}>
+                            <FileCheck size={18} className="text-emerald-500" />
+                            <span>Biriktirilgan Hujjatlar ({matchingP2.uploaded_documents?.length || 0} ta)</span>
+                          </h3>
+
+                          {matchingP2.uploaded_documents?.length > 0 ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {matchingP2.uploaded_documents.map((doc, idx) => (
+                                <div
+                                  key={idx}
+                                  className="p-3.5 rounded-xl border border-white/10 bg-white/5 flex items-center justify-between text-xs"
+                                >
+                                  <div className="flex items-center gap-2.5 truncate pr-2">
+                                    <FileText size={16} className="text-[#00A8FF] shrink-0" />
+                                    <span className="font-semibold truncate">{doc.file_name}</span>
+                                  </div>
+                                  <a
+                                    href={doc.file_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="px-3 py-1.5 rounded-lg bg-[#00A8FF] text-white font-bold flex items-center gap-1.5 hover:bg-[#0090FF]"
+                                  >
+                                    <Download size={13} />
+                                    <span>Yuklab Olish</span>
+                                  </a>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-slate-400">Ushbu nomzod tomonidan alohida fayl biriktirilmagan</p>
+                          )}
+                        </div>
+
+                        {/* Electronic NDA Verification Badge */}
+                        <div className="p-5 rounded-2xl border bg-emerald-500/10 border-emerald-500/30 flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-3">
+                            <Shield size={22} className="text-emerald-400 shrink-0" />
+                            <div>
+                              <span className="font-bold text-emerald-400 uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>
+                                Elektron NDA Imzolangan (Rasmiy Kelishuv)
+                              </span>
+                              <p className="text-slate-300 text-[11px] mt-0.5">
+                                Imzolovchi: <strong>{matchingP2.nda_signer_name}</strong> • Imzolangan sana: {new Date(matchingP2.nda_agreed_at || matchingP2.created_at).toLocaleString("ru-RU")}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold border border-emerald-500/40">
+                            VERIFIED v1.0
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        className={`rounded-2xl border p-12 text-center backdrop-blur-md shadow-xl flex flex-col items-center gap-4 ${
+                          isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
+                        }`}
+                      >
+                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${isLight ? "bg-amber-50" : "bg-amber-500/10"}`}>
+                          <AlertCircle size={32} className="text-amber-400" />
+                        </div>
+                        <div>
+                          <p className={`text-base font-bold uppercase ${isLight ? "text-slate-800" : "text-white"}`} style={{ fontFamily: "var(--font-zuume)" }}>
+                            2-Bosqich so'rovnomasi to'ldirilmagan
+                          </p>
+                          <p className={`text-xs mt-1 max-w-md ${isLight ? "text-slate-500" : "text-white/50"}`}>
+                            Ushbu ishtirokchi 2-bosqich moliyaviy va biznes tahlili so'rovnomasini (Section A/B & NDA) hali topshirmagan.
+                          </p>
+                        </div>
+                      </div>
+                    )
                   )}
                 </div>
-
-                {/* Electronic NDA Verification Badge */}
-                <div className="p-5 rounded-2xl border bg-emerald-500/10 border-emerald-500/30 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-3">
-                    <Shield size={22} className="text-emerald-400 shrink-0" />
-                    <div>
-                      <span className="font-bold text-emerald-400 uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>
-                        Elektron NDA Imzolangan (Rasmiy Kelishuv)
-                      </span>
-                      <p className="text-slate-300 text-[11px] mt-0.5">
-                        Imzolovchi: <strong>{selectedPhase2App.nda_signer_name}</strong> • Imzolangan sana: {new Date(selectedPhase2App.nda_agreed_at || selectedPhase2App.created_at).toLocaleString("ru-RU")}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold border border-emerald-500/40">
-                    VERIFIED v1.0
-                  </span>
-                </div>
-              </div>
-            ) : (
-              /* PHASE 2 APPLICANTS LIST VIEW */
-              <div className="flex flex-col gap-6 animate-fade-in">
-                <div className="flex items-center justify-between">
+              );
+            })()
+          ) : activePhase === "moderation" ? (
+            /* ═══════════════════════════════════════════════════════════ */
+            /* MODERATION VIEW — Yangi Arizalar (submitted)               */
+            /* ═══════════════════════════════════════════════════════════ */
+            <div className="flex flex-col gap-6 animate-fade-in">
+              <div className="flex items-center justify-between">
+                <div>
                   <h2
                     className={`text-2xl sm:text-4xl font-bold uppercase tracking-wider ${
                       isLight ? "text-slate-900" : "text-white"
                     }`}
                     style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.03em" }}
                   >
-                    2-Bosqich Biznes va Moliyaviy Tahlil Arizalari
+                    Moderatsiya
                   </h2>
-                  <span
-                    className="px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#00A8FF]/15 text-[#00A8FF] border border-[#00A8FF]/30"
-                    style={{ fontFamily: "var(--font-zuume)" }}
-                  >
-                    Jami: {phase2Apps.length} ta
-                  </span>
+                  <p className={`text-xs mt-1 ${isLight ? "text-slate-500" : "text-white/50"}`}>
+                    Yangi kelgan arizalarni ko'rib chiqing va tasdiqlang
+                  </p>
                 </div>
+                <span
+                  className={`px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
+                    statusCounts.yangi_ariza > 0
+                      ? "bg-violet-500/15 text-violet-400 border-violet-500/30"
+                      : isLight
+                      ? "bg-blue-50 text-[#00A8FF] border-blue-200/60"
+                      : "bg-[#00A8FF]/10 text-[#00A8FF] border-[#00A8FF]/30"
+                  }`}
+                  style={{ fontFamily: "var(--font-zuume)" }}
+                >
+                  {statusCounts.yangi_ariza} ta yangi
+                </span>
+              </div>
 
-                {/* Phase 2 Submissions Table */}
+              {loadingApps ? (
+                <div className="py-20 flex flex-col items-center justify-center gap-3">
+                  <div className="w-8 h-8 border-3 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                  <span className={`text-xs font-semibold ${isLight ? "text-slate-500" : "text-white/60"}`}>Yuklanmoqda...</span>
+                </div>
+              ) : moderationApps.length === 0 ? (
+                <div
+                  className={`rounded-2xl border p-12 text-center backdrop-blur-md shadow-xl flex flex-col items-center gap-4 ${
+                    isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
+                  }`}
+                >
+                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${isLight ? "bg-slate-100" : "bg-white/5"}`}>
+                    <CheckCircle2 size={32} className="text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className={`text-sm font-bold ${isLight ? "text-slate-700" : "text-white/80"}`} style={{ fontFamily: "var(--font-zuume)" }}>
+                      Yangi arizalar yo'q
+                    </p>
+                    <p className={`text-xs mt-1 ${isLight ? "text-slate-400" : "text-white/40"}`}>
+                      Hamma arizalar ko'rib chiqilgan
+                    </p>
+                  </div>
+                </div>
+              ) : (
                 <div
                   className={`rounded-2xl border shadow-xl backdrop-blur-md overflow-hidden transition-colors ${
                     isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/95 border-white/10"
                   }`}
                 >
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse min-w-[700px]">
+                    <table className="w-full text-left border-collapse min-w-[650px]">
                       <thead>
                         <tr
                           className={`border-b text-xs font-bold uppercase tracking-wider ${
@@ -1423,21 +1367,173 @@ export default function AdminPage() {
                           }`}
                           style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
                         >
+                          <th className="py-4 px-3 w-10 text-center">
+                            <input
+                              type="checkbox"
+                              checked={
+                                moderationApps.length > 0 &&
+                                moderationApps.every((a) => selectedAppIds.includes(a.fullId))
+                              }
+                              onChange={() => handleToggleSelectAll(moderationApps)}
+                              className="w-4 h-4 rounded accent-[#00A8FF] cursor-pointer"
+                            />
+                          </th>
                           <th className="py-4 px-4 w-12 text-center">#</th>
-                          <th className="py-4 px-4">Korxona Nomi</th>
-                          <th className="py-4 px-4">Toifasi</th>
-                          <th className="py-4 px-4">So'ralgan Investitsiya</th>
-                          <th className="py-4 px-4 text-center">Hujjatlar</th>
-                          <th className="py-4 px-4 text-center">NDA Tasdiq</th>
-                          <th className="py-4 px-4 text-center">Batafsil</th>
+                          <th className="py-4 px-4">Arizachi F.I.O & Brend</th>
+                          <th className="py-4 px-4">Kategoriya</th>
+                          <th className="py-4 px-4">Viloyat</th>
+                          <th className="py-4 px-4">Sana</th>
+                          <th className="py-4 px-4 text-center">Amallar</th>
                         </tr>
                       </thead>
                       <tbody className={`divide-y text-xs ${isLight ? "divide-slate-200/60 text-slate-800" : "divide-white/5 text-white/90"}`}>
-                        {phase2Apps.length > 0 ? (
-                          phase2Apps.map((item, index) => (
+                        {moderationApps.map((item, index) => (
+                          <tr key={item.id} className={`transition-all ${selectedAppIds.includes(item.fullId) ? (isLight ? "bg-sky-50" : "bg-[#00A8FF]/10") : (isLight ? "hover:bg-violet-50/60" : "hover:bg-violet-500/5")}`}>
+                            <td className="py-4 px-3 text-center">
+                              <input
+                                type="checkbox"
+                                checked={selectedAppIds.includes(item.fullId)}
+                                onChange={() => handleToggleSelectApp(item.fullId)}
+                                className="w-4 h-4 rounded accent-[#00A8FF] cursor-pointer"
+                              />
+                            </td>
+                            <td className={`py-4 px-4 text-center font-mono text-xs font-semibold ${isLight ? "text-slate-400" : "text-white/40"}`}>{index + 1}</td>
+                            <td className="py-4 px-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-900 shrink-0 border border-white/15">
+                                  {item.avatarUrl ? (
+                                    <img src={item.avatarUrl} alt={item.fio} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-violet-500/20 text-violet-400 font-bold text-sm">
+                                      {item.fio.charAt(0)}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex flex-col gap-0.5">
+                                  <span className={`text-sm font-extrabold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>{item.fio}</span>
+                                  <span className={`text-xs font-semibold ${isLight ? "text-slate-500" : "text-violet-400/80"}`}>{item.brandName}</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-4 px-4">
+                              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-[#00A8FF]/10 text-[#00A8FF] border border-[#00A8FF]/20">
+                                {item.categoryLabel}
+                              </span>
+                            </td>
+                            <td className={`py-4 px-4 font-semibold text-xs ${isLight ? "text-slate-700" : "text-white/80"}`}>{item.region}</td>
+                            <td className={`py-4 px-4 font-mono text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>{item.date}</td>
+                            <td className="py-4 px-4">
+                              <div className="flex items-center gap-2 justify-center">
+                                <button
+                                  onClick={() => handleSelectApplicant(item, "1-bosqich")}
+                                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
+                                    isLight ? "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100" : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
+                                  }`}
+                                >
+                                  Ko'rish
+                                </button>
+                                <button
+                                  onClick={() => handleApproveModeration(item.fullId)}
+                                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+                                  title="1-Bosqichga o'tkazish va Ishtirokchilar ro'yxatiga qo'shish"
+                                >
+                                  <CheckCircle2 size={13} />
+                                  <span>1-Bosqichga o'tkazish</span>
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setSelectedApplicant(item);
+                                    setRejectModalOpen(true);
+                                    setRejectReason("");
+                                  }}
+                                  className="px-3 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 text-xs font-bold transition-all cursor-pointer border border-rose-500/30 flex items-center gap-1.5"
+                                >
+                                  <X size={13} />
+                                  Rad
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : activePhase === "2-bosqich" ? (
+            /* ═══════════════════════════════════════════════════════════ */
+            /* 2-BOSQICH VIEW — Moliyaviy Ko'rsatkichlar & Tahlil         */
+            /* ═══════════════════════════════════════════════════════════ */
+            <div className="flex flex-col gap-6 animate-fade-in">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2
+                    className={`text-2xl sm:text-4xl font-bold uppercase tracking-wider ${
+                      isLight ? "text-slate-900" : "text-white"
+                    }`}
+                    style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.03em" }}
+                  >
+                    2-Bosqich Moliyaviy va Biznes Tahlil Arizalari
+                  </h2>
+                  <p className={`text-xs mt-1 ${isLight ? "text-slate-500" : "text-white/50"}`}>
+                    2-bosqich ishtirokchilarining moliyaviy so'rovnomalari, hujjatlari va NDA verification holati
+                  </p>
+                </div>
+                <span
+                  className="px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#00A8FF]/15 text-[#00A8FF] border border-[#00A8FF]/30"
+                  style={{ fontFamily: "var(--font-zuume)" }}
+                >
+                  Jami: {phase2Apps.length} ta
+                </span>
+              </div>
+
+              {loadingPhase2 ? (
+                <div className="py-20 flex flex-col items-center justify-center gap-3">
+                  <div className="w-8 h-8 border-3 border-[#00A8FF] border-t-transparent rounded-full animate-spin" />
+                  <span className={`text-xs font-semibold ${isLight ? "text-slate-500" : "text-white/60"}`}>
+                    2-Bosqich arizalari yuklanmoqda...
+                  </span>
+                </div>
+              ) : (
+                <div
+                  className={`rounded-2xl border shadow-xl backdrop-blur-md overflow-hidden transition-colors ${
+                    isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/95 border-white/10"
+                  }`}
+                >
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse min-w-[700px]">
+                    <thead>
+                      <tr
+                        className={`border-b text-xs font-bold uppercase tracking-wider ${
+                          isLight ? "bg-slate-50/90 border-slate-200 text-slate-700" : "bg-white/5 border-white/10 text-white/70"
+                        }`}
+                        style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
+                      >
+                        <th className="py-4 px-4 w-12 text-center">#</th>
+                        <th className="py-4 px-4">Korxona / Ishtirokchi Nomi</th>
+                        <th className="py-4 px-4">Toifasi</th>
+                        <th className="py-4 px-4">So'ralgan Investitsiya</th>
+                        <th className="py-4 px-4 text-center">Hujjatlar</th>
+                        <th className="py-4 px-4 text-center">NDA Tasdiq</th>
+                        <th className="py-4 px-4 text-center">Batafsil</th>
+                      </tr>
+                    </thead>
+                    <tbody className={`divide-y text-xs ${isLight ? "divide-slate-200/60 text-slate-800" : "divide-white/5 text-white/90"}`}>
+                      {phase2Apps.length > 0 ? (
+                        phase2Apps.map((item, index) => {
+                          const matchingApp = applicants.find(
+                            (a) => a.fullId === item.application_id || a.fullId === item.user_id || a.brandName?.toLowerCase().trim() === item.company_name?.toLowerCase().trim()
+                          );
+
+                          return (
                             <tr
                               key={item.id}
-                              onClick={() => setSelectedPhase2App(item)}
+                              onClick={() => {
+                                if (matchingApp) {
+                                  handleSelectApplicant(matchingApp, "2-bosqich");
+                                }
+                              }}
                               className={`transition-all cursor-pointer ${
                                 isLight ? "hover:bg-blue-50/60" : "hover:bg-[#00A8FF]/10"
                               }`}
@@ -1468,385 +1564,53 @@ export default function AdminPage() {
                                 </span>
                               </td>
                               <td className="py-4 px-4 text-center">
-                                <button className="px-3 py-1 rounded-lg bg-[#00A8FF] text-white font-bold text-xs hover:bg-[#0090FF]">
+                                <button className="px-3.5 py-1.5 rounded-lg bg-[#00A8FF] text-white font-bold text-xs hover:bg-[#0090FF]">
                                   Ko'rish
                                 </button>
                               </td>
                             </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan={7} className="py-12 text-center text-slate-400">
-                              <div className="flex flex-col items-center justify-center gap-2">
-                                <FileText size={32} className="opacity-40" />
-                                <p className="text-sm font-medium">Hozircha 2-bosqich so'rovnomalari kelib tushmagan</p>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan={7} className="py-12 text-center text-slate-400">
+                            <div className="flex flex-col items-center justify-center gap-2">
+                              <FileText size={32} className="opacity-40" />
+                              <p className="text-sm font-medium">Hozircha 2-bosqich so'rovnomalari kelib tushmagan</p>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-            )
-          ) : loadingApps ? (
-            <div className="py-20 flex flex-col items-center justify-center gap-3">
-              <div className="w-8 h-8 border-3 border-[#00A8FF] border-t-transparent rounded-full animate-spin" />
-              <span className={`text-xs font-semibold ${isLight ? "text-slate-500" : "text-white/60"}`}>
-                Bazadan real arizalar yuklanmoqda...
-              </span>
-            </div>
-          ) : selectedApplicant ? (
-            /* ──────────────────────────────────────────────────────────── */
-            /* VIEW MODE 1: PHASE 1 APPLICANT DETAILS                       */
-            /* ──────────────────────────────────────────────────────────── */
-            <div className="flex flex-col gap-6 animate-fade-in">
-              <div
-                className={`rounded-2xl border p-4 sm:p-6 backdrop-blur-md shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all ${
-                  isLight
-                    ? "bg-white/90 border-slate-200/90 hover:border-blue-300"
-                    : "bg-[#0a0c10]/90 border-white/10 hover:border-[#00A8FF]/30"
-                }`}
-              >
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <button
-                    onClick={() => setSelectedApplicant(null)}
-                    className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-[#00A8FF] hover:bg-[#0090FF] text-white text-xs font-bold shadow-md transition-all cursor-pointer hover:shadow-lg active:scale-95 uppercase tracking-wider"
-                    style={{ fontFamily: "var(--font-zuume)" }}
-                  >
-                    <ArrowLeft size={15} />
-                    <span>Orqaga</span>
-                  </button>
-
-                  <div className="flex items-center gap-2.5 sm:gap-3">
-                    <h2
-                      className={`text-xl sm:text-3xl font-bold uppercase tracking-wider ${
-                        isLight ? "text-slate-900" : "text-white"
-                      }`}
-                      style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.04em" }}
-                    >
-                      Ariza
-                    </h2>
-                    <span
-                      className={`text-xs font-mono px-2 py-0.5 sm:py-1 rounded-md font-semibold ${
-                        isLight ? "bg-slate-100 text-slate-600" : "bg-white/10 text-white/70"
-                      }`}
-                    >
-                      #{selectedApplicant.id}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-                  <button
-                    onClick={() => handleUpdateStatus(selectedApplicant.fullId, "qaytarildi")}
-                    className="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold text-xs shadow-xs transition-all cursor-pointer hover:shadow-md active:scale-95 flex items-center gap-2 border border-amber-400/30"
-                  >
-                    <RefreshCw size={14} />
-                    <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>Qayta ko'rib chiqishga qaytarish</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleUpdateStatus(selectedApplicant.fullId, "korib_chiqilmoqda")}
-                    className="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold text-xs shadow-xs transition-all cursor-pointer hover:shadow-md active:scale-95 flex items-center gap-2 border border-emerald-400/30"
-                  >
-                    <Send size={14} />
-                    <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>Saralashga o'tkazish</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setRejectModalOpen(true);
-                      setRejectReason(selectedApplicant.rejectionComment || "");
-                    }}
-                    className="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white font-semibold text-xs shadow-xs transition-all cursor-pointer hover:shadow-md active:scale-95 flex items-center gap-2 border border-rose-400/30"
-                  >
-                    <XCircle size={14} />
-                    <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>Rad etish</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Stepper Timeline Bar */}
-              <div
-                className={`rounded-2xl border p-4 sm:p-6 backdrop-blur-md shadow-xl overflow-x-auto transition-colors ${
-                  isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
-                }`}
-              >
-                <div className="min-w-[450px]">
-                  <div className="relative flex items-center justify-between px-6 sm:px-8">
-                    <div className={`absolute left-10 right-10 top-4 h-0.5 -z-0 ${isLight ? "bg-slate-200" : "bg-white/10"}`} />
-
-                    {STEPPER_STAGES.map((stageName, idx) => {
-                      const stepNumber = idx + 1;
-                      const activeStageIndex = currentStatusCfg.stepIndex;
-                      const isCompleted = stepNumber < activeStageIndex;
-                      const isCurrent = stepNumber === activeStageIndex;
-
-                      return (
-                        <div key={stageName} className="relative z-10 flex flex-col items-center group">
-                          <div
-                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                              isCompleted
-                                ? "bg-emerald-500 text-white shadow-md"
-                                : isCurrent
-                                ? "bg-emerald-500 text-white ring-4 ring-emerald-500/20 shadow-md"
-                                : isLight
-                                ? "bg-slate-100 text-slate-400 border border-slate-200"
-                                : "bg-white/5 text-white/30 border border-white/10"
-                            }`}
-                          >
-                            {isCompleted || isCurrent ? (
-                              <Check size={16} strokeWidth={2.5} />
-                            ) : (
-                              <span className="text-xs font-bold" style={{ fontFamily: "var(--font-zuume)" }}>
-                                {stepNumber}
-                              </span>
-                            )}
-                          </div>
-
-                          <span
-                            className={`mt-2.5 text-xs font-bold uppercase tracking-wider max-w-[130px] text-center leading-tight transition-colors ${
-                              isCurrent
-                                ? "text-emerald-500"
-                                : isCompleted
-                                ? isLight
-                                  ? "text-slate-700"
-                                  : "text-white/80"
-                                : isLight
-                                ? "text-slate-400"
-                                : "text-white/30"
-                            }`}
-                            style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.03em" }}
-                          >
-                            {stageName}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Founder Summary */}
-              <div
-                className={`rounded-2xl border p-5 sm:p-6 backdrop-blur-md shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 transition-colors ${
-                  isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="relative w-14 sm:w-16 h-14 sm:h-16 rounded-2xl overflow-hidden bg-slate-900 border border-white/10 shrink-0 shadow-md">
-                    {selectedApplicant.avatarUrl ? (
-                      <img
-                        src={selectedApplicant.avatarUrl}
-                        alt={selectedApplicant.fio}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-[#00A8FF]/15 text-[#00A8FF] font-bold text-xl">
-                        {selectedApplicant.fio.charAt(0)}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3
-                        className={`text-lg sm:text-2xl font-extrabold ${
-                          isLight ? "text-slate-900" : "text-white"
-                        }`}
-                      >
-                        {selectedApplicant.fio}
-                      </h3>
-                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#00A8FF]/15 text-[#00A8FF] border border-[#00A8FF]/30">
-                        {selectedApplicant.categoryLabel}
-                      </span>
-                    </div>
-
-                    <p className={`text-xs sm:text-sm font-semibold ${isLight ? "text-slate-600" : "text-white/70"}`}>
-                      {selectedApplicant.brandName}
-                    </p>
-
-                    <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
-                      <MapPin size={14} className="text-[#00A8FF]" />
-                      <span>{selectedApplicant.region}</span>
-                      <span>•</span>
-                      <span>{selectedApplicant.age} yosh</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Gallery Section */}
-              <div
-                className={`rounded-2xl border p-4 sm:p-6 backdrop-blur-md shadow-xl flex flex-col gap-5 transition-colors ${
-                  isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
-                }`}
-              >
-                <div className={`flex items-center justify-between border-b pb-3 ${isLight ? "border-slate-100" : "border-white/10"}`}>
-                  <h3
-                    className={`text-sm sm:text-base font-bold uppercase tracking-wider flex items-center gap-2 ${
-                      isLight ? "text-slate-900" : "text-white"
-                    }`}
-                    style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.04em" }}
-                  >
-                    <ImageIcon size={18} className="text-[#00A8FF]" />
-                    <span>Loyiha Va Mahsulot Rasmlari</span>
-                  </h3>
-                  <span className={`text-xs font-medium ${isLight ? "text-slate-400" : "text-white/40"}`}>
-                    Jami {galleryItems.length} ta noyob rasm
-                  </span>
-                </div>
-
-                {activeMainImg ? (
-                  <div className="relative w-full max-h-[480px] min-h-[260px] sm:min-h-[300px] rounded-2xl overflow-hidden bg-black/90 flex items-center justify-center border border-white/10 group">
-                    <img
-                      src={activeMainImg}
-                      alt="Loyiha rasmi"
-                      className="max-h-[460px] w-auto max-w-full object-contain mx-auto transition-all duration-300"
-                    />
-
-                    <div className="absolute top-3 left-3 sm:top-4 sm:left-4 flex items-center gap-2">
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#00A8FF] text-white shadow-md flex items-center gap-1.5 uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>
-                        <CheckCircle2 size={13} strokeWidth={2.5} />
-                        <span>Asosiy Ko'rinish</span>
-                      </span>
-                    </div>
-
-                    <button
-                      onClick={() => setLightboxImg(activeMainImg)}
-                      className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 sm:p-2.5 rounded-xl bg-black/60 backdrop-blur-md text-white/80 hover:text-white hover:bg-black/80 transition-colors cursor-pointer"
-                      title="To'liq rasmda ko'rish"
-                    >
-                      <Maximize2 size={16} />
-                    </button>
-                  </div>
-                ) : (
-                  <div className={`p-8 rounded-xl border border-dashed text-center text-xs ${isLight ? "border-slate-200 text-slate-400" : "border-white/10 text-white/40"}`}>
-                    Ushbu arizachi uchun rasm joylanmagan
-                  </div>
-                )}
-
-                <div className="flex flex-col gap-2">
-                  <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/50"}`} style={{ fontFamily: "var(--font-zuume)" }}>
-                    Barcha galereya rasmlari (Tanlash uchun bosing):
-                  </span>
-                  <div className="flex items-center gap-3 overflow-x-auto pb-2 no-scrollbar">
-                    {galleryItems.map((item, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setActiveMainImg(item.url)}
-                        className={`relative w-20 sm:w-24 h-16 sm:h-20 rounded-xl overflow-hidden border-2 shrink-0 transition-all cursor-pointer ${
-                          activeMainImg === item.url
-                            ? "border-[#00A8FF] ring-2 ring-[#00A8FF]/30 scale-105"
-                            : "border-transparent opacity-70 hover:opacity-100"
-                        }`}
-                      >
-                        <img src={item.url} alt={item.label} className="w-full h-full object-cover" />
-                        <span className="absolute bottom-1 left-1 right-1 text-[9px] font-bold bg-black/70 text-white text-center rounded py-0.5 truncate uppercase tracking-tight" style={{ fontFamily: "var(--font-zuume)" }}>
-                          {item.label}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Full Details Grid */}
-              <div
-                className={`rounded-2xl border p-5 sm:p-8 backdrop-blur-md shadow-xl flex flex-col gap-6 transition-colors ${
-                  isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
-                }`}
-              >
-                <div className={`flex items-center justify-between border-b pb-4 ${isLight ? "border-slate-100" : "border-white/10"}`}>
-                  <h3
-                    className={`text-base sm:text-lg font-bold uppercase tracking-wider flex items-center gap-2 ${
-                      isLight ? "text-slate-900" : "text-white"
-                    }`}
-                    style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.04em" }}
-                  >
-                    <Info size={18} className="text-[#00A8FF]" />
-                    <span>Arizachi Ma'lumotlari</span>
-                  </h3>
-                  <span className={`text-xs font-mono ${isLight ? "text-slate-400" : "text-white/40"}`}>ID: #{selectedApplicant.id}</span>
-                </div>
-
-                {selectedApplicant.status === "rad_etildi" && selectedApplicant.rejectionComment && (
-                  <div className={`rounded-xl border p-4 text-xs flex items-start gap-3 ${
-                    isLight ? "border-rose-200 bg-rose-50/80 text-rose-800" : "border-rose-500/30 bg-rose-500/10 text-rose-300"
-                  }`}>
-                    <AlertCircle size={18} className="text-rose-500 shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-bold uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>Rad etish sababi:</span>
-                      <p className="mt-1 leading-relaxed opacity-90">{selectedApplicant.rejectionComment}</p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3.5 gap-x-8 text-xs sm:text-sm">
-                  <div className={`flex items-center justify-between py-2 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
-                    <span className={isLight ? "font-medium text-slate-500" : "font-medium text-white/50"}>Holati</span>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-bold border uppercase tracking-wider ${
-                        isLight
-                          ? `${currentStatusCfg.lightBg} ${currentStatusCfg.lightText} ${currentStatusCfg.lightBorder}`
-                          : `${currentStatusCfg.darkBg} ${currentStatusCfg.darkText} ${currentStatusCfg.darkBorder}`
-                      }`}
-                      style={{ fontFamily: "var(--font-zuume)" }}
-                    >
-                      {currentStatusCfg.label}
-                    </span>
-                  </div>
-
-                  <div className={`flex items-center justify-between py-2 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
-                    <span className={isLight ? "font-medium text-slate-500" : "font-medium text-white/50"}>FIO</span>
-                    <span className={`font-extrabold text-right ${isLight ? "text-slate-900" : "text-white"}`}>{selectedApplicant.fio}</span>
-                  </div>
-
-                  <div className={`flex items-center justify-between py-2 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
-                    <span className={isLight ? "font-medium text-slate-500" : "font-medium text-white/50"}>Brend Nomi</span>
-                    <span className={`font-bold ${isLight ? "text-slate-900" : "text-white"}`}>{selectedApplicant.brandName}</span>
-                  </div>
-
-                  <div className={`flex items-center justify-between py-2 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
-                    <span className={isLight ? "font-medium text-slate-500" : "font-medium text-white/50"}>Kategoriya</span>
-                    <span className="font-bold text-[#00A8FF]">{selectedApplicant.categoryLabel}</span>
-                  </div>
-
-                  <div className={`flex items-center justify-between py-2 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
-                    <span className={isLight ? "font-medium text-slate-500" : "font-medium text-white/50"}>Viloyat / Hudud</span>
-                    <span className={`font-medium ${isLight ? "text-slate-800" : "text-white/80"}`}>{selectedApplicant.region}</span>
-                  </div>
-
-                  <div className={`flex items-center justify-between py-2 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
-                    <span className={isLight ? "font-medium text-slate-500" : "font-medium text-white/50"}>Telefon raqami</span>
-                    <a href={`tel:${selectedApplicant.phone}`} className="font-semibold text-[#00A8FF] hover:underline">
-                      {selectedApplicant.phone}
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : selectedStatusKey === "tasdiqlangan" ? (
-            /* ══════════════════════════════════════════════════════════ */
-            /* TASDIQLANGAN (APPROVED) LIST VIEW                          */
-            /* ══════════════════════════════════════════════════════════ */
+            )}
+          </div>
+          ) : activePhase === "3-bosqich" ? (
+            /* ═══════════════════════════════════════════════════════════ */
+            /* 3-BOSQICH VIEW — Oflayn Suhbat va Pitching Ishtirokchilari  */
+            /* ═══════════════════════════════════════════════════════════ */
             <div className="flex flex-col gap-6 animate-fade-in">
               <div className="flex items-center justify-between">
-                <h2
-                  className={`text-2xl sm:text-4xl font-bold uppercase tracking-wider ${
-                    isLight ? "text-slate-900" : "text-white"
-                  }`}
-                  style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.03em" }}
-                >
-                  Tasdiqlangan Arizalar
-                </h2>
+                <div>
+                  <h2
+                    className={`text-2xl sm:text-4xl font-bold uppercase tracking-wider ${
+                      isLight ? "text-slate-900" : "text-white"
+                    }`}
+                    style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.03em" }}
+                  >
+                    3-Bosqich Oflayn Suhbat Ishtirokchilari
+                  </h2>
+                  <p className={`text-xs mt-1 ${isLight ? "text-slate-500" : "text-white/50"}`}>
+                    Final va yarim-final oflayn pitching suhbatlariga saralangan nomzodlar
+                  </p>
+                </div>
                 <span
                   className="px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
                   style={{ fontFamily: "var(--font-zuume)" }}
                 >
-                  Jami: {approvedApps.length} ta
+                  Jami: {approvedApps.length} ta nomzod
                 </span>
               </div>
 
@@ -1855,35 +1619,28 @@ export default function AdminPage() {
                   isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/95 border-white/10"
                 }`}
               >
-                {approvedApps.length === 0 ? (
-                  <div className="py-12 text-center">
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <FileText size={32} className="opacity-40" />
-                      <p className={`text-sm font-medium ${isLight ? "text-slate-400" : "text-white/40"}`}>Hozircha tasdiqlangan arizalar yo'q</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse min-w-[650px]">
-                      <thead>
-                        <tr
-                          className={`border-b text-xs font-bold uppercase tracking-wider ${
-                            isLight ? "bg-slate-50/90 border-slate-200 text-slate-700" : "bg-white/5 border-white/10 text-white/70"
-                          }`}
-                          style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
-                        >
-                          <th className="py-4 px-4 w-12 text-center">#</th>
-                          <th className="py-4 px-4">Arizachi F.I.O & Brend</th>
-                          <th className="py-4 px-4">Kategoriya</th>
-                          <th className="py-4 px-4">Viloyat / Hudud</th>
-                          <th className="py-4 px-4">Sana</th>
-                          <th className="py-4 px-4 text-center">Holati</th>
-                        </tr>
-                      </thead>
-                      <tbody className={`divide-y text-xs ${isLight ? "divide-slate-200/60 text-slate-800" : "divide-white/5 text-white/90"}`}>
-                        {approvedApps.map((item, index) => (
-                          <tr key={item.id} className={`transition-all ${isLight ? "hover:bg-emerald-50/60" : "hover:bg-emerald-500/5"}`}>
-                            <td className={`py-4 px-4 text-center font-mono text-xs font-semibold ${isLight ? "text-slate-400" : "text-white/40"}`}>{index + 1}</td>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse min-w-[700px]">
+                    <thead>
+                      <tr
+                        className={`border-b text-xs font-bold uppercase tracking-wider ${
+                          isLight ? "bg-slate-50/90 border-slate-200 text-slate-700" : "bg-white/5 border-white/10 text-white/70"
+                        }`}
+                        style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
+                      >
+                        <th className="py-4 px-4 w-12 text-center">#</th>
+                        <th className="py-4 px-4">Ishtirokchi F.I.O & Brend</th>
+                        <th className="py-4 px-4">Kategoriya</th>
+                        <th className="py-4 px-4">Viloyat</th>
+                        <th className="py-4 px-4 text-center">Status</th>
+                        <th className="py-4 px-4 text-center">Batafsil</th>
+                      </tr>
+                    </thead>
+                    <tbody className={`divide-y text-xs ${isLight ? "divide-slate-200/60 text-slate-800" : "divide-white/5 text-white/90"}`}>
+                      {approvedApps.length > 0 ? (
+                        approvedApps.map((item, index) => (
+                          <tr key={item.id} className={`transition-all ${isLight ? "hover:bg-emerald-50/60" : "hover:bg-emerald-500/10"}`}>
+                            <td className="py-4 px-4 text-center font-mono text-slate-400">{index + 1}</td>
                             <td className="py-4 px-4">
                               <div className="flex items-center gap-3">
                                 <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-900 shrink-0 border border-white/15">
@@ -1897,7 +1654,137 @@ export default function AdminPage() {
                                 </div>
                                 <div className="flex flex-col gap-0.5">
                                   <span className={`text-sm font-extrabold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>{item.fio}</span>
-                                  <span className={`text-xs font-semibold ${isLight ? "text-slate-500" : "text-emerald-400/80"}`}>{item.brandName}</span>
+                                  <span className="text-xs font-semibold text-emerald-400">{item.brandName}</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-4 px-4">
+                              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-[#00A8FF]/10 text-[#00A8FF] border border-[#00A8FF]/20">
+                                {item.categoryLabel}
+                              </span>
+                            </td>
+                            <td className="py-4 px-4 font-semibold">{item.region}</td>
+                            <td className="py-4 px-4 text-center">
+                              <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[10px] border border-emerald-500/30 uppercase">
+                                3-BOSQICH (OFLAYN)
+                              </span>
+                            </td>
+                            <td className="py-4 px-4 text-center">
+                              <button
+                                onClick={() => handleSelectApplicant(item, "2-bosqich")}
+                                className="px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-500 shadow-sm cursor-pointer"
+                              >
+                                Ko'rish
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={6} className="py-12 text-center text-slate-400">
+                            <div className="flex flex-col items-center justify-center gap-2">
+                              <Award size={32} className="opacity-40 text-emerald-400" />
+                              <p className="text-sm font-medium">Hozircha 3-bosqich oflayn suhbatiga nomzodlar saralanmagan</p>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* ═══════════════════════════════════════════════════════════ */
+            /* 1-BOSQICH LIST VIEW (Filtered by Status)                   */
+            /* ═══════════════════════════════════════════════════════════ */
+            <div className="flex flex-col gap-6 animate-fade-in">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2
+                    className={`text-2xl sm:text-4xl font-bold uppercase tracking-wider ${
+                      isLight ? "text-slate-900" : "text-white"
+                    }`}
+                    style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.03em" }}
+                  >
+                    1-Bosqich ({currentStatusCfg.label})
+                  </h2>
+                  <p className={`text-xs mt-1 ${isLight ? "text-slate-500" : "text-white/50"}`}>
+                    Umumiy ro'yxatdan o'tgan nomzodlar ma'lumotlari va arizalari
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${currentStatusCfg.darkBg} ${currentStatusCfg.darkText} ${currentStatusCfg.darkBorder}`}
+                    style={{ fontFamily: "var(--font-zuume)" }}
+                  >
+                    Jami: {filteredApplicants.length} ta
+                  </span>
+                </div>
+              </div>
+
+              {/* Table */}
+              <div
+                className={`rounded-2xl border shadow-xl backdrop-blur-md overflow-hidden transition-colors ${
+                  isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/95 border-white/10"
+                }`}
+              >
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse min-w-[700px]">
+                    <thead>
+                      <tr
+                        className={`border-b text-xs font-bold uppercase tracking-wider ${
+                          isLight ? "bg-slate-50/90 border-slate-200 text-slate-700" : "bg-white/5 border-white/10 text-white/70"
+                        }`}
+                        style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
+                      >
+                        <th className="py-4 px-3 w-10 text-center">
+                          <input
+                            type="checkbox"
+                            checked={
+                              filteredApplicants.length > 0 &&
+                              filteredApplicants.every((a) => selectedAppIds.includes(a.fullId))
+                            }
+                            onChange={() => handleToggleSelectAll(filteredApplicants)}
+                            className="w-4 h-4 rounded accent-[#00A8FF] cursor-pointer"
+                          />
+                        </th>
+                        <th className="py-4 px-4 w-12 text-center">#</th>
+                        <th className="py-4 px-4">Arizachi F.I.O & Brend</th>
+                        <th className="py-4 px-4">Kategoriya</th>
+                        <th className="py-4 px-4">Viloyat</th>
+                        <th className="py-4 px-4">Sana</th>
+                        <th className="py-4 px-4 text-center">Amallar</th>
+                      </tr>
+                    </thead>
+                    <tbody className={`divide-y text-xs ${isLight ? "divide-slate-200/60 text-slate-800" : "divide-white/5 text-white/90"}`}>
+                      {filteredApplicants.length > 0 ? (
+                        filteredApplicants.map((item, index) => (
+                          <tr key={item.id} className={`transition-all ${selectedAppIds.includes(item.fullId) ? (isLight ? "bg-sky-50" : "bg-[#00A8FF]/10") : (isLight ? "hover:bg-slate-50" : "hover:bg-white/5")}`}>
+                            <td className="py-4 px-3 text-center">
+                              <input
+                                type="checkbox"
+                                checked={selectedAppIds.includes(item.fullId)}
+                                onChange={() => handleToggleSelectApp(item.fullId)}
+                                className="w-4 h-4 rounded accent-[#00A8FF] cursor-pointer"
+                              />
+                            </td>
+                            <td className={`py-4 px-4 text-center font-mono text-xs font-semibold ${isLight ? "text-slate-400" : "text-white/40"}`}>{index + 1}</td>
+                            <td className="py-4 px-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-900 shrink-0 border border-white/15">
+                                  {item.avatarUrl ? (
+                                    <img src={item.avatarUrl} alt={item.fio} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-[#00A8FF]/20 text-[#00A8FF] font-bold text-sm">
+                                      {item.fio.charAt(0)}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex flex-col gap-0.5">
+                                  <span className={`text-sm font-extrabold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>{item.fio}</span>
+                                  <span className="text-xs font-semibold text-[#00A8FF]">{item.brandName}</span>
                                 </div>
                               </div>
                             </td>
@@ -1908,302 +1795,33 @@ export default function AdminPage() {
                             </td>
                             <td className={`py-4 px-4 font-semibold text-xs ${isLight ? "text-slate-700" : "text-white/80"}`}>{item.region}</td>
                             <td className={`py-4 px-4 font-mono text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>{item.date}</td>
-                            <td className="py-4 px-4 text-center">
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border-emerald-500/30" style={{ fontFamily: "var(--font-zuume)" }}>
-                                <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                                Tasdiqlangan
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            /* ──────────────────────────────────────────────────────────── */
-            /* VIEW MODE 2: PHASE 1 APPLICATIONS TABLE LIST                 */
-            /* ──────────────────────────────────────────────────────────── */
-            <div className="flex flex-col gap-6 animate-fade-in">
-              <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
-                <div
-                  className={`rounded-2xl border p-4 sm:p-5 backdrop-blur-md shadow-lg flex items-center justify-between transition-all ${
-                    isLight ? "bg-white/90 border-slate-200/80" : "bg-[#0a0c10]/90 border-white/10"
-                  }`}
-                >
-                  <div className="flex flex-col gap-1">
-                    <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/50"}`} style={{ fontFamily: "var(--font-zuume)" }}>
-                      Jami
-                    </span>
-                    <span className={`text-xl sm:text-3xl font-extrabold ${isLight ? "text-slate-900" : "text-white"}`}>
-                      {applicants.length}
-                    </span>
-                  </div>
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-[#00A8FF]/15 text-[#00A8FF] flex items-center justify-center border border-[#00A8FF]/30 shadow-xs">
-                    <Inbox size={20} />
-                  </div>
-                </div>
-
-                <div
-                  className={`rounded-2xl border p-4 sm:p-5 backdrop-blur-md shadow-lg flex items-center justify-between transition-all ${
-                    isLight ? "bg-white/90 border-slate-200/80" : "bg-[#0a0c10]/90 border-white/10"
-                  }`}
-                >
-                  <div className="flex flex-col gap-1">
-                    <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/50"}`} style={{ fontFamily: "var(--font-zuume)" }}>
-                      Ko'rib chiqilmoqda
-                    </span>
-                    <span className="text-xl sm:text-3xl font-extrabold text-[#00A8FF]">
-                      {statusCounts.korib_chiqilmoqda}
-                    </span>
-                  </div>
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-[#00A8FF]/15 text-[#00A8FF] flex items-center justify-center border border-[#00A8FF]/30 shadow-xs">
-                    <Clock size={20} />
-                  </div>
-                </div>
-
-                <div
-                  className={`rounded-2xl border p-4 sm:p-5 backdrop-blur-md shadow-lg flex items-center justify-between transition-all ${
-                    isLight ? "bg-white/90 border-slate-200/80" : "bg-[#0a0c10]/90 border-white/10"
-                  }`}
-                >
-                  <div className="flex flex-col gap-1">
-                    <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/50"}`} style={{ fontFamily: "var(--font-zuume)" }}>
-                      Qaytarilgan
-                    </span>
-                    <span className="text-xl sm:text-3xl font-extrabold text-amber-400">
-                      {statusCounts.qaytarildi}
-                    </span>
-                  </div>
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-500/15 text-amber-400 flex items-center justify-center border border-amber-500/30 shadow-xs">
-                    <RotateCcw size={20} />
-                  </div>
-                </div>
-
-                <div
-                  className={`rounded-2xl border p-4 sm:p-5 backdrop-blur-md shadow-lg flex items-center justify-between transition-all ${
-                    isLight ? "bg-white/90 border-slate-200/80" : "bg-[#0a0c10]/90 border-white/10"
-                  }`}
-                >
-                  <div className="flex flex-col gap-1">
-                    <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/50"}`} style={{ fontFamily: "var(--font-zuume)" }}>
-                      Rad etilgan
-                    </span>
-                    <span className="text-xl sm:text-3xl font-extrabold text-rose-500">
-                      {statusCounts.rad_etildi}
-                    </span>
-                  </div>
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-rose-500/15 text-rose-500 flex items-center justify-center border border-rose-500/30 shadow-xs">
-                    <XCircle size={20} />
-                  </div>
-                </div>
-
-                <div
-                  className={`rounded-2xl border p-4 sm:p-5 backdrop-blur-md shadow-lg flex items-center justify-between transition-all ${
-                    isLight ? "bg-white/90 border-slate-200/80" : "bg-[#0a0c10]/90 border-white/10"
-                  }`}
-                >
-                  <div className="flex flex-col gap-1">
-                    <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/50"}`} style={{ fontFamily: "var(--font-zuume)" }}>
-                      Tasdiqlangan
-                    </span>
-                    <span className="text-xl sm:text-3xl font-extrabold text-emerald-400">
-                      {statusCounts.tasdiqlangan}
-                    </span>
-                  </div>
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center border border-emerald-500/30 shadow-xs">
-                    <CheckCircle2 size={20} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-5">
-                <div className="flex items-center justify-between">
-                  <h2
-                    className={`text-2xl sm:text-4xl font-bold uppercase tracking-wider ${
-                      isLight ? "text-slate-900" : "text-white"
-                    }`}
-                    style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.03em" }}
-                  >
-                    {currentStatusCfg.label}
-                  </h2>
-                  <span className={`text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full border ${
-                    isLight ? "bg-blue-50 text-[#00A8FF] border-blue-200/60" : "bg-[#00A8FF]/10 text-[#00A8FF] border-[#00A8FF]/30"
-                  }`} style={{ fontFamily: "var(--font-zuume)" }}>
-                    Jami: {filteredApplicants.length} ta
-                  </span>
-                </div>
-
-                <div
-                  className={`rounded-2xl border p-4 shadow-xl backdrop-blur-md grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 transition-colors ${
-                    isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/90 border-white/10"
-                  }`}
-                >
-                  <div className="relative">
-                    <Search size={15} className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${isLight ? "text-slate-400" : "text-white/40"}`} />
-                    <input
-                      type="text"
-                      placeholder="F.I.O yoki Brend nomi..."
-                      value={searchName}
-                      onChange={(e) => setSearchName(e.target.value)}
-                      className={`w-full pl-9 pr-3.5 py-2.5 rounded-xl border text-xs transition-all outline-none ${
-                        isLight
-                          ? "bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400 focus:bg-white focus:border-[#00A8FF]"
-                          : "bg-white/5 border-white/10 text-white placeholder-white/40 focus:bg-white/10 focus:border-[#00A8FF]"
-                      }`}
-                    />
-                  </div>
-
-                  <div className="relative">
-                    <select
-                      value={categoryFilter}
-                      onChange={(e) => setCategoryFilter(e.target.value)}
-                      className={`w-full px-3.5 py-2.5 rounded-xl border text-xs transition-all outline-none appearance-none cursor-pointer ${
-                        isLight
-                          ? "bg-slate-50 border-slate-200 text-slate-700 focus:bg-white focus:border-[#00A8FF]"
-                          : "bg-[#0a0c10] border-white/10 text-white focus:border-[#00A8FF]"
-                      }`}
-                    >
-                      <option value="all" className={isLight ? "bg-white text-slate-800" : "bg-[#0a0c10] text-white"}>Kategoriya (Barchasi)</option>
-                      <option value="business" className={isLight ? "bg-white text-slate-800" : "bg-[#0a0c10] text-white"}>An'anaviy Biznes</option>
-                      <option value="startup" className={isLight ? "bg-white text-slate-800" : "bg-[#0a0c10] text-white"}>Startap</option>
-                    </select>
-                    <SlidersHorizontal size={14} className={`absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${isLight ? "text-slate-400" : "text-white/40"}`} />
-                  </div>
-
-                  <div className="relative">
-                    <select
-                      value={regionFilter}
-                      onChange={(e) => setRegionFilter(e.target.value)}
-                      className={`w-full px-3.5 py-2.5 rounded-xl border text-xs transition-all outline-none appearance-none cursor-pointer ${
-                        isLight
-                          ? "bg-slate-50 border-slate-200 text-slate-700 focus:bg-white focus:border-[#00A8FF]"
-                          : "bg-[#0a0c10] border-white/10 text-white focus:border-[#00A8FF]"
-                      }`}
-                    >
-                      <option value="all" className={isLight ? "bg-white text-slate-800" : "bg-[#0a0c10] text-white"}>Viloyat / Hudud (Barchasi)</option>
-                      {uniqueRegions.map((reg) => (
-                        <option key={reg} value={reg} className={isLight ? "bg-white text-slate-800" : "bg-[#0a0c10] text-white"}>
-                          {reg}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown size={14} className={`absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${isLight ? "text-slate-400" : "text-white/40"}`} />
-                  </div>
-
-                  <div className="relative">
-                    <Calendar size={15} className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${isLight ? "text-slate-400" : "text-white/40"}`} />
-                    <input
-                      type="text"
-                      placeholder="Sana (masalan 07.08.2026)"
-                      value={dateFilter}
-                      onChange={(e) => setDateFilter(e.target.value)}
-                      className={`w-full pl-9 pr-3.5 py-2.5 rounded-xl border text-xs transition-all outline-none ${
-                        isLight
-                          ? "bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400 focus:bg-white focus:border-[#00A8FF]"
-                          : "bg-white/5 border-white/10 text-white placeholder-white/40 focus:bg-white/10 focus:border-[#00A8FF]"
-                      }`}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div
-                className={`rounded-2xl border shadow-xl backdrop-blur-md overflow-hidden transition-colors ${
-                  isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/95 border-white/10"
-                }`}
-              >
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse min-w-[650px]">
-                    <thead>
-                      <tr
-                        className={`border-b text-xs font-bold uppercase tracking-wider ${
-                          isLight ? "bg-slate-50/90 border-slate-200 text-slate-700" : "bg-white/5 border-white/10 text-white/70"
-                        }`}
-                        style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
-                      >
-                        <th className="py-4 px-4 w-12 text-center">#</th>
-                        <th className="py-4 px-4">Arizachi F.I.O & Brend</th>
-                        <th className="py-4 px-4">Kategoriya</th>
-                        <th className="py-4 px-4">Viloyat / Hudud</th>
-                        <th className="py-4 px-4">Sana</th>
-                        <th className="py-4 px-4 text-center">Holati</th>
-                      </tr>
-                    </thead>
-                    <tbody className={`divide-y text-xs ${isLight ? "divide-slate-200/60 text-slate-800" : "divide-white/5 text-white/90"}`}>
-                      {filteredApplicants.length > 0 ? (
-                        filteredApplicants.map((item, index) => (
-                          <tr
-                            key={item.id}
-                            onClick={() => handleSelectApplicant(item)}
-                            className={`transition-all cursor-pointer group ${
-                              isLight ? "hover:bg-blue-50/60" : "hover:bg-[#00A8FF]/10"
-                            }`}
-                          >
-                            <td className={`py-4 px-4 text-center font-mono text-xs font-semibold ${isLight ? "text-slate-400" : "text-white/40"}`}>
-                              {index + 1}
-                            </td>
-
                             <td className="py-4 px-4">
-                              <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-900 shrink-0 border border-white/15 shadow-xs">
-                                  {item.avatarUrl ? (
-                                    <img src={item.avatarUrl} alt={item.fio} className="w-full h-full object-cover" />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-[#00A8FF]/20 text-[#00A8FF] font-bold text-sm">
-                                      {item.fio.charAt(0)}
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="flex flex-col gap-0.5">
-                                  <span
-                                    className={`text-sm sm:text-base font-extrabold tracking-tight transition-colors ${
-                                      isLight ? "text-slate-900 group-hover:text-[#00A8FF]" : "text-white group-hover:text-[#00A8FF]"
-                                    }`}
+                              <div className="flex items-center gap-2 justify-center">
+                                <button
+                                  onClick={() => handleSelectApplicant(item, "1-bosqich")}
+                                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
+                                    isLight ? "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100" : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
+                                  }`}
+                                >
+                                  Ko'rish
+                                </button>
+                                {item.status !== "tasdiqlangan" && (
+                                  <button
+                                    onClick={() => handleApprove(item.fullId)}
+                                    className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+                                    title="Ishtirokchilar bo'limiga o'tkazish (Tasdiqlash)"
                                   >
-                                    {item.fio}
-                                  </span>
-                                  <span className={`text-xs font-semibold ${isLight ? "text-slate-500" : "text-[#00A8FF]/80"}`}>
-                                    {item.brandName}
-                                  </span>
-                                </div>
+                                    <UserCheck size={13} />
+                                    <span>Ishtirokchilarga o'tkazish</span>
+                                  </button>
+                                )}
                               </div>
-                            </td>
-
-                            <td className="py-4 px-4">
-                              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-[#00A8FF]/10 text-[#00A8FF] border border-[#00A8FF]/20">
-                                {item.categoryLabel}
-                              </span>
-                            </td>
-
-                            <td className={`py-4 px-4 font-semibold text-xs ${isLight ? "text-slate-700" : "text-white/80"}`}>
-                              {item.region}
-                            </td>
-
-                            <td className={`py-4 px-4 font-mono text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>
-                              {item.date}
-                            </td>
-
-                            <td className="py-4 px-4 text-center">
-                              <span
-                                className={`inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-bold border uppercase tracking-wider ${
-                                  isLight
-                                    ? `${currentStatusCfg.lightBg} ${currentStatusCfg.lightText} ${currentStatusCfg.lightBorder}`
-                                    : `${currentStatusCfg.darkBg} ${currentStatusCfg.darkText} ${currentStatusCfg.darkBorder}`
-                                }`}
-                                style={{ fontFamily: "var(--font-zuume)" }}
-                              >
-                                <span className={`w-2 h-2 rounded-full ${currentStatusCfg.dotColor} animate-pulse`} />
-                                <span>{currentStatusCfg.label}</span>
-                              </span>
                             </td>
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={6} className={`py-12 text-center ${isLight ? "text-slate-400" : "text-white/40"}`}>
+                          <td colSpan={7} className={`py-12 text-center ${isLight ? "text-slate-400" : "text-white/40"}`}>
                             <div className="flex flex-col items-center justify-center gap-2">
                               <FileText size={32} className="opacity-40" />
                               <p className="text-sm font-medium">Ushbu holatda arizalar topilmadi</p>
@@ -2278,6 +1896,43 @@ export default function AdminPage() {
                 Tasdiqlash va Rad etish
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── FLOATING BULK MIGRATION ACTION TOOLBAR ───────────────── */}
+      {selectedAppIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9990] bg-[#0a0f2c]/95 border border-[#00A8FF]/40 backdrop-blur-xl shadow-2xl rounded-2xl px-6 py-3.5 flex items-center gap-6 text-white animate-slide-up">
+          <div className="flex items-center gap-2.5">
+            <span className="w-7 h-7 rounded-full bg-[#00A8FF] text-white flex items-center justify-center font-bold text-xs shadow-md">
+              {selectedAppIds.length}
+            </span>
+            <span className="text-xs font-bold uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>
+              ta ariza tanlandi
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleBulkMigrateToPhase2}
+              disabled={isBulkProcessing}
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-xs shadow-lg transition-all active:scale-95 flex items-center gap-2 border border-emerald-300/30 cursor-pointer disabled:opacity-50"
+              style={{ fontFamily: "var(--font-zuume)" }}
+            >
+              {isBulkProcessing ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <UserCheck size={16} />
+              )}
+              <span>ISHTIROKCHILARGA O'TKAZISH (TASDIQLASH)</span>
+            </button>
+
+            <button
+              onClick={() => setSelectedAppIds([])}
+              className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 text-xs font-semibold transition-colors cursor-pointer"
+            >
+              Bekor qilish
+            </button>
           </div>
         </div>
       )}

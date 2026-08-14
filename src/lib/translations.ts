@@ -63,8 +63,6 @@ export type TranslationKey =
   | "cat.biz.desc"
   | "cat.startup.title"
   | "cat.startup.desc"
-  | "cat.idea.title"
-  | "cat.idea.desc"
   // Experts
   | "experts.label"
   | "experts.heading"
@@ -91,13 +89,40 @@ export type TranslationKey =
   | "footer.sections"
   | "footer.apply"
   | "footer.startup"
-  | "footer.ideas"
   | "footer.business"
   | "footer.copyright"
   | "footer.poweredby"
   // Theme toggle titles
   | "theme.toDark"
-  | "theme.toLight";
+  | "theme.toLight"
+  // Participants Page
+  | "participants.moreInfo"
+  | "participants.loginToView"
+  | "participants.aboutBusiness"
+  | "participants.goals"
+  | "participants.galleryTitle"
+  | "participants.clickToZoom"
+  | "participants.apply"
+  | "participants.label"
+  | "participants.title"
+  | "participants.subtitle"
+  | "participants.searchPlaceholder"
+  | "participants.all"
+  | "participants.business"
+  | "participants.startup"
+  | "participants.allRegions"
+  | "participants.countSuffix"
+  | "participants.clear"
+  | "participants.emptyTitle"
+  | "participants.emptyDesc"
+  | "participants.loadMore"
+  | "participants.ageLabel"
+  | "participants.ageSuffix"
+  | "participants.brandLabel"
+  | "participants.regionLabel"
+  | "participants.phoneLabel"
+  | "participants.legalLabel"
+  | "participants.potentialImpact";
 
 type Translations = Record<Language, Record<TranslationKey, string>>;
 
@@ -165,8 +190,6 @@ export const translations: Translations = {
     "cat.biz.desc": "Sizda allaqachon ishlayotgan biznes bor. Uni kengaytiring, yangi darajaga olib chiqing va O'zbekistondagi yirik kompaniyalardan biriga aylaning.",
     "cat.startup.title": "Startap",
     "cat.startup.desc": "Siz muammoga aniq va kuchli yechim topgansiz. Endi uni tezroq o'stiring, investitsiya jalb qiling va katta o'yinchilardan biriga aylaning.",
-    "cat.idea.title": "G'oya",
-    "cat.idea.desc": "Sizda hali amalga oshirilmagan, lekin kuchli potensialga ega g'oya bor. Uni real mahsulotga aylantiring, MVP chiqaring va investitsiya olib keyingi bosqichga olib chiqing.",
     // Experts
     "experts.label": "HAKAMLAR",
     "experts.heading": "jamg'arma kengashi a'zolari",
@@ -204,13 +227,40 @@ export const translations: Translations = {
     "footer.sections": "Bo'limlar",
     "footer.apply": "Ariza",
     "footer.startup": "Startap uchun",
-    "footer.ideas": "G'oya uchun",
     "footer.business": "Biznes uchun",
     "footer.copyright": "Powered by",
     "footer.poweredby": "Yoshlar ishlari agentligi",
     // Theme
     "theme.toDark": "Qorong'u rejimga o'tish",
     "theme.toLight": "Kun rejimiga o'tish",
+    // Participants Page
+    "participants.moreInfo": "Ko'proq ma'lumot",
+    "participants.loginToView": "Ko'rish uchun kirish",
+    "participants.aboutBusiness": "Biznes Haqida",
+    "participants.goals": "Maqsadlari",
+    "participants.galleryTitle": "Loyihadan Lavhalar (Taqdimot Sahifalari)",
+    "participants.clickToZoom": "Kattalashtirish uchun bosing",
+    "participants.apply": "Ariza topshirish",
+    "participants.label": "Yosh Tadbirkorlar Chempionati",
+    "participants.title": "ISHTIROKCHILAR",
+    "participants.subtitle": "Chempionatga qabul qilingan ishtirokchilar — kelajakning yosh tadbirkorlari",
+    "participants.searchPlaceholder": "F.I.O yoki Brend nomi...",
+    "participants.all": "Barchasi",
+    "participants.business": "Biznes",
+    "participants.startup": "Startap",
+    "participants.allRegions": "Barcha hududlar",
+    "participants.countSuffix": "ta ishtirokchi",
+    "participants.clear": "Tozalash",
+    "participants.emptyTitle": "HECH NIMA TOPILMADI",
+    "participants.emptyDesc": "Boshqa filter tanlab ko'ring",
+    "participants.loadMore": "Ko'proq yuklash",
+    "participants.ageLabel": "Yoshi:",
+    "participants.ageSuffix": "yosh",
+    "participants.brandLabel": "Brend nomi:",
+    "participants.regionLabel": "Hudud:",
+    "participants.phoneLabel": "Telefon:",
+    "participants.legalLabel": "Yuridik nomi:",
+    "participants.potentialImpact": "Potensial Ta'sir",
   },
 
   ru: {
@@ -227,13 +277,13 @@ export const translations: Translations = {
     // Hero
     "hero.title1": "ЧЕМПИОНАТ МОЛОДЫХ",
     "hero.title2": "ПРЕДПРИНИМАТЕЛЕЙ",
-    "hero.subtitle": "Представьте свой стартап, бизнес или идею и боритесь за инвестиции",
+    "hero.subtitle": "Представьте свой стартап или бизнес и боритесь за инвестиции",
     "hero.button": "Подать заявку",
     // About
     "about.label": "О чемпионате",
     "about.heading1": "ЧТО ЖДЁТ",
     "about.heading2": "НА ЧЕМПИОНАТЕ",
-    "about.text": "Ежегодный конкурс, организованный на основании постановления главы государства ПП-59, в котором могут участвовать молодые люди в возрасте от 18 до 30 лет с традиционным бизнесом, стартапом или идеей. По итогам конкурса до 100 бизнес- и стартап-проектов получат инвестиции до 1 млрд сумов, а также покрытие расходов в размере до 100 базовых расчётных величин на маркетинговые и финансовые консультации для развития в бренд.",
+    "about.text": "Ежегодный конкурс, организованный на основании постановления главы государства ПП-59, в котором могут участвовать молодые люди в возрасте от 18 до 30 лет с традиционным бизнесом или стартапом. По итогам конкурса до 100 бизнес- и стартап-проектов получат инвестиции до 1 млрд сумов, а также покрытие расходов в размере до 100 базовых расчётных величин на маркетинговые и финансовые консультации для развития в бренд.",
     // Stats
     "stats.scrollText": "ЧЕРЕЗ ИНВЕСТИЦИИ — ПОДДЕРЖИВАЕМ СИЛЬНЕЙШИЕ ИДЕИ, САМЫХ СМЕЛЫХ ПРЕДПРИНИМАТЕЛЕЙ И УЗБЕКСКИЕ БРЕНДЫ МИРОВОГО УРОВНЯ, КОТОРЫЕ ОНИ СОЗДАЮТ",
     "stats.counter1.label": "Направления",
@@ -270,14 +320,12 @@ export const translations: Translations = {
     "positive.card6.desc": "Победители чемпионата будут направлены на стажировки в известные зарубежные акселераторы и компании.",
     // Categories
     "cat.label": "Направления чемпионата",
-    "cat.heading": "Принимаем заявки \nпо 3 направлениям",
+    "cat.heading": "Принимаем заявки \nпо 2 направлениям",
     "cat.button": "Подать заявку",
     "cat.biz.title": "Традиционный бизнес",
     "cat.biz.desc": "У вас уже работающий бизнес. Расширьте его, выведите на новый уровень и станьте одной из крупных компаний Узбекистана.",
     "cat.startup.title": "Стартап",
     "cat.startup.desc": "Вы нашли чёткое и мощное решение проблемы. Теперь масштабируйте его быстрее, привлекайте инвестиции и станьте крупным игроком.",
-    "cat.idea.title": "Идея",
-    "cat.idea.desc": "У вас есть ещё не реализованная идея с сильным потенциалом. Превратите её в реальный продукт, создайте MVP и выйдите на следующий уровень с инвестициями.",
     // Experts
     "experts.label": "ЖЮРИ",
     "experts.heading": "Члены совета фонда",
@@ -315,13 +363,40 @@ export const translations: Translations = {
     "footer.sections": "Разделы",
     "footer.apply": "Заявка",
     "footer.startup": "Для стартапа",
-    "footer.ideas": "Для идеи",
     "footer.business": "Для бизнеса",
     "footer.copyright": "Powered by",
     "footer.poweredby": "Агентство по делам молодёжи",
     // Theme
     "theme.toDark": "Переключить на тёмный режим",
     "theme.toLight": "Переключить на светлый режим",
+    // Participants Page
+    "participants.moreInfo": "Подробнее",
+    "participants.loginToView": "Войти для просмотра",
+    "participants.aboutBusiness": "О бизнесе",
+    "participants.goals": "Цели",
+    "participants.galleryTitle": "Кадры из проекта (Презентационные страницы)",
+    "participants.clickToZoom": "Нажмите, чтобы увеличить",
+    "participants.apply": "Подать анкету",
+    "participants.label": "Чемпионат молодых предпринимателей",
+    "participants.title": "УЧАСТНИКИ",
+    "participants.subtitle": "Участники, принятые на чемпионат — молодые предприниматели будущего",
+    "participants.searchPlaceholder": "Ф.И.О или название бренда...",
+    "participants.all": "Все",
+    "participants.business": "Бизнес",
+    "participants.startup": "Стартап",
+    "participants.allRegions": "Все регионы",
+    "participants.countSuffix": "участников",
+    "participants.clear": "Сбросить",
+    "participants.emptyTitle": "НИЧЕГО НЕ НАЙДЕНО",
+    "participants.emptyDesc": "Попробуйте выбрать другие фильтры",
+    "participants.loadMore": "Загрузить еще",
+    "participants.ageLabel": "Возраст:",
+    "participants.ageSuffix": "лет",
+    "participants.brandLabel": "Название бренда:",
+    "participants.regionLabel": "Регион:",
+    "participants.phoneLabel": "Телефон:",
+    "participants.legalLabel": "Юридическое название:",
+    "participants.potentialImpact": "Потенциальный эффект",
   },
 
   en: {
@@ -338,13 +413,13 @@ export const translations: Translations = {
     // Hero
     "hero.title1": "YOUNG ENTREPRENEURS",
     "hero.title2": "CHAMPIONSHIP",
-    "hero.subtitle": "Present your startup, business or idea and compete for investment",
+    "hero.subtitle": "Present your startup or business and compete for investment",
     "hero.button": "Apply Now",
     // About
     "about.label": "About the Championship",
     "about.heading1": "WHAT TO EXPECT",
     "about.heading2": "AT THE CHAMPIONSHIP",
-    "about.text": "An annual competition established by Presidential Decree PP-59, open to young people aged 18 to 30 with a traditional business, startup, or idea. Upon completion, up to 100 business and startup projects will each receive investments of up to 1 billion soums, plus coverage of up to 100 times the base calculation unit for financial and marketing expert services to help them develop into brands.",
+    "about.text": "An annual competition established by Presidential Decree PP-59, open to young people aged 18 to 30 with a traditional business or startup. Upon completion, up to 100 business and startup projects will each receive investments of up to 1 billion soums, plus coverage of up to 100 times the base calculation unit for financial and marketing expert services to help them develop into brands.",
     // Stats
     "stats.scrollText": "THROUGH INVESTMENT — WE SUPPORT THE STRONGEST IDEAS, THE BOLDEST ENTREPRENEURS, AND THE WORLD-CLASS UZBEK BRANDS THEY WILL BUILD",
     "stats.counter1.label": "Directions",
@@ -381,14 +456,12 @@ export const translations: Translations = {
     "positive.card6.desc": "Championship winners will be sent to internship programmes at prestigious foreign accelerators and companies.",
     // Categories
     "cat.label": "Championship Tracks",
-    "cat.heading": "We accept applications \nin 3 tracks",
+    "cat.heading": "We accept applications \nin 2 tracks",
     "cat.button": "Apply Now",
     "cat.biz.title": "Traditional Business",
     "cat.biz.desc": "You already have a running business. Expand it, take it to the next level, and become one of Uzbekistan's major companies.",
     "cat.startup.title": "Startup",
     "cat.startup.desc": "You've found a clear and powerful solution to a problem. Now scale it faster, attract investment, and become a major player.",
-    "cat.idea.title": "Idea",
-    "cat.idea.desc": "You have an idea with strong potential that hasn't been realised yet. Turn it into a real product, launch an MVP, and take it to the next level with investment.",
     // Experts
     "experts.label": "JURY",
     "experts.heading": "Fund Board Members",
@@ -426,12 +499,39 @@ export const translations: Translations = {
     "footer.sections": "Sections",
     "footer.apply": "Apply",
     "footer.startup": "For Startup",
-    "footer.ideas": "For Idea",
     "footer.business": "For Business",
     "footer.copyright": "Powered by",
     "footer.poweredby": "Youth Affairs Agency",
     // Theme
     "theme.toDark": "Switch to dark mode",
     "theme.toLight": "Switch to light mode",
+    // Participants Page
+    "participants.moreInfo": "More info",
+    "participants.loginToView": "Login to view",
+    "participants.aboutBusiness": "About Business",
+    "participants.goals": "Goals",
+    "participants.galleryTitle": "Project Gallery (Presentation Slides)",
+    "participants.clickToZoom": "Click to zoom",
+    "participants.apply": "Apply Now",
+    "participants.label": "Young Entrepreneurs Championship",
+    "participants.title": "PARTICIPANTS",
+    "participants.subtitle": "Participants accepted to the championship — young entrepreneurs of the future",
+    "participants.searchPlaceholder": "F.I.O or Brand name...",
+    "participants.all": "All",
+    "participants.business": "Business",
+    "participants.startup": "Startup",
+    "participants.allRegions": "All regions",
+    "participants.countSuffix": "participants",
+    "participants.clear": "Clear",
+    "participants.emptyTitle": "NO RESULTS FOUND",
+    "participants.emptyDesc": "Try choosing different filters",
+    "participants.loadMore": "Load more",
+    "participants.ageLabel": "Age:",
+    "participants.ageSuffix": "years old",
+    "participants.brandLabel": "Brand name:",
+    "participants.regionLabel": "Region:",
+    "participants.phoneLabel": "Phone:",
+    "participants.legalLabel": "Legal name:",
+    "participants.potentialImpact": "Potential Impact",
   },
 };

@@ -24,6 +24,10 @@ import logoWhite from "../assets/logos/white full.png";
 import logoBlue from "../assets/logos/blue-full.png";
 import HeroImage from "../assets/img/hero-image.png";
 import HeroLightImage from "../assets/imglight/herolight.png";
+import VideoPlayer from "../components/VideoPlayer";
+
+const SECONDSTAGE_VIDEO_URL = "https://orxgpsqmadgfkmeqkvpy.supabase.co/storage/v1/object/public/participant-media/videos/secondstage.mp4";
+
 
 /* ─── Interfaces & Constants ─────────────────────────────────── */
 
@@ -497,6 +501,25 @@ export default function Phase2QuestionnairePage() {
             <p className={`text-xs sm:text-sm leading-relaxed ${isLight ? "text-slate-600" : "text-white/70"}`}>
               Ushbu so'rovnoma investorlar va hakamlar hay'ati uchun loyihangizning moliyaviy barqarorligi va samaradorligini baholashga xizmat qiladi.
             </p>
+          </div>
+
+          {/* ── VIDEO GUIDANCE BANNER ────────────────────────────────── */}
+          <div className="mb-8 rounded-2xl border border-[#00A8FF]/30 bg-[#00A8FF]/5 p-5 sm:p-6 backdrop-blur-md flex flex-col gap-4 shadow-xl">
+            <div className="flex items-center gap-3 text-[#00A8FF]">
+              <Award size={20} />
+              <h3 className="text-base sm:text-lg font-bold text-white tracking-wide" style={{ fontFamily: "var(--font-zuume)" }}>
+                2-BOSQICH TUSHIUNTIRISH VA YO'RIQNOMA VIDEOSI
+              </h3>
+            </div>
+            <p className="text-xs text-white/70 leading-relaxed max-w-3xl">
+              So'rovnomani to'ldirishdan oldin 2-bosqich talablari, moliyaviy jadval va hujjatlarni topshirish bo'yicha tayyorlangan quyidagi video qo'llanmani diqqat bilan tomosha qiling.
+            </p>
+            <VideoPlayer
+              src={SECONDSTAGE_VIDEO_URL}
+              title="2-Bosqich Yo'riqnomasi"
+              subtitle="Yosh Tadbirkorlar Chempionati 2026"
+              className="w-full aspect-video rounded-xl shadow-2xl"
+            />
           </div>
 
           {/* ── STEPPER ───────────────────────────────────────────── */}

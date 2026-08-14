@@ -120,7 +120,7 @@ const Stats = () => {
 
       <Container size="md">
         <div className="grid grid-cols-2 md:flex md:justify-between gap-6">
-          <Counter end={3} suffix=" ta" label={t("stats.counter1.label")} isLight={isLight} />
+          <Counter end={2} suffix=" ta" label={t("stats.counter1.label")} isLight={isLight} />
           <Counter end={1} suffix=" mlrd" label={t("stats.counter2.label")} isLight={isLight} />
           <Counter end={100} suffix=" BHM" label={t("stats.counter3.label")} isLight={isLight} />
           <Counter end={100} suffix=" ta" label={t("stats.counter4.label")} isLight={isLight} />

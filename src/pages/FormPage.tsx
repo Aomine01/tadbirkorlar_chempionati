@@ -3,10 +3,6 @@ import { ArrowLeft } from "lucide-react";
 import Container from "../components/Container";
 
 const forms: Record<string, { title: string; src: string }> = {
-  ideas: {
-    title: "G'oya yo'nalishi",
-    src: "https://docs.google.com/forms/d/e/1FAIpQLSfltjeAwHPaZow6K8dk2NPbhlFA15MD1fVq8fl_fjQERocrMg/viewform?embedded=true",
-  },
   startup: {
     title: "Startap yo'nalishi",
     src: "https://docs.google.com/forms/d/e/1FAIpQLScGrCEEEW3JSa8gbGhZI4siNOcEAn7v2Fx50dpXEMl2uFshGA/viewform?embedded=true",

@@ -4,9 +4,12 @@ import { ArrowRight, X, Search, MapPin, RotateCcw } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
+import { useLanguage } from "../contexts/LanguageContext";
 import type { Application } from "../types/database";
 import logo from "../assets/logos/white full.png";
+import logoBlue from "../assets/logos/blue-full.png";
 import HeroImage from "../assets/img/hero-image.png";
+import HeroLightImage from "../assets/imglight/herolight.png";
 import largeCardMen from "../assets/img/largecardmen.png";
 import largeCardFemale from "../assets/img/largcardfemale.png";
 import miniMaleLight from "../assets/imglight/minimalelight.png";
@@ -52,18 +55,18 @@ interface ExtendedApplication extends Application {
   full_name?: string;
 }
 
-/* ─── Category labels ──────────────────────────────── */
-
-const CATEGORY_LABELS: Record<string, string> = {
-  startup: "Startap",
-  business: "Biznes",
-};
 
 /* ─── Local Premium Participants (Mock/Static Data) ─── */
 // All participants are migrated to Supabase database now.
 const LOCAL_PARTICIPANTS: ExtendedApplication[] = [];
 
 /* ─── Compact Participant Card ─────────────────────── */
+
+const getCategoryLabel = (cat: string, translateFn: (k: any) => string) => {
+  if (cat === "business") return translateFn("participants.business");
+  if (cat === "startup") return translateFn("participants.startup");
+  return cat;
+};
 
 const ParticipantCard = ({
   app,
@@ -72,6 +75,10 @@ const ParticipantCard = ({
   app: ExtendedApplication;
   onClick: () => void;
 }) => {
+  const { theme } = useTheme();
+  const { t } = useLanguage();
+  const isLight = theme === "light";
+
   // Determine gender for card accent coloring
   const gender = app.gender || "male";
   
@@ -85,11 +92,15 @@ const ParticipantCard = ({
   return (
     <article
       onClick={onClick}
-      className={`group relative rounded-xl overflow-hidden border border-white/5 transition-[transform,border-color] duration-300 ${hoverBorderColor} hover:-translate-y-0.5 bg-[#0a0a0c]/95 sm:bg-[#0a0a0c]/80 sm:backdrop-blur-sm cursor-pointer shadow-md flex flex-col justify-between`}
+      className={`group relative rounded-xl overflow-hidden border transition-[transform,border-color] duration-300 ${hoverBorderColor} hover:-translate-y-0.5 ${
+        isLight
+          ? "bg-white border-slate-200 shadow-md shadow-slate-200/50"
+          : "bg-[#0a0a0c]/95 sm:bg-[#0a0a0c]/80 border-white/5"
+      } sm:backdrop-blur-sm cursor-pointer shadow-md flex flex-col justify-between`}
     >
       <div>
         {/* Aspect 3/4 Portrait Photo */}
-        <div className="relative aspect-[3/4] overflow-hidden bg-zinc-950">
+        <div className={`relative aspect-[3/4] overflow-hidden ${isLight ? "bg-slate-100" : "bg-zinc-950"}`}>
           {app.product_image_url ? (
             <img
               src={imgUrl(app.product_image_url)}
@@ -106,10 +117,12 @@ const ParticipantCard = ({
           {/* Badges */}
           <div className="absolute top-2 left-2 right-2 flex justify-between items-center z-10">
             <span
-              className={`inline-block px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider backdrop-blur-md bg-black/60 border border-white/10 ${accentTextColor}`}
+              className={`inline-block px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider backdrop-blur-md ${
+                isLight ? "bg-white/80 border border-slate-200/60" : "bg-black/60 border border-white/10"
+              } ${accentTextColor}`}
               style={{ fontFamily: "var(--font-button)" }}
             >
-              {CATEGORY_LABELS[app.category] ?? app.category}
+              {getCategoryLabel(app.category, t)}
             </span>
           </div>
         </div>
@@ -117,12 +130,19 @@ const ParticipantCard = ({
         {/* Text Area */}
         <div className="p-2.5 sm:p-3">
           {/* Region */}
-          <div className="text-[8px] sm:text-[9px] uppercase tracking-wider text-white/40 mb-1" style={{ fontFamily: "var(--font-button)" }}>
+          <div
+            className={`text-[8px] sm:text-[9px] uppercase tracking-wider mb-1 ${
+              isLight ? "text-slate-400" : "text-white/40"
+            }`}
+            style={{ fontFamily: "var(--font-button)" }}
+          >
             {app.region}
           </div>
           {/* Founder Name */}
           <h2
-            className="text-base sm:text-xl font-bold text-white leading-tight uppercase truncate"
+            className={`text-base sm:text-xl font-bold leading-tight uppercase truncate ${
+              isLight ? "text-slate-900" : "text-white"
+            }`}
             style={{ fontFamily: "var(--font-zuume)" }}
           >
             {app.full_name || app.brand_name}
@@ -135,8 +155,13 @@ const ParticipantCard = ({
       </div>
 
       {/* Action Strip */}
-      <div className={`px-2.5 sm:px-3 py-2 sm:py-2.5 border-t border-white/5 flex items-center justify-between text-[9px] sm:text-[10px] font-semibold text-white/40 ${actionStripHover} transition-colors duration-200`} style={{ fontFamily: "var(--font-button)" }}>
-        <span>Ko'proq ma'lumot</span>
+      <div
+        className={`px-2.5 sm:px-3 py-2 sm:py-2.5 border-t flex items-center justify-between text-[9px] sm:text-[10px] font-semibold transition-colors duration-200 ${
+          isLight ? "border-slate-100 text-slate-400" : "border-white/5 text-white/40"
+        } ${actionStripHover}`}
+        style={{ fontFamily: "var(--font-button)" }}
+      >
+        <span>{t("participants.moreInfo")}</span>
         <ArrowRight size={10} className="transform translate-x-0 group-hover:translate-x-0.5 transition-transform shrink-0" />
       </div>
     </article>
@@ -153,6 +178,7 @@ const ParticipantDetailModal = ({
   onClose: () => void;
 }) => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [activeGalleryIdx, setActiveGalleryIdx] = useState(0);
 
@@ -207,9 +233,13 @@ const ParticipantDetailModal = ({
 
       {/* Modal Card with Gender Background */}
       <div
-        className="relative w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 p-4 sm:p-8 md:p-10 shadow-2xl z-10 no-scrollbar animate-modal-in flex flex-col gap-4 sm:gap-6"
+        className={`relative w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl border p-4 sm:p-8 md:p-10 shadow-2xl z-10 no-scrollbar animate-modal-in flex flex-col gap-4 sm:gap-6 ${
+          isLight ? "border-slate-200" : "border-white/10"
+        }`}
         style={{
-          backgroundImage: `linear-gradient(to bottom, rgba(3, 3, 5, 0.55) 0%, rgba(3, 3, 5, 0.75) 100%), url(${bgImage})`,
+          backgroundImage: isLight
+            ? `linear-gradient(to bottom, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.95) 100%), url(${bgImage})`
+            : `linear-gradient(to bottom, rgba(3, 3, 5, 0.55) 0%, rgba(3, 3, 5, 0.75) 100%), url(${bgImage})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
@@ -217,7 +247,11 @@ const ParticipantDetailModal = ({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full border border-white/10 bg-black/60 text-white/50 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer z-20"
+          className={`absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full border transition-all cursor-pointer z-20 ${
+            isLight
+              ? "border-slate-200 bg-white/80 text-slate-500 hover:text-slate-900 hover:bg-slate-100 hover:border-slate-300"
+              : "border-white/10 bg-black/60 text-white/50 hover:text-white hover:bg-white/10 hover:border-white/20"
+          }`}
         >
           <X size={18} />
         </button>
@@ -228,7 +262,9 @@ const ParticipantDetailModal = ({
           {/* Left Column: Portrait image + info boxes */}
           <div className="md:col-span-4 flex flex-col gap-5">
             {/* Portrait Image (Aspect 3/4) */}
-            <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-white/10 bg-zinc-950 w-full max-w-[280px] mx-auto md:max-w-none">
+            <div className={`relative aspect-[3/4] rounded-2xl overflow-hidden w-full max-w-[280px] mx-auto md:max-w-none border ${
+              isLight ? "border-slate-200 bg-slate-100" : "border-white/10 bg-zinc-950"
+            }`}>
               <img
                 src={imgUrl(app.product_image_url)}
                 alt={app.full_name || app.brand_name}
@@ -239,25 +275,30 @@ const ParticipantDetailModal = ({
               />
             </div>
 
-            {/* Quick Stats / Info Sheet (Glassmorphic style) */}
-            <div className="rounded-2xl border border-white/10 bg-zinc-950/60 backdrop-blur-md p-5 flex flex-col gap-4 text-xs" style={{ fontFamily: "var(--font-button)" }}>
-              <div className="flex justify-between items-center pb-2 border-b border-white/5">
-                <span className="text-white/40">Yoshi:</span>
-                <span className="font-semibold text-white">{app.age} yosh</span>
+            {/* Quick Stats / Info Sheet */}
+            <div
+              className={`rounded-2xl border p-5 flex flex-col gap-4 text-xs backdrop-blur-md ${
+                isLight ? "border-slate-200 bg-white/60" : "border-white/10 bg-zinc-950/60"
+              }`}
+              style={{ fontFamily: "var(--font-button)" }}
+            >
+              <div className={`flex justify-between items-center pb-2 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
+                <span className={isLight ? "text-slate-500" : "text-white/40"}>{t("participants.ageLabel")}</span>
+                <span className={`font-semibold ${isLight ? "text-slate-900" : "text-white"}`}>{app.age} {t("participants.ageSuffix")}</span>
               </div>
-              <div className="flex justify-between items-center pb-2 border-b border-white/5">
-                <span className="text-white/40">Brend nomi:</span>
-                <span className="font-semibold text-white">{app.brand_name || "-"}</span>
+              <div className={`flex justify-between items-center pb-2 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
+                <span className={isLight ? "text-slate-500" : "text-white/40"}>{t("participants.brandLabel")}</span>
+                <span className={`font-semibold ${isLight ? "text-slate-900" : "text-white"}`}>{app.brand_name || "-"}</span>
               </div>
-              <div className="flex justify-between items-start pb-2 border-b border-white/5">
-                <span className="text-white/40 shrink-0">Hudud:</span>
-                <span className="font-semibold text-white text-right ml-4">
+              <div className={`flex justify-between items-start pb-2 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
+                <span className={`shrink-0 ${isLight ? "text-slate-500" : "text-white/40"}`}>{t("participants.regionLabel")}</span>
+                <span className={`font-semibold text-right ml-4 ${isLight ? "text-slate-900" : "text-white"}`}>
                   {app.region} {app.location ? `, ${app.location}` : ""}
                 </span>
               </div>
               {app.phone && (
-                <div className="flex justify-between items-center pb-2 border-b border-white/5 w-full">
-                  <span className="text-white/40 shrink-0">Telefon:</span>
+                <div className={`flex justify-between items-center pb-2 border-b w-full ${isLight ? "border-slate-100" : "border-white/5"}`}>
+                  <span className={`shrink-0 ${isLight ? "text-slate-500" : "text-white/40"}`}>{t("participants.phoneLabel")}</span>
                   {user ? (
                     <a href={`tel:${app.phone}`} className={`font-semibold ${accentTextColor} hover:underline truncate ml-4`}>
                       {app.phone}
@@ -265,29 +306,42 @@ const ParticipantDetailModal = ({
                   ) : (
                     <Link
                       to="/auth/login"
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 text-white/70 hover:text-white transition-all text-[10px] font-medium ml-4 shrink-0"
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all text-[10px] font-medium ml-4 shrink-0 border ${
+                        isLight
+                          ? "bg-slate-100 border-slate-200 hover:border-slate-350 text-slate-650 hover:text-slate-900"
+                          : "bg-white/5 border-white/10 hover:border-white/20 text-white/70 hover:text-white"
+                      }`}
                     >
-                      Ko'rish uchun kirish
+                      {t("participants.loginToView")}
                     </Link>
                   )}
                 </div>
               )}
               <div className="flex justify-between items-center">
-                <span className="text-white/40">Yuridik nomi:</span>
-                <span className="font-semibold text-white/80">{app.legal_name || "-"}</span>
+                <span className={isLight ? "text-slate-500" : "text-white/40"}>{t("participants.legalLabel")}</span>
+                <span className={`font-semibold ${isLight ? "text-slate-700" : "text-white/80"}`}>{app.legal_name || "-"}</span>
               </div>
             </div>
 
-            {/* Potential Impact Box (Glassmorphic style) */}
+            {/* Potential Impact Box */}
             {app.potential_impact && app.potential_impact.length > 0 && (
-              <div className="rounded-2xl border border-white/10 bg-zinc-950/60 backdrop-blur-md p-5 flex flex-col gap-3 text-xs" style={{ fontFamily: "var(--font-button)" }}>
-                <h3 className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 border-b border-white/5 pb-2">
-                  Potensial Ta'sir
+              <div
+                className={`rounded-2xl border p-5 flex flex-col gap-3 text-xs backdrop-blur-md ${
+                  isLight ? "border-slate-200 bg-white/60" : "border-white/10 bg-zinc-950/60"
+                }`}
+                style={{ fontFamily: "var(--font-button)" }}
+              >
+                <h3
+                  className={`text-[10px] font-bold uppercase tracking-wider border-b pb-2 ${
+                    isLight ? "text-emerald-600 border-slate-100" : "text-emerald-400 border-white/5"
+                  }`}
+                >
+                  {t("participants.potentialImpact")}
                 </h3>
                 <ul className="flex flex-col gap-2">
                   {app.potential_impact.map((impact, idx) => (
-                    <li key={idx} className="flex gap-2 text-white/70 leading-relaxed">
-                      <span className="text-emerald-400 shrink-0 mt-0.5">•</span>
+                    <li key={idx} className={`flex gap-2 leading-relaxed ${isLight ? "text-slate-600 font-medium" : "text-white/70"}`}>
+                      <span className={`shrink-0 mt-0.5 ${isLight ? "text-emerald-600" : "text-emerald-400"}`}>•</span>
                       <span>{impact}</span>
                     </li>
                   ))}
@@ -300,12 +354,17 @@ const ParticipantDetailModal = ({
           <div className="md:col-span-8 flex flex-col gap-6">
             
             {/* Header Identity Block */}
-            <div className="flex flex-col gap-1 border-b border-white/5 pb-3">
-              <div className="text-white/40 text-xs uppercase tracking-widest font-bold" style={{ fontFamily: "var(--font-button)" }}>
+            <div className={`flex flex-col gap-1 border-b pb-3 ${isLight ? "border-slate-100" : "border-white/5"}`}>
+              <div
+                className={`text-xs uppercase tracking-widest font-bold ${isLight ? "text-slate-400" : "text-white/40"}`}
+                style={{ fontFamily: "var(--font-button)" }}
+              >
                 {app.region}
               </div>
               <h2
-                className="text-3xl sm:text-5xl md:text-6xl font-black text-white leading-tight uppercase tracking-tight"
+                className={`text-3xl sm:text-5xl md:text-6xl font-black leading-tight uppercase tracking-tight ${
+                  isLight ? "text-slate-900" : "text-white"
+                }`}
                 style={{ fontFamily: "var(--font-zuume)" }}
               >
                 {app.full_name || app.brand_name}
@@ -316,24 +375,37 @@ const ParticipantDetailModal = ({
             </div>
 
             {/* Biznes Haqida */}
-            <div className={`rounded-2xl border border-white/10 bg-zinc-950/60 backdrop-blur-md p-5 ${accentBorderColor} transition-all duration-300`}>
+            <div
+              className={`rounded-2xl border p-5 transition-all duration-300 backdrop-blur-md ${accentBorderColor} ${
+                isLight ? "border-slate-200 bg-white/60" : "border-white/10 bg-zinc-950/60"
+              }`}
+            >
               <h3 className={`text-[10px] font-bold uppercase tracking-[0.15em] ${accentTextColor} mb-3`} style={{ fontFamily: "var(--font-button)" }}>
-                Biznes Haqida
+                {t("participants.aboutBusiness")}
               </h3>
-              <p className="text-xs sm:text-sm text-white/85 leading-relaxed">
+              <p className={`text-xs sm:text-sm leading-relaxed ${isLight ? "text-slate-700 font-medium" : "text-white/85"}`}>
                 {cleanDescription}
               </p>
             </div>
 
             {/* Goals */}
             {app.goals && app.goals.length > 0 && (
-              <div className={`rounded-2xl border border-white/10 bg-zinc-950/60 backdrop-blur-md p-5 ${accentBorderColor} transition-all duration-300`}>
+              <div
+                className={`rounded-2xl border p-5 transition-all duration-300 backdrop-blur-md ${accentBorderColor} ${
+                  isLight ? "border-slate-200 bg-white/60" : "border-white/10 bg-zinc-950/60"
+                }`}
+              >
                 <h3 className={`text-[10px] font-bold uppercase tracking-[0.15em] ${accentTextColor} mb-3`} style={{ fontFamily: "var(--font-button)" }}>
-                  Maqsadlari
+                  {t("participants.goals")}
                 </h3>
                 <ul className="flex flex-col gap-3">
                   {app.goals.map((goal, idx) => (
-                    <li key={idx} className="flex gap-2.5 text-xs sm:text-sm text-white/70 leading-relaxed items-start">
+                    <li
+                      key={idx}
+                      className={`flex gap-2.5 text-xs sm:text-sm leading-relaxed items-start ${
+                        isLight ? "text-slate-650 font-medium" : "text-white/70"
+                      }`}
+                    >
                       <span className={`flex items-center justify-center w-5 h-5 rounded ${numberBadgeBg} text-[10px] font-bold shrink-0 mt-0.5`}>
                         {idx + 1}
                       </span>
@@ -348,13 +420,15 @@ const ParticipantDetailModal = ({
             {galleryImages.length > 0 && (
               <div className="flex flex-col gap-4 mt-2">
                 <h3 className={`text-[10px] font-bold uppercase tracking-[0.15em] ${accentTextColor}`} style={{ fontFamily: "var(--font-button)" }}>
-                  Loyihadan Lavhalar (Taqdimot Sahifalari)
+                  {t("participants.galleryTitle")}
                 </h3>
                 
                 {/* Featured Large Image Box */}
                 <div 
                   onClick={() => setActiveImage(galleryImages[activeGalleryIdx])}
-                  className="relative aspect-video w-full rounded-2xl overflow-hidden border border-white/15 bg-zinc-950/80 shadow-lg cursor-pointer group hover:border-[#00A8FF]/30 transition-colors duration-300"
+                  className={`relative aspect-video w-full rounded-2xl overflow-hidden border shadow-lg cursor-pointer group transition-colors duration-300 hover:border-[#00A8FF]/30 ${
+                    isLight ? "border-slate-200 bg-slate-100" : "border-white/15 bg-zinc-950/80"
+                  }`}
                 >
                   <img
                     src={imgUrl(galleryImages[activeGalleryIdx])}
@@ -366,7 +440,7 @@ const ParticipantDetailModal = ({
                   />
                   <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
                     <span className="px-3.5 py-2 rounded-xl bg-black/75 backdrop-blur-md border border-white/15 text-[10px] font-bold text-white uppercase tracking-wider">
-                      Kattalashtirish uchun bosing
+                      {t("participants.clickToZoom")}
                     </span>
                   </div>
                 </div>
@@ -380,7 +454,9 @@ const ParticipantDetailModal = ({
                       className={`relative aspect-video rounded-xl overflow-hidden border transition-all duration-300 cursor-pointer shadow-sm group ${
                         activeGalleryIdx === i
                           ? `${activeThumbnailBorder} ring-2 scale-102`
-                          : "border-white/10 bg-zinc-950/40 hover:border-white/20 hover:scale-102"
+                          : isLight
+                            ? "border-slate-200 bg-slate-100 hover:border-slate-350 hover:scale-102"
+                            : "border-white/10 bg-zinc-950/40 hover:border-white/20 hover:scale-102"
                       }`}
                     >
                       <img
@@ -417,7 +493,9 @@ const ParticipantDetailModal = ({
             src={imgUrl(activeImage)}
             alt="Presentation slide expanded"
             decoding="async"
-            className="relative max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl border border-white/10"
+            className={`relative max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl border ${
+              isLight ? "border-slate-200" : "border-white/10"
+            }`}
           />
         </div>
       )}
@@ -446,6 +524,10 @@ const ParticipantDetailModal = ({
 /* ─── Page ─────────────────────────────────────────── */
 
 const IshtirokchilarPage = () => {
+  const { theme } = useTheme();
+  const { t } = useLanguage();
+  const isLight = theme === "light";
+
   const [applications, setApplications] = useState<ExtendedApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedApp, setSelectedApp] = useState<ExtendedApplication | null>(null);
@@ -455,7 +537,7 @@ const IshtirokchilarPage = () => {
       supabase
         .from("applications")
         .select("*, profiles(full_name, phone_number)")
-        .eq("status", "approved")
+        .in("status", ["under_review", "approved"])
         .eq("is_deleted", false)          // exclude soft-deleted applications
         .order("created_at", { ascending: false })
         .then(({ data }) => {
@@ -478,7 +560,7 @@ const IshtirokchilarPage = () => {
             const rawDescription = app.business_description || "";
             const founderMatch = rawDescription.match(/\[Founder:\s*([^\]]+)\]/i);
             const genderMatch = rawDescription.match(/\[Gender:\s*(male|female)\]/i);
-            const phoneMatch = rawDescription.match(/\[Phone:\s*([^\]]+)\]/i);
+            const phoneMatch = rawDescription.match(/\[Phone:\s*[^\]]+\]/i);
 
             const full_name = founderMatch ? founderMatch[1].trim() : (app.profiles?.full_name || app.brand_name);
             const gender = genderMatch ? (genderMatch[1].toLowerCase() as "male" | "female") : (app.gender || "male");
@@ -538,6 +620,16 @@ const IshtirokchilarPage = () => {
   const uniqueRegions = Object.entries(regionCounts).sort((a, b) => b[1] - a[1]).map(([r]) => r);
 
   const filtered = applications.filter((a) => {
+    // Apply search query
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const nameMatch = (a.full_name || "").toLowerCase().includes(q);
+      const brandMatch = (a.brand_name || "").toLowerCase().includes(q);
+      if (!nameMatch && !brandMatch) return false;
+    }
+    // Apply category filter
+    if (categoryFilter !== "all" && a.category !== categoryFilter) return false;
+    // Apply region filter
     if (regionFilter !== "all" && a.region !== regionFilter) return false;
     return true;
   });
@@ -547,37 +639,51 @@ const IshtirokchilarPage = () => {
 
   return (
     <div
-      className="min-h-screen relative overflow-hidden"
-      style={{ background: "#000001" }}
+      className={`min-h-screen relative overflow-hidden transition-colors duration-300`}
+      style={{ background: isLight ? "#f8fafc" : "#000001" }}
       data-lenis-prevent
     >
       {/* Background Image overlay matching the Hero page style */}
       <div
         className="absolute inset-0 bg-cover bg-center opacity-35 pointer-events-none scale-105"
         style={{
-          backgroundImage: `url(${HeroImage})`,
+          backgroundImage: `url(${isLight ? HeroLightImage : HeroImage})`,
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-[#000001]/10 via-[#000001]/50 to-[#000001] pointer-events-none" />
+      <div className={`absolute inset-0 bg-gradient-to-b ${
+        isLight
+          ? "from-slate-50/10 via-slate-50/50 to-slate-50"
+          : "from-[#000001]/10 via-[#000001]/50 to-[#000001]"
+      } pointer-events-none`} />
 
       {/* Content wrapper */}
       <div className="relative z-10">
         {/* Header */}
-        <div className="border-b border-white/5 sticky top-0 z-10 bg-black/80 backdrop-blur-sm">
+        <div className={`border-b sticky top-0 z-10 backdrop-blur-sm transition-colors duration-300 ${
+          isLight ? "border-slate-200 bg-white/80" : "border-white/5 bg-black/80"
+        }`}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3 group">
-              <div className="w-8 h-8 flex items-center justify-center rounded-lg border border-white/10 group-hover:border-white/20 transition-colors">
-                <ArrowRight size={14} className="text-white/40 rotate-180" />
+              <div className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-colors ${
+                isLight ? "border-slate-200 group-hover:border-slate-350" : "border-white/10 group-hover:border-white/20"
+              }`}>
+                <ArrowRight size={14} className={isLight ? "text-slate-400 rotate-180" : "text-white/40 rotate-180"} />
               </div>
-              <div className="flex items-center bg-[#111111] border border-white/10 rounded-[10px] px-3 py-2.5 overflow-hidden">
-                <img src={logo} alt="Logo" className="h-7 w-auto object-contain" />
+              <div className={`flex items-center border rounded-[10px] px-3 py-2.5 overflow-hidden transition-colors ${
+                isLight ? "bg-slate-50 border-slate-200" : "bg-[#111111] border-white/10"
+              }`}>
+                <img src={isLight ? logoBlue : logo} alt="Logo" className="h-7 w-auto object-contain" />
               </div>
             </Link>
             <Link
               to="/auth/login"
-              className="hidden sm:flex items-center gap-2 text-xs border border-white/10 rounded-xl px-4 py-2 text-white/60 hover:text-white hover:border-white/20 transition-all"
+              className={`hidden sm:flex items-center gap-2 text-xs border rounded-xl px-4 py-2 transition-all ${
+                isLight
+                  ? "border-slate-200 text-slate-650 hover:text-slate-900 hover:border-slate-350 bg-white"
+                  : "border-white/10 text-white/60 hover:text-white hover:border-white/20"
+              }`}
             >
-              Ariza topshirish <ArrowRight size={12} />
+              {t("participants.apply")} <ArrowRight size={12} />
             </Link>
           </div>
         </div>
@@ -585,40 +691,50 @@ const IshtirokchilarPage = () => {
         {/* Hero */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-14 pb-10">
           <p
-            className="text-xs text-[#00A8FF] tracking-[0.2em] uppercase mb-3"
+            className="text-xs text-[#00A8FF] tracking-[0.2em] uppercase mb-3 font-semibold"
             style={{ fontFamily: "var(--font-button)" }}
           >
-            Yosh Tadbirkorlar Chempionati
+            {t("participants.label")}
           </p>
           <h1
-            className="text-4xl sm:text-6xl md:text-7xl font-bold mb-4 leading-none"
+            className={`text-4xl sm:text-6xl md:text-7xl font-bold mb-4 leading-none ${
+              isLight ? "text-slate-900" : "text-white"
+            }`}
             style={{ fontFamily: "var(--font-zuume)" }}
           >
-            ISHTIROKCHILAR
+            {t("participants.title")}
           </h1>
-          <p className="text-sm text-white/40 max-w-lg" style={{ fontFamily: "var(--font-button)" }}>
-            Chempionatga qabul qilingan ishtirokchilar — kelajakning yosh tadbirkorlari
+          <p className={`text-sm max-w-lg ${isLight ? "text-slate-500" : "text-white/40"}`} style={{ fontFamily: "var(--font-button)" }}>
+            {t("participants.subtitle")}
           </p>
 
           {/* Redesigned User-Friendly Filter Control Bar */}
           {!loading && applications.length > 0 && (
             <div className="mt-8 flex flex-col gap-4">
-              <div className="p-3 sm:p-4 rounded-2xl border border-white/10 bg-[#0a0a0c]/80 backdrop-blur-md shadow-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+              <div className={`p-3 sm:p-4 rounded-2xl border backdrop-blur-md shadow-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 transition-colors duration-300 ${
+                isLight ? "border-slate-200 bg-white/80 shadow-slate-200/50" : "border-white/10 bg-[#0a0a0c]/80"
+              }`}>
                 
                 {/* Search Input */}
                 <div className="relative flex-1">
-                  <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
+                  <Search size={16} className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${isLight ? "text-slate-400" : "text-white/40"}`} />
                   <input
                     type="text"
-                    placeholder="F.I.O yoki Brend nomi..."
+                    placeholder={t("participants.searchPlaceholder")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-9 py-2.5 rounded-xl border border-white/10 bg-white/5 text-xs text-white placeholder-white/40 outline-none focus:border-[#00A8FF]/60 focus:bg-white/10 transition-all font-medium"
+                    className={`w-full pl-10 pr-9 py-2.5 rounded-xl border outline-none transition-all font-medium text-xs ${
+                      isLight
+                        ? "border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-400 focus:border-[#00A8FF]/60 focus:bg-white"
+                        : "border-white/10 bg-white/5 text-white placeholder-white/40 focus:border-[#00A8FF]/60 focus:bg-white/10"
+                    }`}
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white cursor-pointer"
+                      className={`absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer transition-colors ${
+                        isLight ? "text-slate-400 hover:text-slate-700" : "text-white/40 hover:text-white"
+                      }`}
                     >
                       <X size={14} />
                     </button>
@@ -626,39 +742,41 @@ const IshtirokchilarPage = () => {
                 </div>
 
                 {/* Category Switcher */}
-                <div className="flex items-center p-1 rounded-xl border border-white/10 bg-white/5 shrink-0 self-start md:self-auto">
+                <div className={`flex items-center p-1 rounded-xl border shrink-0 self-start md:self-auto transition-colors ${
+                  isLight ? "border-slate-200 bg-slate-50" : "border-white/10 bg-white/5"
+                }`}>
                   <button
                     onClick={() => setCategoryFilter("all")}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                       categoryFilter === "all"
                         ? "bg-[#00A8FF] text-white shadow-md"
-                        : "text-white/60 hover:text-white"
+                        : isLight ? "text-slate-500 hover:text-slate-900" : "text-white/60 hover:text-white"
                     }`}
                     style={{ fontFamily: "var(--font-button)" }}
                   >
-                    Barchasi
+                    {t("participants.all")}
                   </button>
                   <button
                     onClick={() => setCategoryFilter("business")}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                       categoryFilter === "business"
                         ? "bg-[#00A8FF] text-white shadow-md"
-                        : "text-white/60 hover:text-white"
+                        : isLight ? "text-slate-500 hover:text-slate-900" : "text-white/60 hover:text-white"
                     }`}
                     style={{ fontFamily: "var(--font-button)" }}
                   >
-                    Biznes
+                    {t("participants.business")}
                   </button>
                   <button
                     onClick={() => setCategoryFilter("startup")}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                       categoryFilter === "startup"
                         ? "bg-[#00A8FF] text-white shadow-md"
-                        : "text-white/60 hover:text-white"
+                        : isLight ? "text-slate-500 hover:text-slate-900" : "text-white/60 hover:text-white"
                     }`}
                     style={{ fontFamily: "var(--font-button)" }}
                   >
-                    Startap
+                    {t("participants.startup")}
                   </button>
                 </div>
 
@@ -668,16 +786,22 @@ const IshtirokchilarPage = () => {
                   <select
                     value={regionFilter}
                     onChange={(e) => setRegionFilter(e.target.value)}
-                    className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-white/10 bg-[#0a0a0c] text-xs text-white outline-none cursor-pointer focus:border-[#00A8FF]/60 appearance-none font-bold tracking-wide"
+                    className={`w-full pl-9 pr-8 py-2.5 rounded-xl border outline-none cursor-pointer focus:border-[#00A8FF]/60 appearance-none font-bold tracking-wide transition-colors ${
+                      isLight
+                        ? "border-slate-200 bg-white text-slate-900"
+                        : "border-white/10 bg-[#0a0a0c] text-white"
+                    }`}
                   >
-                    <option value="all">Barcha Hududlar ({applications.length})</option>
+                    <option value="all">{t("participants.allRegions")} ({applications.length})</option>
                     {uniqueRegions.map((region) => (
                       <option key={region} value={region}>
                         {region} ({regionCounts[region]})
                       </option>
                     ))}
                   </select>
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-white/40 text-[10px]">
+                  <div className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[10px] ${
+                    isLight ? "text-slate-400" : "text-white/40"
+                  }`}>
                     ▼
                   </div>
                 </div>
@@ -691,10 +815,12 @@ const IshtirokchilarPage = () => {
                     className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${
                       regionFilter === "all"
                         ? "bg-[#00A8FF]/20 border-[#00A8FF]/40 text-[#00A8FF]"
-                        : "border-white/10 text-white/50 hover:text-white hover:border-white/20 bg-white/5"
+                        : isLight
+                          ? "border-slate-200 text-slate-500 hover:text-slate-900 hover:border-slate-350 bg-white"
+                          : "border-white/10 text-white/50 hover:text-white hover:border-white/20 bg-white/5"
                     }`}
                   >
-                    Barcha hududlar
+                    {t("participants.allRegions")}
                     <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-white/70 font-mono">
                       {applications.length}
                     </span>
@@ -707,7 +833,9 @@ const IshtirokchilarPage = () => {
                       className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${
                         regionFilter === region
                           ? "bg-[#00A8FF]/20 border-[#00A8FF]/40 text-[#00A8FF]"
-                          : "border-white/10 text-white/50 hover:text-white hover:border-white/20 bg-white/5"
+                          : isLight
+                            ? "border-slate-200 text-slate-500 hover:text-slate-900 hover:border-slate-350 bg-white"
+                            : "border-white/10 text-white/50 hover:text-white hover:border-white/20 bg-white/5"
                       }`}
                     >
                       {region}
@@ -719,8 +847,8 @@ const IshtirokchilarPage = () => {
                 </div>
 
                 <div className="shrink-0 ml-auto flex items-center gap-3">
-                  <span className="hidden sm:inline text-xs text-white/40 font-mono">
-                    {filtered.length} ta ishtirokchi
+                  <span className={`hidden sm:inline text-xs font-mono ${isLight ? "text-slate-400" : "text-white/40"}`}>
+                    {filtered.length} {t("participants.countSuffix")}
                   </span>
                   {(searchQuery || categoryFilter !== "all" || regionFilter !== "all") && (
                     <button
@@ -732,7 +860,7 @@ const IshtirokchilarPage = () => {
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-400 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 transition-all cursor-pointer"
                     >
                       <RotateCcw size={12} />
-                      Tozalash
+                      {t("participants.clear")}
                     </button>
                   )}
                 </div>
@@ -745,15 +873,17 @@ const IshtirokchilarPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
           {loading ? (
             <div className="flex items-center justify-center py-32">
-              <div className="w-8 h-8 border-2 border-white/20 border-t-[#00A8FF] rounded-full animate-spin" />
+              <div className={`w-8 h-8 border-2 rounded-full animate-spin ${
+                isLight ? "border-slate-200 border-t-[#00A8FF]" : "border-white/20 border-t-[#00A8FF]"
+              }`} />
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-32">
-              <p className="text-4xl mb-4 font-bold text-white/10" style={{ fontFamily: "var(--font-zuume)" }}>
-                TEZDA
+              <p className={`text-4xl mb-4 font-bold ${isLight ? "text-slate-200" : "text-white/10"}`} style={{ fontFamily: "var(--font-zuume)" }}>
+                {t("participants.emptyTitle")}
               </p>
-              <p className="text-sm text-white/30">
-                Boshqa filter tanlab ko'ring
+              <p className={`text-sm ${isLight ? "text-slate-400" : "text-white/30"}`}>
+                {t("participants.emptyDesc")}
               </p>
             </div>
           ) : (
@@ -773,10 +903,14 @@ const IshtirokchilarPage = () => {
                 <div className="flex justify-center mt-12 mb-8">
                   <button
                     onClick={() => setVisibleCount((prev) => prev + 12)}
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-semibold uppercase tracking-wider border border-white/10 hover:border-[#00A8FF]/40 text-white/70 hover:text-white bg-[#0a0a0c]/85 hover:bg-[#0a0a0c] backdrop-blur-md transition-all duration-300 hover:scale-102 cursor-pointer shadow-lg"
+                    className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-semibold uppercase tracking-wider border hover:border-[#00A8FF]/40 hover:scale-102 cursor-pointer shadow-lg backdrop-blur-md transition-all duration-300 ${
+                      isLight
+                        ? "border-slate-200 text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 shadow-slate-200/50"
+                        : "border-white/10 text-white/70 hover:text-white bg-[#0a0a0c]/85 hover:bg-[#0a0a0c]"
+                    }`}
                     style={{ fontFamily: "var(--font-button)" }}
                   >
-                    <span>Ko'proq yuklash</span>
+                    <span>{t("participants.loadMore")}</span>
                     <ArrowRight size={12} className="rotate-90 text-[#00A8FF] animate-bounce" />
                   </button>
                 </div>
@@ -786,11 +920,11 @@ const IshtirokchilarPage = () => {
         </div>
 
         {/* Footer strip */}
-        <div className="border-t border-white/5 py-8">
+        <div className={`border-t py-8 transition-colors ${isLight ? "border-slate-200" : "border-white/5"}`}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <img src={logo} alt="Logo" className="h-5 w-auto opacity-30" />
-            <p className="text-xs text-white/20" style={{ fontFamily: "var(--font-button)" }}>
-              © {new Date().getFullYear()} Yosh Tadbirkorlar Chempionati
+            <img src={isLight ? logoBlue : logo} alt="Logo" className="h-5 w-auto opacity-30" />
+            <p className={`text-xs ${isLight ? "text-slate-400" : "text-white/20"}`} style={{ fontFamily: "var(--font-button)" }}>
+              © {new Date().getFullYear()} {t("participants.label")}
             </p>
           </div>
         </div>
