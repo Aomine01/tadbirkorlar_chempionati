@@ -80,7 +80,7 @@ const ParticipantCard = ({
   const isLight = theme === "light";
 
   // Determine gender for card accent coloring
-  const gender = app.gender || "male";
+  const gender = (app.gender || "male").toLowerCase();
   
   // Theme styling based on gender
   const isFemale = gender === "female";
@@ -205,7 +205,7 @@ const ParticipantDetailModal = ({
 
   // Parse gender
   const rawDescription = app.business_description || "";
-  const gender = app.gender || "male";
+  const gender = (app.gender || "male").toLowerCase();
   const cleanDescription = rawDescription
     .replace(/\[Founder:\s*[^\]]+\]/i, "")
     .replace(/\[Gender:\s*(male|female)\]/i, "")
@@ -817,63 +817,27 @@ const IshtirokchilarPage = () => {
                 </div>
               </div>
 
-              {/* Horizontal Scroll Pill Bar + Reset Button */}
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex overflow-x-auto py-1 gap-2 no-scrollbar items-center max-w-full">
-                  <button
-                    onClick={() => setRegionFilter("all")}
-                    className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${
-                      regionFilter === "all"
-                        ? "bg-[#00A8FF]/20 border-[#00A8FF]/40 text-[#00A8FF]"
-                        : isLight
-                          ? "border-slate-200 text-slate-500 hover:text-slate-900 hover:border-slate-350 bg-white"
-                          : "border-white/10 text-white/50 hover:text-white hover:border-white/20 bg-white/5"
-                    }`}
-                  >
-                    {t("participants.allRegions")}
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-white/70 font-mono">
-                      {applications.length}
-                    </span>
-                  </button>
-
-                  {uniqueRegions.map((region) => (
-                    <button
-                      key={region}
-                      onClick={() => setRegionFilter(regionFilter === region ? "all" : region)}
-                      className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${
-                        regionFilter === region
-                          ? "bg-[#00A8FF]/20 border-[#00A8FF]/40 text-[#00A8FF]"
-                          : isLight
-                            ? "border-slate-200 text-slate-500 hover:text-slate-900 hover:border-slate-350 bg-white"
-                            : "border-white/10 text-white/50 hover:text-white hover:border-white/20 bg-white/5"
-                      }`}
-                    >
-                      {region}
-                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10 text-white/70 font-mono">
-                        {regionCounts[region]}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="shrink-0 ml-auto flex items-center gap-3">
-                  <span className={`hidden sm:inline text-xs font-mono ${isLight ? "text-slate-400" : "text-white/40"}`}>
+              {/* Filter Results Status Bar */}
+              <div className="flex items-center justify-between mt-1 text-xs">
+                <div className={`font-mono ${isLight ? "text-slate-400" : "text-white/40"}`}>
+                  <span>
                     {filtered.length} {t("participants.countSuffix")}
                   </span>
-                  {(searchQuery || categoryFilter !== "all" || regionFilter !== "all") && (
-                    <button
-                      onClick={() => {
-                        setSearchQuery("");
-                        setCategoryFilter("all");
-                        setRegionFilter("all");
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-400 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 transition-all cursor-pointer"
-                    >
-                      <RotateCcw size={12} />
-                      {t("participants.clear")}
-                    </button>
-                  )}
                 </div>
+
+                {(searchQuery || categoryFilter !== "all" || regionFilter !== "all") && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery("");
+                      setCategoryFilter("all");
+                      setRegionFilter("all");
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-400 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 transition-all cursor-pointer"
+                  >
+                    <RotateCcw size={12} />
+                    {t("participants.clear")}
+                  </button>
+                )}
               </div>
             </div>
           )}
