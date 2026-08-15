@@ -296,27 +296,6 @@ const ParticipantDetailModal = ({
                   {app.region} {app.location ? `, ${app.location}` : ""}
                 </span>
               </div>
-              {app.phone && (
-                <div className={`flex justify-between items-center pb-2 border-b w-full ${isLight ? "border-slate-100" : "border-white/5"}`}>
-                  <span className={`shrink-0 ${isLight ? "text-slate-500" : "text-white/40"}`}>{t("participants.phoneLabel")}</span>
-                  {user ? (
-                    <a href={`tel:${app.phone}`} className={`font-semibold ${accentTextColor} hover:underline truncate ml-4`}>
-                      {app.phone}
-                    </a>
-                  ) : (
-                    <Link
-                      to="/auth/login"
-                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all text-[10px] font-medium ml-4 shrink-0 border ${
-                        isLight
-                          ? "bg-slate-100 border-slate-200 hover:border-slate-350 text-slate-650 hover:text-slate-900"
-                          : "bg-white/5 border-white/10 hover:border-white/20 text-white/70 hover:text-white"
-                      }`}
-                    >
-                      {t("participants.loginToView")}
-                    </Link>
-                  )}
-                </div>
-              )}
               <div className="flex justify-between items-center">
                 <span className={isLight ? "text-slate-500" : "text-white/40"}>{t("participants.legalLabel")}</span>
                 <span className={`font-semibold ${isLight ? "text-slate-700" : "text-white/80"}`}>{app.legal_name || "-"}</span>
