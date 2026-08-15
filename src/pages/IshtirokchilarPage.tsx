@@ -533,63 +533,63 @@ const IshtirokchilarPage = () => {
   const [selectedApp, setSelectedApp] = useState<ExtendedApplication | null>(null);
 
   useEffect(() => {
-    const fetchApps = () => {
-      supabase
-        .from("applications")
-        .select("*, profiles(full_name, phone_number)")
-        .in("status", ["under_review", "approved"])
-        .eq("is_deleted", false)          // exclude soft-deleted applications
-        .order("created_at", { ascending: false })
-        .then(({ data, error }) => {
-          if (error) {
-            console.error("Error fetching participants from Supabase:", error);
-            setLoading(false);
-            return;
-          }
+    const fetchApps = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("applications")
+          .select("*, profiles(full_name, phone_number)")
+          .in("status", ["under_review", "approved"])
+          .eq("is_deleted", false)          // exclude soft-deleted applications
+          .order("created_at", { ascending: false });
 
-          const dbApps = (data ?? []).map((app: any) => {
-            // Parse product_image_urls if stored as a JSON string
-            let gallery: string[] = [];
-            if (app.product_image_urls) {
-              if (Array.isArray(app.product_image_urls)) {
-                gallery = app.product_image_urls;
-              } else if (typeof app.product_image_urls === "string") {
-                try {
-                  gallery = JSON.parse(app.product_image_urls);
-                } catch {
-                  gallery = [app.product_image_urls];
-                }
+        if (error) {
+          console.error("Error fetching participants from Supabase:", error);
+          setLoading(false);
+          return;
+        }
+
+        const dbApps = (data ?? []).map((app: any) => {
+          // Parse product_image_urls if stored as a JSON string
+          let gallery: string[] = [];
+          if (app.product_image_urls) {
+            if (Array.isArray(app.product_image_urls)) {
+              gallery = app.product_image_urls;
+            } else if (typeof app.product_image_urls === "string") {
+              try {
+                gallery = JSON.parse(app.product_image_urls);
+              } catch {
+                gallery = [app.product_image_urls];
               }
             }
+          }
 
-            // Parse embedded metadata from description (works around RLS profiles query restriction)
-            const rawDescription = app.business_description || "";
-            const founderMatch = rawDescription.match(/\[Founder:\s*([^\]]+)\]/i);
-            const genderMatch = rawDescription.match(/\[Gender:\s*(male|female)\]/i);
-            const phoneMatch = rawDescription.match(/\[Phone:\s*([^\]]+)\]/i);
+          // Parse embedded metadata from description (works around RLS profiles query restriction)
+          const rawDescription = app.business_description || "";
+          const founderMatch = rawDescription.match(/\[Founder:\s*([^\]]+)\]/i);
+          const genderMatch = rawDescription.match(/\[Gender:\s*(male|female)\]/i);
+          const phoneMatch = rawDescription.match(/\[Phone:\s*([^\]]+)\]/i);
 
-            const full_name = founderMatch ? founderMatch[1].trim() : (app.profiles?.full_name || app.brand_name);
-            const gender = genderMatch ? (genderMatch[1].toLowerCase() as "male" | "female") : (app.gender || "male");
-            const phone = phoneMatch ? phoneMatch[1].trim() : (app.profiles?.phone_number || app.phone || "");
+          const full_name = founderMatch ? founderMatch[1].trim() : (app.profiles?.full_name || app.brand_name);
+          const gender = genderMatch ? (genderMatch[1].toLowerCase() as "male" | "female") : (app.gender || "male");
+          const phone = phoneMatch ? phoneMatch[1].trim() : (app.profiles?.phone_number || app.phone || "");
 
-            return {
-              ...app,
-              region: normalizeRegionName(app.region),
-              full_name,
-              gender,
-              phone,
-              gallery
-            };
-          });
-          
-          // Combine static premium local participants with Supabase database applications
-          setApplications([...LOCAL_PARTICIPANTS, ...dbApps]);
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error("Unhandled error fetching participants:", err);
-          setLoading(false);
+          return {
+            ...app,
+            region: normalizeRegionName(app.region),
+            full_name,
+            gender,
+            phone,
+            gallery
+          };
         });
+        
+        // Combine static premium local participants with Supabase database applications
+        setApplications([...LOCAL_PARTICIPANTS, ...dbApps]);
+        setLoading(false);
+      } catch (err) {
+        console.error("Unhandled error fetching participants:", err);
+        setLoading(false);
+      }
     };
 
     fetchApps();
