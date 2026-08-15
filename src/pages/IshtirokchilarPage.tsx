@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, X, Search, MapPin, RotateCcw } from "lucide-react";
 import { supabase } from "../lib/supabase";
-import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import type { Application } from "../types/database";
@@ -177,7 +176,6 @@ const ParticipantDetailModal = ({
   app: ExtendedApplication | null;
   onClose: () => void;
 }) => {
-  const { user } = useAuth();
   const { t } = useLanguage();
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [activeGalleryIdx, setActiveGalleryIdx] = useState(0);
