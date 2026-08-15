@@ -540,7 +540,13 @@ const IshtirokchilarPage = () => {
         .in("status", ["under_review", "approved"])
         .eq("is_deleted", false)          // exclude soft-deleted applications
         .order("created_at", { ascending: false })
-        .then(({ data }) => {
+        .then(({ data, error }) => {
+          if (error) {
+            console.error("Error fetching participants from Supabase:", error);
+            setLoading(false);
+            return;
+          }
+
           const dbApps = (data ?? []).map((app: any) => {
             // Parse product_image_urls if stored as a JSON string
             let gallery: string[] = [];
@@ -560,7 +566,7 @@ const IshtirokchilarPage = () => {
             const rawDescription = app.business_description || "";
             const founderMatch = rawDescription.match(/\[Founder:\s*([^\]]+)\]/i);
             const genderMatch = rawDescription.match(/\[Gender:\s*(male|female)\]/i);
-            const phoneMatch = rawDescription.match(/\[Phone:\s*[^\]]+\]/i);
+            const phoneMatch = rawDescription.match(/\[Phone:\s*([^\]]+)\]/i);
 
             const full_name = founderMatch ? founderMatch[1].trim() : (app.profiles?.full_name || app.brand_name);
             const gender = genderMatch ? (genderMatch[1].toLowerCase() as "male" | "female") : (app.gender || "male");
@@ -578,6 +584,10 @@ const IshtirokchilarPage = () => {
           
           // Combine static premium local participants with Supabase database applications
           setApplications([...LOCAL_PARTICIPANTS, ...dbApps]);
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error("Unhandled error fetching participants:", err);
           setLoading(false);
         });
     };
