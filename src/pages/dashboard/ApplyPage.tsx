@@ -355,6 +355,28 @@ const ApplyPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [alreadyApplied, setAlreadyApplied] = useState(false);
+  const [existingAppId, setExistingAppId] = useState<string | null>(null);
+
+  // Check for duplicate applications — allow reapplication if previously rejected
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("applications")
+      .select("id, status")
+      .eq("user_id", user.id)
+      .eq("is_deleted", false)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          if (data.status === "rejected") {
+            setExistingAppId(data.id);
+            setAlreadyApplied(false);
+          } else {
+            setAlreadyApplied(true);
+          }
+        }
+      });
+  }, [user]);
 
   // Step-level errors
   const [step3Errors, setStep3Errors] = useState<{ goals?: string; impact?: string }>({});
@@ -377,20 +399,6 @@ const ApplyPage = () => {
     productFiles: [],
     productPreviews: [],
   });
-
-  // Check for duplicate applications — exclude soft-deleted so user can reapply after deletion
-  useEffect(() => {
-    if (!user) return;
-    supabase
-      .from("applications")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("is_deleted", false)        // only block if there's an active (non-deleted) application
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) setAlreadyApplied(true);
-      });
-  }, [user]);
 
   /* Step 1 form */
   const step1Form = useForm({
@@ -526,23 +534,49 @@ const ApplyPage = () => {
         }
       }
 
-      /* Insert application */
-      const { error: insertErr } = await supabase.from("applications").insert({
-        user_id: user.id,
-        category: formData.category,
-        age: formData.age,
-        region: formData.region,
-        brand_name: formData.brand_name,
-        legal_name: formData.legal_name,
-        business_description: formData.business_description,
-        goals: formData.goals.filter((g) => g.trim()),
-        potential_impact: formData.potential_impact.filter((g) => g.trim()),
-        avatar_url: avatarData.publicUrl,
-        product_image_url: productUrls[0] ?? null,   // keep legacy column
-        product_image_urls: productUrls,              // new array column
-        status: "submitted",
-        gender: formData.gender,
-      });
+      /* Insert or Update application */
+      let insertErr;
+      if (existingAppId) {
+        const { error } = await supabase
+          .from("applications")
+          .update({
+            category: formData.category,
+            age: formData.age,
+            region: formData.region,
+            brand_name: formData.brand_name,
+            legal_name: formData.legal_name,
+            business_description: formData.business_description,
+            goals: formData.goals.filter((g) => g.trim()),
+            potential_impact: formData.potential_impact.filter((g) => g.trim()),
+            avatar_url: avatarData.publicUrl,
+            product_image_url: productUrls[0] ?? null,
+            product_image_urls: productUrls,
+            status: "submitted",
+            rejection_comment: null,
+            gender: formData.gender,
+            is_deleted: false,
+          } as any)
+          .eq("id", existingAppId);
+        insertErr = error;
+      } else {
+        const { error } = await supabase.from("applications").insert({
+          user_id: user.id,
+          category: formData.category,
+          age: formData.age,
+          region: formData.region,
+          brand_name: formData.brand_name,
+          legal_name: formData.legal_name,
+          business_description: formData.business_description,
+          goals: formData.goals.filter((g) => g.trim()),
+          potential_impact: formData.potential_impact.filter((g) => g.trim()),
+          avatar_url: avatarData.publicUrl,
+          product_image_url: productUrls[0] ?? null,
+          product_image_urls: productUrls,
+          status: "submitted",
+          gender: formData.gender,
+        });
+        insertErr = error;
+      }
 
       if (insertErr) {
         // Handle unique constraint violation (user already has an application)

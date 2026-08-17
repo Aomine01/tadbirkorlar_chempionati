@@ -180,6 +180,7 @@ const DashboardPage = () => {
   const { profile, user, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [application, setApplication] = useState<Application | null>(null);
+  const [hasPhase2App, setHasPhase2App] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("profil");
 
@@ -198,6 +199,15 @@ const DashboardPage = () => {
         .then(({ data }) => {
           setApplication(data?.[0] ?? null);
           setLoading(false);
+        });
+
+      supabase
+        .from("phase2_applications")
+        .select("id")
+        .eq("user_id", user.id)
+        .limit(1)
+        .then(({ data }) => {
+          setHasPhase2App(!!(data && data.length > 0));
         });
     };
 
@@ -516,31 +526,70 @@ const DashboardPage = () => {
                     </div>
                   )}
 
-                  {/* Rejected status video & encouragement section */}
+                  {/* Rejected status: 1-Bosqich (soft rejection with reason + re-apply) vs 2-Bosqich (hard rejection with Sorry video) */}
                   {application.status === "rejected" && (
-                    <div className="rounded-2xl border border-rose-500/30 bg-rose-500/5 p-6 backdrop-blur-md flex flex-col gap-6 shadow-xl animate-fade-in">
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center shrink-0">
-                          <AlertTriangle className="w-5 h-5 text-rose-400" />
+                    hasPhase2App ? (
+                      /* 2-Bosqich Hard Rejection with Sorry Video */
+                      <div className="rounded-2xl border border-rose-500/30 bg-rose-500/5 p-6 backdrop-blur-md flex flex-col gap-6 shadow-xl animate-fade-in">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center shrink-0">
+                            <AlertTriangle className="w-5 h-5 text-rose-400" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+                              Hurmatli Ishtirokchi!
+                            </h3>
+                            <p className="text-xs sm:text-sm text-white/70 mt-1 max-w-2xl leading-relaxed">
+                              Afsuski, 2-bosqich moliyaviy va biznes tahlili natijalariga ko'ra arizangiz keyingi bosqichga o'tmadi. Loyihangizni yanada rivojlantirish va kelgusi imkoniyatlar haqida batafsil ma'lumot olish uchun quyidagi video murojaatni tomosha qiling.
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-                            Hurmatli Ishtirokchi!
-                          </h3>
-                          <p className="text-xs sm:text-sm text-white/70 mt-1 max-w-2xl leading-relaxed">
-                            Afsuski, ushbu bosqichda arizangiz saralashdan o'tmadi. Loyihangizni yanada rivojlantirish va kelgusi imkoniyatlar haqida batafsil ma'lumot olish uchun quyidagi video murojaatni tomosha qiling.
-                          </p>
-                        </div>
-                      </div>
 
-                      {/* Video Player */}
-                      <VideoPlayer
-                        src={SORRY_VIDEO_URL}
-                        title="Tashkiliy Qo'mita Murojaati"
-                        subtitle="Yosh Tadbirkorlar Chempionati 2026"
-                        className="w-full aspect-video rounded-xl"
-                      />
-                    </div>
+                        {/* Video Player */}
+                        <VideoPlayer
+                          src={SORRY_VIDEO_URL}
+                          title="Tashkiliy Qo'mita Murojaati"
+                          subtitle="Yosh Tadbirkorlar Chempionati 2026"
+                          className="w-full aspect-video rounded-xl"
+                        />
+                      </div>
+                    ) : (
+                      /* 1-Bosqich Soft Rejection (No video, clear reason & re-apply button) */
+                      <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6 backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-xl animate-fade-in">
+                        <div className="flex items-start gap-3.5">
+                          <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0 mt-0.5">
+                            <AlertTriangle className="w-5 h-5 text-amber-400" />
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+                              Arizangiz moderatsiyadan o'tmadi
+                            </h3>
+                            <p className="text-xs sm:text-sm text-white/70 max-w-xl leading-relaxed">
+                              Arizangizdagi ko'rsatilgan kamchiliklarni to'g'irlab, qayta topshirishingiz mumkin.
+                            </p>
+                            {application.rejection_comment && (
+                              <div className="mt-1 rounded-xl border border-amber-500/20 bg-black/40 px-3.5 py-2.5 max-w-lg">
+                                <p className="text-[10px] text-amber-400/80 uppercase tracking-widest font-semibold mb-0.5">
+                                  Rad etish sababi:
+                                </p>
+                                <p className="text-xs text-amber-200 leading-relaxed font-medium">
+                                  {application.rejection_comment}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <Link
+                          to="/dashboard/apply"
+                          className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl px-6 py-3.5 shadow-lg active:scale-95 transition-all shrink-0 cursor-pointer"
+                          style={{ fontFamily: "var(--font-button)" }}
+                        >
+                          <span>Qayta ariza topshirish</span>
+                          <ArrowRight size={15} />
+                        </Link>
+                      </div>
+                    )
                   )}
 
                   {/* Status card */}

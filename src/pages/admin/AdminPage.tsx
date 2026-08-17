@@ -320,6 +320,16 @@ export default function AdminPage() {
       }
 
       if (data && data.length > 0) {
+        // Automatic realignment: move legacy 'approved' applications to 'under_review' (1-Bosqich)
+        const legacyApproved = data.filter((item: any) => item.status === "approved");
+        if (legacyApproved.length > 0) {
+          supabase
+            .from("applications")
+            .update({ status: "under_review" } as any)
+            .in("id", legacyApproved.map((i: any) => i.id))
+            .then(() => {});
+        }
+
         const mapped: ApplicantItem[] = data.map((item, idx) => {
           const rawDesc = item.business_description || "";
           const founderMatch = rawDesc.match(/\[Founder:\s*([^\]]+)\]/i);
@@ -341,7 +351,10 @@ export default function AdminPage() {
 
           let stKey: StatusKey = "korib_chiqilmoqda";
           if (item.status === "submitted") stKey = "yangi_ariza";
-          else if (item.status === "approved") stKey = "tasdiqlangan";
+          else if (item.status === "approved") {
+            // Realignment: if unpromoted, map to 1-bosqich active status
+            stKey = "korib_chiqilmoqda";
+          }
           else if (item.status === "rejected") stKey = "rad_etildi";
           else if ((item.status as string) === "returned" || (item.status as string) === "qaytarildi") stKey = "qaytarildi";
 
@@ -636,17 +649,22 @@ export default function AdminPage() {
                   1-Bosqich
                 </span>
               </div>
-              <ChevronDown
-                size={15}
-                className={`transition-transform duration-200 ${
-                  arizalarOpen ? "rotate-180 text-[#00A8FF]" : isLight ? "text-slate-400" : "text-white/40"
-                }`}
-              />
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#00A8FF]/15 text-[#00A8FF] border border-[#00A8FF]/30">
+                  {statusCounts["korib_chiqilmoqda"] || 0} TA
+                </span>
+                <ChevronDown
+                  size={15}
+                  className={`transition-transform duration-200 ${
+                    arizalarOpen ? "rotate-180 text-[#00A8FF]" : isLight ? "text-slate-400" : "text-white/40"
+                  }`}
+                />
+              </div>
             </button>
 
             {arizalarOpen && (
               <div className={`mt-1.5 ml-3 pl-3 border-l-2 flex flex-col gap-1 py-1 ${isLight ? "border-slate-100" : "border-white/10"}`}>
-                {STATUS_LIST.filter((s) => s.key !== "yangi_ariza").map((statusItem) => {
+                {STATUS_LIST.filter((s) => s.key !== "yangi_ariza" && s.key !== "tasdiqlangan").map((statusItem) => {
                   const isSelected = activePhase === "1-bosqich" && selectedStatusKey === statusItem.key;
                   const count = statusCounts[statusItem.key] || 0;
 
