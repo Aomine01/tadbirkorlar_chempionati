@@ -25,9 +25,22 @@ dist
 *.sln
 *.sw?
 
-# Upload scripts & reports
+# Upload scripts, user folders & reports
 upload_*.js
 upload_*.mjs
 upload_*.json
 diagnose.mjs
+clean_reupload.mjs
+clean_reupload_report.json
+import_missing_applications.mjs
+move_approved_to_moderation.mjs
+update_db_regions.mjs
+check_statuses.mjs
+query_db.js
+
+# User folders & local media
+users/
+legaldocs/
+videos/
+
 
