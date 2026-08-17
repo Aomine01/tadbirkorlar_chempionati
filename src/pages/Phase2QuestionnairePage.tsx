@@ -507,11 +507,11 @@ export default function Phase2QuestionnairePage() {
           <div className="mb-8 rounded-2xl border border-[#00A8FF]/30 bg-[#00A8FF]/5 p-5 sm:p-6 backdrop-blur-md flex flex-col gap-4 shadow-xl">
             <div className="flex items-center gap-3 text-[#00A8FF]">
               <Award size={20} />
-              <h3 className="text-base sm:text-lg font-bold text-white tracking-wide" style={{ fontFamily: "var(--font-zuume)" }}>
-                2-BOSQICH TUSHIUNTIRISH VA YO'RIQNOMA VIDEOSI
+              <h3 className={`text-base sm:text-lg font-bold tracking-wide ${isLight ? "text-slate-900" : "text-white"}`} style={{ fontFamily: "var(--font-zuume)" }}>
+                2-BOSQICH TUSHUNTIRISH VA YO'RIQNOMA VIDEOSI
               </h3>
             </div>
-            <p className="text-xs text-white/70 leading-relaxed max-w-3xl">
+            <p className={`text-xs leading-relaxed max-w-3xl ${isLight ? "text-slate-600 font-medium" : "text-white/70"}`}>
               So'rovnomani to'ldirishdan oldin 2-bosqich talablari, moliyaviy jadval va hujjatlarni topshirish bo'yicha tayyorlangan quyidagi video qo'llanmani diqqat bilan tomosha qiling.
             </p>
             <VideoPlayer
@@ -1108,25 +1108,25 @@ export default function Phase2QuestionnairePage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-0.5">
-                    <span className="text-slate-400 text-[10px] uppercase font-bold">Korxona Nomi:</span>
-                    <span className="font-bold text-white">{companyName || "N/A"}</span>
+                  <div className={`p-3 rounded-xl border flex flex-col gap-0.5 ${isLight ? "bg-slate-50 border-slate-200" : "bg-white/5 border-white/5"}`}>
+                    <span className={`text-[10px] uppercase font-bold ${isLight ? "text-slate-500" : "text-slate-400"}`}>Korxona Nomi:</span>
+                    <span className={`font-bold ${isLight ? "text-slate-900" : "text-white"}`}>{companyName || "N/A"}</span>
                   </div>
-                  <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-0.5">
-                    <span className="text-slate-400 text-[10px] uppercase font-bold">Tashkiliy Shakli:</span>
-                    <span className="font-bold text-white">
+                  <div className={`p-3 rounded-xl border flex flex-col gap-0.5 ${isLight ? "bg-slate-50 border-slate-200" : "bg-white/5 border-white/5"}`}>
+                    <span className={`text-[10px] uppercase font-bold ${isLight ? "text-slate-500" : "text-slate-400"}`}>Tashkiliy Shakli:</span>
+                    <span className={`font-bold ${isLight ? "text-slate-900" : "text-white"}`}>
                       {legalStructure === "Boshqa" ? legalStructureCustom || "Boshqa" : legalStructure}
                     </span>
                   </div>
-                  <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-0.5">
-                    <span className="text-slate-400 text-[10px] uppercase font-bold">So'ralayotgan Investitsiya:</span>
+                  <div className={`p-3 rounded-xl border flex flex-col gap-0.5 ${isLight ? "bg-slate-50 border-slate-200" : "bg-white/5 border-white/5"}`}>
+                    <span className={`text-[10px] uppercase font-bold ${isLight ? "text-slate-500" : "text-slate-400"}`}>So'ralayotgan Investitsiya:</span>
                     <span className="font-extrabold text-[#00A8FF] font-mono text-sm">
                       {requestedAmount || "0"} UZS
                     </span>
                   </div>
-                  <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-0.5">
-                    <span className="text-slate-400 text-[10px] uppercase font-bold">Toifa:</span>
-                    <span className="font-bold text-emerald-400">
+                  <div className={`p-3 rounded-xl border flex flex-col gap-0.5 ${isLight ? "bg-slate-50 border-slate-200" : "bg-white/5 border-white/5"}`}>
+                    <span className={`text-[10px] uppercase font-bold ${isLight ? "text-slate-500" : "text-slate-400"}`}>Toifa:</span>
+                    <span className="font-bold text-emerald-500">
                       {category === "business" ? "An'anaviy Biznes" : "Startap / Innovatsiya"}
                     </span>
                   </div>

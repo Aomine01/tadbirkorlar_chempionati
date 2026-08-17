@@ -357,18 +357,19 @@ const ApplyPage = () => {
   const [alreadyApplied, setAlreadyApplied] = useState(false);
   const [existingAppId, setExistingAppId] = useState<string | null>(null);
 
-  // Check for duplicate applications — allow reapplication if previously rejected
+  // Check for duplicate applications — allow reapplication if previously rejected and re-apply is allowed
   useEffect(() => {
     if (!user) return;
     supabase
       .from("applications")
-      .select("id, status")
+      .select("id, status, rejection_comment")
       .eq("user_id", user.id)
       .eq("is_deleted", false)
       .maybeSingle()
       .then(({ data }) => {
         if (data) {
-          if (data.status === "rejected") {
+          const isBlocked = data.rejection_comment?.includes("[Reapply: blocked]");
+          if (data.status === "rejected" && !isBlocked) {
             setExistingAppId(data.id);
             setAlreadyApplied(false);
           } else {

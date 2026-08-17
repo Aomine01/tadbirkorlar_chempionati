@@ -1,15 +1,24 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import type { ReactNode } from "react";
 
-const Spinner = () => (
-  <div
-    className="min-h-screen flex items-center justify-center"
-    style={{ background: "#0a0a0a" }}
-  >
-    <div className="w-8 h-8 border-2 border-white/20 border-t-[#00A8FF] rounded-full animate-spin" />
-  </div>
-);
+const Spinner = () => {
+  const { theme } = useTheme();
+  const isLight = theme === "light";
+
+  return (
+    <div
+      className={`min-h-screen flex items-center justify-center transition-colors duration-300 ${
+        isLight ? "bg-[#f6f8fb]" : "bg-[#000001]"
+      }`}
+    >
+      <div className={`w-9 h-9 border-3 rounded-full animate-spin ${
+        isLight ? "border-slate-200 border-t-[#00A8FF]" : "border-white/20 border-t-[#00A8FF]"
+      }`} />
+    </div>
+  );
+};
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading } = useAuth();

@@ -65,9 +65,8 @@ const Roadmap = () => {
           {/* Left - Sticky header */}
           <div className="lg:sticky lg:top-32 lg:self-start w-full">
             <span
-              className="text-sm font-medium tracking-wide uppercase mb-4 block"
+              className="text-sm font-medium tracking-wide uppercase mb-4 block text-[#00a8ff]"
               style={{
-                color: "#00a8ff",
                 fontFamily: "var(--font-button)",
               }}
             >
@@ -94,8 +93,12 @@ const Roadmap = () => {
                   {/* Icon + Title */}
                   <div className="flex items-center gap-3 mb-2">
                     <Icon
-                      className={`w-5 h-5 sm:w-6 sm:h-6 shrink-0 transition-colors ${
-                        sp > 0.1 ? "text-[#00A8FF]" : isLight ? "text-slate-400" : "text-white/30"
+                      className={`w-5 h-5 sm:w-6 sm:h-6 shrink-0 transition-colors duration-300 ${
+                        sp > 0.1
+                          ? "text-[#00A8FF]"
+                          : isLight
+                          ? "text-slate-400"
+                          : "text-white/35"
                       }`}
                     />
                     <h3 className="text-2xl sm:text-3xl uppercase md:text-4xl font-bold leading-tight">
@@ -111,10 +114,14 @@ const Roadmap = () => {
                                 ),
                               );
                         
-                        const alpha = 0.35 + wordProgress * 0.65;
+                        const alpha = isLight
+                          ? 0.45 + wordProgress * 0.55
+                          : 0.35 + wordProgress * 0.65;
+
                         return (
                           <span
                             key={wi}
+                            className="transition-colors duration-200"
                             style={{
                               color: isLight
                                 ? `rgba(15, 23, 42, ${alpha})`
@@ -130,11 +137,12 @@ const Roadmap = () => {
                   </div>
 
                   {/* Subtext Badge */}
-                  <div className="ml-8 sm:ml-9 mt-1 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium tracking-wide border transition-all duration-300"
+                  <div
+                    className="ml-8 sm:ml-9 mt-1 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium tracking-wide border transition-all duration-300"
                     style={{
                       backgroundColor: isLight ? "rgba(0, 168, 255, 0.08)" : "rgba(0, 168, 255, 0.12)",
-                      borderColor: "rgba(0, 168, 255, 0.25)",
-                      color: "#00A8FF",
+                      borderColor: isLight ? "rgba(0, 168, 255, 0.3)" : "rgba(0, 168, 255, 0.25)",
+                      color: isLight ? "#0088dd" : "#00A8FF",
                     }}
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-[#00A8FF]" />

@@ -253,6 +253,7 @@ export default function AdminPage() {
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [rejectError, setRejectError] = useState("");
+  const [allowReapply, setAllowReapply] = useState(true);
 
   // Bulk Selection & Phase 2 Migration State
   const [selectedAppIds, setSelectedAppIds] = useState<string[]>([]);
@@ -561,11 +562,15 @@ export default function AdminPage() {
       return;
     }
     if (selectedApplicant) {
-      handleUpdateStatus(selectedApplicant.fullId, "rad_etildi", rejectReason.trim());
+      const finalComment = allowReapply
+        ? `${rejectReason.trim()} [Reapply: allowed]`
+        : `${rejectReason.trim()} [Reapply: blocked]`;
+      handleUpdateStatus(selectedApplicant.fullId, "rad_etildi", finalComment);
     }
     setRejectModalOpen(false);
     setRejectReason("");
     setRejectError("");
+    setAllowReapply(true);
     setSelectedApplicant(null);
   };
 
@@ -1173,13 +1178,13 @@ export default function AdminPage() {
                           </div>
 
                           <div className="flex flex-col gap-1.5 text-xs">
-                            <span className="font-bold uppercase tracking-wider text-slate-400">Egalik tuzilmasi:</span>
-                            <p className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 leading-relaxed">{matchingP2.ownership_structure}</p>
+                            <span className={`font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-slate-400"}`}>Egalik tuzilmasi:</span>
+                            <p className={`p-3 rounded-xl border leading-relaxed ${isLight ? "bg-slate-50 border-slate-200/80 text-slate-800" : "bg-white/5 border-white/5 text-white/90"}`}>{matchingP2.ownership_structure}</p>
                           </div>
 
                           <div className="flex flex-col gap-1.5 text-xs">
-                            <span className="font-bold uppercase tracking-wider text-slate-400">Investitsiya natijalaridan kutilayotgan samaradorlik:</span>
-                            <p className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 leading-relaxed">{matchingP2.expected_outcomes}</p>
+                            <span className={`font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-slate-400"}`}>Investitsiya natijalaridan kutilayotgan samaradorlik:</span>
+                            <p className={`p-3 rounded-xl border leading-relaxed ${isLight ? "bg-slate-50 border-slate-200/80 text-slate-800" : "bg-white/5 border-white/5 text-white/90"}`}>{matchingP2.expected_outcomes}</p>
                           </div>
                         </div>
 
@@ -1191,29 +1196,29 @@ export default function AdminPage() {
                         >
                           {matchingP2.category === "startup" ? (
                             <>
-                              <h3 className="text-base font-bold uppercase tracking-wider flex items-center gap-2 text-amber-400" style={{ fontFamily: "var(--font-zuume)" }}>
+                              <h3 className="text-base font-bold uppercase tracking-wider flex items-center gap-2 text-amber-500" style={{ fontFamily: "var(--font-zuume)" }}>
                                 <Rocket size={18} />
                                 <span>B-Bo'lim — Startap / Innovatsiyalar Tahlili</span>
                               </h3>
 
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs sm:text-sm">
-                                <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
-                                  <span className="text-slate-400 font-bold uppercase text-[10px]">Mahsulot Bosqichi (B1):</span>
-                                  <span className="font-bold text-amber-400">{matchingP2.section_b_data?.product_stage || "N/A"}</span>
+                                <div className={`p-3 rounded-xl border flex flex-col gap-1 ${isLight ? "bg-slate-50/80 border-slate-200/80" : "bg-white/5 border-white/5"}`}>
+                                  <span className={`font-bold uppercase text-[10px] ${isLight ? "text-slate-500" : "text-slate-400"}`}>Mahsulot Bosqichi (B1):</span>
+                                  <span className="font-bold text-amber-500">{matchingP2.section_b_data?.product_stage || "N/A"}</span>
                                 </div>
 
-                                <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
-                                  <span className="text-slate-400 font-bold uppercase text-[10px]">Biznes Modeli / Monetizatsiya (B2):</span>
+                                <div className={`p-3 rounded-xl border flex flex-col gap-1 ${isLight ? "bg-slate-50/80 border-slate-200/80 text-slate-900" : "bg-white/5 border-white/5 text-white"}`}>
+                                  <span className={`font-bold uppercase text-[10px] ${isLight ? "text-slate-500" : "text-slate-400"}`}>Biznes Modeli / Monetizatsiya (B2):</span>
                                   <span className="font-semibold">{matchingP2.section_b_data?.business_model || "N/A"}</span>
                                 </div>
 
-                                <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
-                                  <span className="text-slate-400 font-bold uppercase text-[10px]">Hozirgi Traksiya (MAU/MRR) (B3):</span>
+                                <div className={`p-3 rounded-xl border flex flex-col gap-1 ${isLight ? "bg-slate-50/80 border-slate-200/80 text-slate-900" : "bg-white/5 border-white/5 text-white"}`}>
+                                  <span className={`font-bold uppercase text-[10px] ${isLight ? "text-slate-500" : "text-slate-400"}`}>Hozirgi Traksiya (MAU/MRR) (B3):</span>
                                   <span className="font-semibold">{matchingP2.section_b_data?.current_traction_mau_mrr || "N/A"}</span>
                                 </div>
 
-                                <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
-                                  <span className="text-slate-400 font-bold uppercase text-[10px]">12 Oy Kutilayotgan Traksiya (B4):</span>
+                                <div className={`p-3 rounded-xl border flex flex-col gap-1 ${isLight ? "bg-slate-50/80 border-slate-200/80 text-slate-900" : "bg-white/5 border-white/5 text-white"}`}>
+                                  <span className={`font-bold uppercase text-[10px] ${isLight ? "text-slate-500" : "text-slate-400"}`}>12 Oy Kutilayotgan Traksiya (B4):</span>
                                   <span className="font-semibold">{matchingP2.section_b_data?.expected_traction_12m || "N/A"}</span>
                                 </div>
                               </div>
@@ -1226,23 +1231,23 @@ export default function AdminPage() {
                               </h3>
 
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs sm:text-sm">
-                                <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
-                                  <span className="text-slate-400 font-bold uppercase text-[10px]">12 Oylik Tushum Dinamikasi (A1):</span>
+                                <div className={`p-3 rounded-xl border flex flex-col gap-1 ${isLight ? "bg-slate-50/80 border-slate-200/80 text-slate-900" : "bg-white/5 border-white/5 text-white"}`}>
+                                  <span className={`font-bold uppercase text-[10px] ${isLight ? "text-slate-500" : "text-slate-400"}`}>12 Oylik Tushum Dinamikasi (A1):</span>
                                   <span className="font-semibold">{matchingP2.section_a_data?.revenue_12m_dynamics || "N/A"}</span>
                                 </div>
 
-                                <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
-                                  <span className="text-slate-400 font-bold uppercase text-[10px]">Kutilayotgan Yillik Tushum (A2):</span>
-                                  <span className="font-semibold text-emerald-400">{matchingP2.section_a_data?.expected_revenue_12m || "N/A"}</span>
+                                <div className={`p-3 rounded-xl border flex flex-col gap-1 ${isLight ? "bg-slate-50/80 border-slate-200/80" : "bg-white/5 border-white/5"}`}>
+                                  <span className={`font-bold uppercase text-[10px] ${isLight ? "text-slate-500" : "text-slate-400"}`}>Kutilayotgan Yillik Tushum (A2):</span>
+                                  <span className="font-semibold text-emerald-500">{matchingP2.section_a_data?.expected_revenue_12m || "N/A"}</span>
                                 </div>
 
-                                <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
-                                  <span className="text-slate-400 font-bold uppercase text-[10px]">Joriy Qarzlar (A5):</span>
+                                <div className={`p-3 rounded-xl border flex flex-col gap-1 ${isLight ? "bg-slate-50/80 border-slate-200/80 text-slate-900" : "bg-white/5 border-white/5 text-white"}`}>
+                                  <span className={`font-bold uppercase text-[10px] ${isLight ? "text-slate-500" : "text-slate-400"}`}>Joriy Qarzlar (A5):</span>
                                   <span className="font-semibold">{matchingP2.section_a_data?.current_debts_and_payments || "N/A"}</span>
                                 </div>
 
-                                <div className="p-3 rounded-xl bg-white/5 flex flex-col gap-1">
-                                  <span className="text-slate-400 font-bold uppercase text-[10px]">Aktivlar va Garov Imkoniyati (A6):</span>
+                                <div className={`p-3 rounded-xl border flex flex-col gap-1 ${isLight ? "bg-slate-50/80 border-slate-200/80 text-slate-900" : "bg-white/5 border-white/5 text-white"}`}>
+                                  <span className={`font-bold uppercase text-[10px] ${isLight ? "text-slate-500" : "text-slate-400"}`}>Aktivlar va Garov Imkoniyati (A6):</span>
                                   <span className="font-semibold">{matchingP2.section_a_data?.assets_and_collateral || "N/A"}</span>
                                 </div>
                               </div>
@@ -1266,7 +1271,9 @@ export default function AdminPage() {
                               {matchingP2.uploaded_documents.map((doc, idx) => (
                                 <div
                                   key={idx}
-                                  className="p-3.5 rounded-xl border border-white/10 bg-white/5 flex items-center justify-between text-xs"
+                                  className={`p-3.5 rounded-xl border flex items-center justify-between text-xs ${
+                                    isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-white/5 border-white/10 text-white"
+                                  }`}
                                 >
                                   <div className="flex items-center gap-2.5 truncate pr-2">
                                     <FileText size={16} className="text-[#00A8FF] shrink-0" />
@@ -1913,6 +1920,35 @@ export default function AdminPage() {
                 isLight ? "bg-slate-50 border-slate-200 text-slate-800" : "bg-white/5 border-white/10 text-white"
               }`}
             />
+
+            {/* Allow Re-apply Switch */}
+            <div className={`flex items-center justify-between p-3 rounded-xl border transition-colors ${
+              isLight ? "bg-slate-50 border-slate-200" : "bg-white/5 border-white/10"
+            }`}>
+              <div className="flex flex-col gap-0.5">
+                <span className={`text-xs font-bold ${isLight ? "text-slate-800" : "text-white"}`}>
+                  Qayta ariza topshirishga ruxsat
+                </span>
+                <span className={`text-[11px] ${isLight ? "text-slate-500" : "text-white/50"}`}>
+                  {allowReapply
+                    ? "Foydalanuvchi kamchiliklarni to'g'rilab qayta topshira oladi"
+                    : "Foydalanuvchiga qayta topshirish taqiqlanadi"}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAllowReapply(!allowReapply)}
+                className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors cursor-pointer shrink-0 ${
+                  allowReapply ? "bg-emerald-500" : isLight ? "bg-slate-300" : "bg-white/20"
+                }`}
+              >
+                <div
+                  className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                    allowReapply ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
 
             {rejectError && <p className="text-xs text-rose-500 font-semibold">{rejectError}</p>}
 

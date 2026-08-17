@@ -36,12 +36,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
-    setProfile(data);
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .maybeSingle();
+      if (!error && data) {
+        setProfile(data);
+      }
+    } catch (e) {
+      console.error("fetchProfile error:", e);
+    }
   };
 
   const refreshProfile = async () => {
@@ -49,21 +55,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // Get initial session synchronously
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id).finally(() => setLoading(false));
-      } else {
-        setLoading(false);
-      }
-    });
+    let isMounted = true;
+
+    // Safety timeout to prevent infinite spinner
+    const timeoutId = setTimeout(() => {
+      if (isMounted) setLoading(false);
+    }, 2500);
+
+    // Get initial session
+    supabase.auth
+      .getSession()
+      .then(async ({ data: { session } }) => {
+        if (!isMounted) return;
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await fetchProfile(session.user.id);
+        }
+      })
+      .catch((err) => {
+        console.error("Auth getSession error:", err);
+      })
+      .finally(() => {
+        if (isMounted) {
+          clearTimeout(timeoutId);
+          setLoading(false);
+        }
+      });
 
     // Subscribe to auth state changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!isMounted) return;
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -71,9 +95,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setProfile(null);
       }
+      setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (

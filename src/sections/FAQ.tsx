@@ -33,23 +33,32 @@ const FAQItem = ({
   isLight: boolean;
 }) => (
   <div
-    className={`border-b transition-colors ${
-      isLight ? "border-slate-200" : "border-[#252528]"
+    className={`border-b transition-all duration-200 ${
+      isLight ? "border-slate-200/70" : "border-white/5"
+    } ${
+      isOpen
+        ? isLight
+          ? "bg-[#00A8FF]/6"
+          : "bg-white/4"
+        : isLight
+        ? "hover:bg-slate-50/70"
+        : "hover:bg-white/2"
     }`}
-    style={{
-      background: isOpen
-        ? isLight ? "rgba(0,168,255,0.04)" : "rgba(255,255,255,0.03)"
-        : "transparent",
-    }}
   >
     <button
       onClick={onToggle}
-      className="w-full flex items-center justify-between px-5 sm:px-6 py-4 sm:py-5 cursor-pointer text-left"
+      className="w-full flex items-center justify-between px-5 sm:px-7 py-4 sm:py-5.5 cursor-pointer text-left group"
     >
       <div className="flex items-center gap-3">
         <span
-          className={`text-sm sm:text-base font-medium ${
-            isLight ? "text-slate-900" : "text-white"
+          className={`text-sm sm:text-base font-semibold transition-colors ${
+            isOpen
+              ? isLight
+                ? "text-[#00A8FF]"
+                : "text-[#00A8FF]"
+              : isLight
+              ? "text-slate-800 group-hover:text-[#00A8FF]"
+              : "text-white/90 group-hover:text-white"
           }`}
           style={{ fontFamily: "var(--font-body)" }}
         >
@@ -59,7 +68,11 @@ const FAQItem = ({
       <ChevronDown
         size={18}
         className={`shrink-0 ml-4 transition-transform duration-300 ${
-          isLight ? "text-slate-500" : "text-white/50"
+          isOpen
+            ? "text-[#00A8FF]"
+            : isLight
+            ? "text-slate-400 group-hover:text-slate-600"
+            : "text-white/40 group-hover:text-white/70"
         }`}
         style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}
       />
@@ -72,8 +85,8 @@ const FAQItem = ({
       }}
     >
       <p
-        className={`px-5 sm:px-6 pb-5 text-xs sm:text-sm leading-relaxed whitespace-pre-line ${
-          isLight ? "text-slate-600 font-medium" : "text-white/60"
+        className={`px-5 sm:px-7 pb-5 text-xs sm:text-sm leading-relaxed whitespace-pre-line ${
+          isLight ? "text-slate-600 font-normal" : "text-white/70"
         }`}
         style={{ fontFamily: "var(--font-button)" }}
       >
@@ -93,12 +106,12 @@ const FAQ = () => {
     <section id="faq" className="relative py-20 sm:py-28 transition-colors duration-300">
       <Container size="md">
         {/* Header */}
-        <div className="mb-10 sm:mb-14">
+        <div className="mb-10 sm:mb-14 text-center sm:text-left">
           <span
-            className="text-sm font-medium tracking-wide uppercase mb-4 block"
+            className="text-xs sm:text-sm font-bold tracking-widest uppercase mb-3 block text-[#00a8ff]"
             style={{
-              color: "#00a8ff",
-              fontFamily: "var(--font-button)",
+              fontFamily: "var(--font-zuume)",
+              letterSpacing: "0.1em",
             }}
           >
             {t("faq.label")}
@@ -109,8 +122,8 @@ const FAQ = () => {
         </div>
 
         {/* FAQ List */}
-        <div className={`rounded-2xl overflow-hidden border transition-colors duration-300 ${
-          isLight ? "bg-white border-slate-200 shadow-md shadow-slate-200/50" : "bg-[#0a0a0a] border-white/5"
+        <div className={`rounded-3xl overflow-hidden border transition-all duration-300 ${
+          isLight ? "bg-white/90 border-slate-200/90 shadow-xl shadow-slate-200/50 backdrop-blur-md" : "bg-[#0a0a0c]/90 border-white/10 shadow-2xl backdrop-blur-md"
         }`}>
           {faqKeys.map(({ q, a }, i) => (
             <FAQItem
