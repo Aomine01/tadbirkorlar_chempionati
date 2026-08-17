@@ -98,7 +98,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 /* ─── Status Timeline ──────────────────────────────── */
 
-const steps = [
+const ALL_STEPS = [
   { key: "submitted", stepNum: "1-bosqich", title: "Umumiy ma'lumotlar" },
   { key: "under_review", stepNum: "2-bosqich", title: "Moliyaviy ko'rsatkichlar" },
   { key: "approved", stepNum: "3-bosqich", title: "Oflayn suhbat" },
@@ -106,42 +106,81 @@ const steps = [
 
 type TimelineStatus = "submitted" | "under_review" | "approved" | "rejected";
 
-const Timeline = ({ status, isLight }: { status: TimelineStatus; isLight?: boolean }) => {
-  const isRejectedStatus = status === "rejected";
-  const rejectedAt = isRejectedStatus ? 1 : -1;
+const Timeline = ({
+  status,
+  hasPhase2App,
+  isLight,
+}: {
+  status: TimelineStatus;
+  hasPhase2App?: boolean;
+  isLight?: boolean;
+}) => {
+  const isRejected = status === "rejected";
 
-  const currentIdx = isRejectedStatus ? 1 : steps.findIndex((s) => s.key === status);
+  // Dynamic step visibility:
+  // 1-bosqich (submitted) & 2-bosqich (under_review): 3-bosqich is hidden!
+  // 3-bosqich (approved): all 3 steps unlocked
+  // Rejected: show only stages up to the rejection
+  let visibleSteps: { key: string; stepNum: string; title: string }[] = [];
+
+  if (isRejected) {
+    visibleSteps = hasPhase2App ? [ALL_STEPS[0], ALL_STEPS[1]] : [ALL_STEPS[0]];
+  } else if (status === "submitted" || status === "under_review") {
+    visibleSteps = [ALL_STEPS[0], ALL_STEPS[1]];
+  } else {
+    visibleSteps = [...ALL_STEPS];
+  }
+
+  const currentIdx = isRejected
+    ? hasPhase2App
+      ? 1
+      : 0
+    : status === "submitted"
+    ? 0
+    : status === "under_review"
+    ? 1
+    : 2;
 
   return (
     <div className="flex items-center gap-0 w-full pt-2">
-      {steps.map((stepObj, i) => {
+      {visibleSteps.map((stepObj, i) => {
         const cfg = STATUS_CONFIG[stepObj.key as keyof typeof STATUS_CONFIG];
-        const isActive = i <= currentIdx && !isRejectedStatus;
-        const isCurrent = isRejectedStatus ? i === rejectedAt : i === currentIdx;
+        const isStepRejected = isRejected && i === currentIdx;
+        const isCompleted = !isRejected && i < currentIdx;
+        const isCurrentActive = !isRejected && i === currentIdx;
 
         return (
           <div key={stepObj.key} className="flex items-center flex-1 last:flex-none">
             <div className="flex flex-col items-center gap-1.5">
               <div
                 className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${
-                  isRejectedStatus && isCurrent
+                  isStepRejected
                     ? "border-red-500 bg-red-500/20 shadow-lg shadow-red-500/20"
-                    : isActive
-                    ? "border-[#00A8FF]"
+                    : isCompleted
+                    ? "border-emerald-500 bg-emerald-500/10"
+                    : isCurrentActive
+                    ? isLight
+                      ? "border-[#00A8FF] bg-[#00A8FF]/15 shadow-md shadow-[#00A8FF]/20"
+                      : "border-[#00A8FF] bg-[#00A8FF]/20 shadow-lg shadow-[#00A8FF]/25"
                     : isLight
                     ? "border-slate-300 bg-slate-100"
                     : "border-white/15 bg-white/5"
                 }`}
                 style={
-                  isActive
+                  isCurrentActive
                     ? { borderColor: cfg.color, backgroundColor: `${cfg.color}20` }
                     : {}
                 }
               >
-                {isRejectedStatus && isCurrent ? (
+                {isStepRejected ? (
                   <XCircle size={16} className="text-red-500" />
-                ) : isActive ? (
-                  <CheckCircle2 size={16} style={{ color: cfg.color }} />
+                ) : isCompleted ? (
+                  <CheckCircle2 size={16} className="text-emerald-500" />
+                ) : isCurrentActive ? (
+                  <div
+                    className="w-2.5 h-2.5 rounded-full animate-pulse"
+                    style={{ backgroundColor: cfg.color }}
+                  />
                 ) : (
                   <div className={`w-2 h-2 rounded-full ${isLight ? "bg-slate-300" : "bg-white/20"}`} />
                 )}
@@ -149,29 +188,43 @@ const Timeline = ({ status, isLight }: { status: TimelineStatus; isLight?: boole
               <div className="flex flex-col items-center text-center max-w-[110px] sm:max-w-[130px]">
                 <span
                   className={`text-[11px] font-bold tracking-tight ${
-                    isActive
-                      ? isLight ? "text-slate-900" : "text-white"
-                      : isLight ? "text-slate-400" : "text-white/40"
+                    isCurrentActive || isCompleted
+                      ? isLight
+                        ? "text-slate-900"
+                        : "text-white"
+                      : isLight
+                      ? "text-slate-400"
+                      : "text-white/40"
                   }`}
                   style={{ fontFamily: "var(--font-button)" }}
                 >
                   {stepObj.stepNum}
                 </span>
-                <span className={`text-[10px] leading-tight ${isLight ? "text-slate-500" : "text-white/50"}`}>
+                <span
+                  className={`text-[10px] leading-tight ${
+                    isCurrentActive || isCompleted
+                      ? isLight
+                        ? "text-slate-600 font-medium"
+                        : "text-white/80 font-medium"
+                      : isLight
+                      ? "text-slate-400"
+                      : "text-white/40"
+                  }`}
+                >
                   {stepObj.title}
                 </span>
               </div>
             </div>
-            {i < steps.length - 1 && (
+            {i < visibleSteps.length - 1 && (
               <div
-                className="flex-1 h-px mx-1.5 mb-8 transition-all duration-500"
+                className="flex-1 h-0.5 mx-2 mb-8 transition-all duration-500"
                 style={{
                   background:
-                    isActive && i < currentIdx
-                      ? STATUS_CONFIG[steps[i].key as keyof typeof STATUS_CONFIG].color
+                    isCompleted
+                      ? "#10B981"
                       : isLight
                       ? "rgba(148,163,184,0.3)"
-                      : "rgba(255,255,255,0.1)",
+                      : "rgba(255,255,255,0.12)",
                 }}
               />
             )}
@@ -706,7 +759,7 @@ const DashboardPage = () => {
                           </div>
                         )}
 
-                        <Timeline status={application.status} isLight={isLight} />
+                        <Timeline status={application.status} hasPhase2App={hasPhase2App} isLight={isLight} />
                       </div>
                     );
                   })()}
