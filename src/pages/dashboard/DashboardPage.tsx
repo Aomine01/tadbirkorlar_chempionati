@@ -610,16 +610,18 @@ const DashboardPage = () => {
                     if (hasPhase2App) {
                       return (
                         /* 2-Bosqich Hard Rejection with Sorry Video */
-                        <div className="rounded-2xl border border-rose-500/30 bg-rose-500/5 p-6 backdrop-blur-md flex flex-col gap-6 shadow-xl animate-fade-in">
+                        <div className={`rounded-2xl border p-6 backdrop-blur-md flex flex-col gap-6 shadow-xl animate-fade-in ${
+                          isLight ? "border-rose-300 bg-rose-50/90 text-slate-900 shadow-rose-200/30" : "border-rose-500/30 bg-rose-500/5 text-white"
+                        }`}>
                           <div className="flex items-start gap-3">
                             <div className="w-10 h-10 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center shrink-0">
-                              <AlertTriangle className="w-5 h-5 text-rose-400" />
+                              <AlertTriangle className="w-5 h-5 text-rose-500" />
                             </div>
                             <div>
-                              <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+                              <h3 className={`text-lg sm:text-xl font-bold tracking-tight ${isLight ? "text-rose-950" : "text-white"}`}>
                                 Hurmatli Ishtirokchi!
                               </h3>
-                              <p className="text-xs sm:text-sm text-white/70 mt-1 max-w-2xl leading-relaxed">
+                              <p className={`text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed ${isLight ? "text-rose-900/80 font-medium" : "text-white/70"}`}>
                                 Afsuski, 2-bosqich moliyaviy va biznes tahlili natijalariga ko'ra arizangiz keyingi bosqichga o'tmadi. Loyihangizni yanada rivojlantirish va kelgusi imkoniyatlar haqida batafsil ma'lumot olish uchun quyidagi video murojaatni tomosha qiling.
                               </p>
                             </div>
@@ -639,24 +641,32 @@ const DashboardPage = () => {
                     if (isReapplyBlocked) {
                       return (
                         /* 1-Bosqich Permanent Rejection without re-apply */
-                        <div className="rounded-2xl border border-rose-500/30 bg-rose-500/5 p-6 backdrop-blur-md flex flex-col gap-4 shadow-xl animate-fade-in">
+                        <div className={`rounded-2xl border p-6 backdrop-blur-md flex flex-col gap-4 shadow-xl animate-fade-in ${
+                          isLight ? "border-rose-300 bg-rose-50/90 text-slate-900 shadow-rose-200/30" : "border-rose-500/30 bg-rose-500/5 text-white"
+                        }`}>
                           <div className="flex items-start gap-3.5">
                             <div className="w-10 h-10 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center shrink-0 mt-0.5">
-                              <AlertTriangle className="w-5 h-5 text-rose-400" />
+                              <AlertTriangle className="w-5 h-5 text-rose-500" />
                             </div>
                             <div className="flex flex-col gap-1.5">
-                              <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+                              <h3 className={`text-lg sm:text-xl font-bold tracking-tight ${isLight ? "text-rose-950" : "text-white"}`}>
                                 Arizangiz saralashdan o'tmadi
                               </h3>
-                              <p className="text-xs sm:text-sm text-white/70 max-w-xl leading-relaxed">
+                              <p className={`text-xs sm:text-sm max-w-xl leading-relaxed ${isLight ? "text-rose-900/80 font-medium" : "text-white/70"}`}>
                                 Hakamlar hay'ati qaroriga ko'ra arizangiz keyingi bosqichga tavsiya etilmadi.
                               </p>
                               {cleanComment && (
-                                <div className="mt-1 rounded-xl border border-rose-500/20 bg-black/40 px-3.5 py-2.5 max-w-lg">
-                                  <p className="text-[10px] text-rose-400/80 uppercase tracking-widest font-semibold mb-0.5">
+                                <div className={`mt-1 rounded-xl border px-3.5 py-2.5 max-w-lg ${
+                                  isLight ? "border-rose-200 bg-white/90 shadow-xs" : "border-rose-500/20 bg-black/40"
+                                }`}>
+                                  <p className={`text-[10px] uppercase tracking-widest font-semibold mb-0.5 ${
+                                    isLight ? "text-rose-800 font-bold" : "text-rose-400/80"
+                                  }`}>
                                     Rad etish sababi:
                                   </p>
-                                  <p className="text-xs text-rose-200 leading-relaxed font-medium">
+                                  <p className={`text-xs leading-relaxed font-medium ${
+                                    isLight ? "text-rose-950" : "text-rose-200"
+                                  }`}>
                                     {cleanComment}
                                   </p>
                                 </div>
@@ -669,24 +679,32 @@ const DashboardPage = () => {
 
                     return (
                       /* 1-Bosqich Soft Rejection (No video, clear reason & re-apply button) */
-                      <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6 backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-xl animate-fade-in">
+                      <div className={`rounded-2xl border p-6 backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-xl animate-fade-in ${
+                        isLight ? "border-amber-300 bg-amber-50/95 shadow-amber-200/30 text-slate-900" : "border-amber-500/30 bg-amber-500/5 text-white"
+                      }`}>
                         <div className="flex items-start gap-3.5">
                           <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0 mt-0.5">
-                            <AlertTriangle className="w-5 h-5 text-amber-400" />
+                            <AlertTriangle className="w-5 h-5 text-amber-500" />
                           </div>
                           <div className="flex flex-col gap-1.5">
-                            <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+                            <h3 className={`text-lg sm:text-xl font-bold tracking-tight ${isLight ? "text-amber-950" : "text-white"}`}>
                               Arizangiz moderatsiyadan o'tmadi
                             </h3>
-                            <p className="text-xs sm:text-sm text-white/70 max-w-xl leading-relaxed">
+                            <p className={`text-xs sm:text-sm max-w-xl leading-relaxed ${isLight ? "text-amber-900/85 font-medium" : "text-white/70"}`}>
                               Arizangizdagi ko'rsatilgan kamchiliklarni to'g'irlab, qayta topshirishingiz mumkin.
                             </p>
                             {cleanComment && (
-                              <div className="mt-1 rounded-xl border border-amber-500/20 bg-black/40 px-3.5 py-2.5 max-w-lg">
-                                <p className="text-[10px] text-amber-400/80 uppercase tracking-widest font-semibold mb-0.5">
+                              <div className={`mt-1.5 rounded-xl border px-3.5 py-2.5 max-w-lg ${
+                                isLight ? "border-amber-200 bg-white/95 shadow-xs" : "border-amber-500/20 bg-black/40"
+                              }`}>
+                                <p className={`text-[10px] uppercase tracking-widest font-bold mb-0.5 ${
+                                  isLight ? "text-amber-800" : "text-amber-400/80"
+                                }`}>
                                   Rad etish sababi:
                                 </p>
-                                <p className="text-xs text-amber-200 leading-relaxed font-medium">
+                                <p className={`text-xs leading-relaxed font-medium ${
+                                  isLight ? "text-amber-950" : "text-amber-200"
+                                }`}>
                                   {cleanComment}
                                 </p>
                               </div>
@@ -696,7 +714,7 @@ const DashboardPage = () => {
 
                         <Link
                           to="/dashboard/apply"
-                          className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl px-6 py-3.5 shadow-lg active:scale-95 transition-all shrink-0 cursor-pointer"
+                          className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl px-6 py-3.5 shadow-lg shadow-amber-500/25 active:scale-95 transition-all shrink-0 cursor-pointer"
                           style={{ fontFamily: "var(--font-button)" }}
                         >
                           <span>Qayta ariza topshirish</span>

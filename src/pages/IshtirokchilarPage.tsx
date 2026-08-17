@@ -99,32 +99,37 @@ const ParticipantCard = ({
     >
       <div>
         {/* Aspect 3/4 Portrait Photo */}
-        <div className={`relative aspect-[3/4] overflow-hidden ${isLight ? "bg-slate-100" : "bg-zinc-950"}`}>
-          {app.product_image_url ? (
-            <img
-              src={imgUrl(app.product_image_url)}
-              alt={app.full_name || app.brand_name}
-              loading="lazy"
-              decoding="async"
-              className="absolute inset-0 w-full h-full object-cover opacity-85 group-hover:opacity-100 transition-opacity duration-300 scale-100 group-hover:scale-103 transition-transform duration-500"
-            />
-          ) : (
-            <div className={`absolute inset-0 bg-gradient-to-br ${gradientStart} to-transparent`} />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
+        {(() => {
+          const displayPhoto = app.avatar_url || app.product_image_url || (app.gallery && app.gallery.length > 0 ? app.gallery[0] : null);
+          return (
+            <div className={`relative aspect-[3/4] overflow-hidden ${isLight ? "bg-slate-100" : "bg-zinc-950"}`}>
+              {displayPhoto ? (
+                <img
+                  src={imgUrl(displayPhoto)}
+                  alt={app.full_name || app.brand_name}
+                  loading="lazy"
+                  decoding="async"
+                  className="absolute inset-0 w-full h-full object-cover opacity-85 group-hover:opacity-100 transition-opacity duration-300 scale-100 group-hover:scale-103 transition-transform duration-500"
+                />
+              ) : (
+                <div className={`absolute inset-0 bg-gradient-to-br ${gradientStart} to-transparent`} />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
 
-          {/* Badges */}
-          <div className="absolute top-2 left-2 right-2 flex justify-between items-center z-10">
-            <span
-              className={`inline-block px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider backdrop-blur-md ${
-                isLight ? "bg-white/80 border border-slate-200/60" : "bg-black/60 border border-white/10"
-              } ${accentTextColor}`}
-              style={{ fontFamily: "var(--font-button)" }}
-            >
-              {getCategoryLabel(app.category, t)}
-            </span>
-          </div>
-        </div>
+              {/* Badges */}
+              <div className="absolute top-2 left-2 right-2 flex justify-between items-center z-10">
+                <span
+                  className={`inline-block px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider backdrop-blur-md ${
+                    isLight ? "bg-white/80 border border-slate-200/60" : "bg-black/60 border border-white/10"
+                  } ${accentTextColor}`}
+                  style={{ fontFamily: "var(--font-button)" }}
+                >
+                  {getCategoryLabel(app.category, t)}
+                </span>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Text Area */}
         <div className="p-2.5 sm:p-3">
@@ -260,18 +265,29 @@ const ParticipantDetailModal = ({
           {/* Left Column: Portrait image + info boxes */}
           <div className="md:col-span-4 flex flex-col gap-5">
             {/* Portrait Image (Aspect 3/4) */}
-            <div className={`relative aspect-[3/4] rounded-2xl overflow-hidden w-full max-w-[280px] mx-auto md:max-w-none border ${
-              isLight ? "border-slate-200 bg-slate-100" : "border-white/10 bg-zinc-950"
-            }`}>
-              <img
-                src={imgUrl(app.product_image_url)}
-                alt={app.full_name || app.brand_name}
-                loading="eager"
-                decoding="async"
-                fetchPriority="high"
-                className="w-full h-full object-cover"
-              />
-            </div>
+            {(() => {
+              const modalPhoto = app.avatar_url || app.product_image_url || (galleryImages.length > 0 ? galleryImages[0] : null);
+              return (
+                <div className={`relative aspect-[3/4] rounded-2xl overflow-hidden w-full max-w-[280px] mx-auto md:max-w-none border ${
+                  isLight ? "border-slate-200 bg-slate-100" : "border-white/10 bg-zinc-950"
+                }`}>
+                  {modalPhoto ? (
+                    <img
+                      src={imgUrl(modalPhoto)}
+                      alt={app.full_name || app.brand_name}
+                      loading="eager"
+                      decoding="async"
+                      fetchPriority="high"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-white/30">
+                      Rasm mavjud emas
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Quick Stats / Info Sheet */}
             <div
