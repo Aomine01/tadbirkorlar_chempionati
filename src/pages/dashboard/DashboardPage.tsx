@@ -15,17 +15,48 @@ import {
   CalendarDays,
   LayoutList,
   AlertTriangle,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import { supabase } from "../../lib/supabase";
 import type { Application } from "../../types/database";
 import HeroImage from "../../assets/img/hero-image.png";
+import HeroLightImage from "../../assets/imglight/herolight.png";
+import logoWhite from "../../assets/logos/white full.png";
+import logoBlue from "../../assets/logos/blue-full.png";
 import VideoPlayer from "../../components/VideoPlayer";
 
 const SORRY_VIDEO_URL = "https://orxgpsqmadgfkmeqkvpy.supabase.co/storage/v1/object/public/participant-media/videos/sorrypage.mp4";
 
+type TabKey = "profil" | "arizalar";
 
-/* ─── Status config ────────────────────────────────── */
+/* ─── Info Row Component ────────────────────────────── */
+
+const InfoRow = ({
+  icon: Icon,
+  label,
+  value,
+  isLight = false,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string | null | undefined;
+  isLight?: boolean;
+}) => (
+  <div className={`flex flex-col sm:flex-row sm:items-center justify-between py-3.5 border-b gap-1 sm:gap-0 ${
+    isLight ? "border-slate-100" : "border-white/5"
+  }`}>
+    <span className={`text-xs flex items-center gap-2 font-medium ${isLight ? "text-slate-500" : "text-white/40"}`} style={{ fontFamily: "var(--font-button)" }}>
+      <Icon size={14} className="text-[#00A8FF] shrink-0" />
+      {label}
+    </span>
+    <span className={`text-xs sm:text-sm font-semibold ${isLight ? "text-slate-800" : "text-white/90"}`} style={{ fontFamily: "var(--font-button)" }}>
+      {value || "—"}
+    </span>
+  </div>
+);
 
 /* ─── Status config ────────────────────────────────── */
 
