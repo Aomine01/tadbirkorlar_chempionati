@@ -542,9 +542,9 @@ const IshtirokchilarPage = () => {
       try {
         const { data, error } = await supabase
           .from("applications")
-          .select("*, profiles(full_name, phone_number)")
-          .in("status", ["under_review", "approved"])
-          .eq("is_deleted", false)          // exclude soft-deleted applications
+          .select("*")
+          .neq("status", "rejected")
+          .neq("is_deleted", true)
           .order("created_at", { ascending: false });
 
         if (error) {
@@ -574,7 +574,9 @@ const IshtirokchilarPage = () => {
           const genderMatch = rawDescription.match(/\[Gender:\s*(male|female)\]/i);
           const phoneMatch = rawDescription.match(/\[Phone:\s*([^\]]+)\]/i);
 
-          const full_name = founderMatch ? founderMatch[1].trim() : (app.profiles?.full_name || app.brand_name);
+          const full_name = founderMatch
+            ? founderMatch[1].trim()
+            : (app.full_name || app.profiles?.full_name || app.brand_name || app.legal_name || "Ishtirokchi");
           
           const isFemaleName = (name: string): boolean => {
             if (!name) return false;
@@ -593,7 +595,7 @@ const IshtirokchilarPage = () => {
           const gender = genderMatch 
             ? (genderMatch[1].toLowerCase() as "male" | "female") 
             : (app.gender === "female" || isFemaleName(full_name) ? "female" : "male");
-          const phone = phoneMatch ? phoneMatch[1].trim() : (app.profiles?.phone_number || app.phone || "");
+          const phone = phoneMatch ? phoneMatch[1].trim() : (app.phone_number || app.profiles?.phone_number || app.phone || "");
 
           return {
             ...app,
