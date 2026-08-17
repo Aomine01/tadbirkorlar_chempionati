@@ -13,6 +13,7 @@ import largeCardMen from "../assets/img/largecardmen.png";
 import largeCardFemale from "../assets/img/largcardfemale.png";
 import miniMaleLight from "../assets/imglight/minimalelight.png";
 import miniFemaleLight from "../assets/imglight/minifemalelight.png";
+import { formatUserCode } from "../lib/formatUtils";
 
 /* ─── Region Normalizer ───────────────────────────────────────── */
 function normalizeRegionName(regionStr: string): string {
@@ -125,6 +126,13 @@ const ParticipantCard = ({
                   style={{ fontFamily: "var(--font-button)" }}
                 >
                   {getCategoryLabel(app.category, t)}
+                </span>
+                <span
+                  className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-mono font-bold backdrop-blur-md ${
+                    isLight ? "bg-white/80 border border-slate-200/60 text-slate-700" : "bg-black/60 border border-white/10 text-white/90"
+                  }`}
+                >
+                  {formatUserCode(app.id, true)}
                 </span>
               </div>
             </div>
@@ -296,6 +304,10 @@ const ParticipantDetailModal = ({
               }`}
               style={{ fontFamily: "var(--font-button)" }}
             >
+              <div className={`flex justify-between items-center pb-2 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
+                <span className={isLight ? "text-slate-500" : "text-white/40"}>ID raqami</span>
+                <span className={`font-mono font-bold ${isLight ? "text-[#00A8FF]" : "text-[#00A8FF]"}`}>{formatUserCode(app.id, true)}</span>
+              </div>
               <div className={`flex justify-between items-center pb-2 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
                 <span className={isLight ? "text-slate-500" : "text-white/40"}>{t("participants.ageLabel")}</span>
                 <span className={`font-semibold ${isLight ? "text-slate-900" : "text-white"}`}>{app.age} {t("participants.ageSuffix")}</span>

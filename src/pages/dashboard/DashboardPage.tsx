@@ -28,6 +28,7 @@ import HeroLightImage from "../../assets/imglight/herolight.png";
 import logoWhite from "../../assets/logos/white full.png";
 import logoBlue from "../../assets/logos/blue-full.png";
 import VideoPlayer from "../../components/VideoPlayer";
+import { formatDate, formatUserCode } from "../../lib/formatUtils";
 
 const SORRY_VIDEO_URL = "https://orxgpsqmadgfkmeqkvpy.supabase.co/storage/v1/object/public/participant-media/videos/sorrypage.mp4";
 
@@ -439,21 +440,36 @@ const DashboardPage = () => {
                     >
                       {profile?.full_name}
                     </h2>
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold ${
-                        profile?.role === "admin"
-                          ? "bg-amber-500/15 text-amber-500 border border-amber-500/30"
-                          : "bg-[#00A8FF]/15 text-[#00A8FF] border border-[#00A8FF]/30"
-                      }`}
-                    >
-                      <Shield size={10} />
-                      {profile?.role === "admin" ? "Administrator" : "Ishtirokchi"}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                          profile?.role === "admin"
+                            ? "bg-amber-500/15 text-amber-500 border border-amber-500/30"
+                            : "bg-[#00A8FF]/15 text-[#00A8FF] border border-[#00A8FF]/30"
+                        }`}
+                      >
+                        <Shield size={10} />
+                        {profile?.role === "admin" ? "Administrator" : "Ishtirokchi"}
+                      </span>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
+                          isLight ? "bg-slate-100 border-slate-200 text-slate-700" : "bg-white/10 border-white/15 text-white/90"
+                        }`}
+                      >
+                        {formatUserCode(application?.id || profile?.id || user?.id, true)}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Info rows */}
                 <div className="px-6 py-2">
+                  <InfoRow
+                    icon={Shield}
+                    label="Foydalanuvchi ID"
+                    value={formatUserCode(application?.id || profile?.id || user?.id, true)}
+                    isLight={isLight}
+                  />
                   <InfoRow
                     icon={User}
                     label="To'liq ism"
@@ -470,15 +486,7 @@ const DashboardPage = () => {
                     icon={CalendarDays}
                     label="Ro'yxatdan o'tgan sana"
                     isLight={isLight}
-                    value={
-                      profile?.created_at
-                        ? new Date(profile.created_at).toLocaleDateString("uz-UZ", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          })
-                        : null
-                    }
+                    value={formatDate(profile?.created_at)}
                   />
                   <InfoRow
                     icon={Shield}
@@ -764,12 +772,19 @@ const DashboardPage = () => {
                               </span>
                             </div>
                           </div>
-                          <span
-                            className={`text-xs mt-1 ${isLight ? "text-slate-400" : "text-white/30"}`}
-                            style={{ fontFamily: "var(--font-button)" }}
-                          >
-                            {new Date(application.created_at).toLocaleDateString("uz-UZ")}
-                          </span>
+                          <div className="flex flex-col items-end gap-1">
+                            <span className={`text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-lg border ${
+                              isLight ? "bg-slate-100 border-slate-200 text-slate-700" : "bg-white/10 border-white/15 text-white"
+                            }`}>
+                              {formatUserCode(application.id, true)}
+                            </span>
+                            <span
+                              className={`text-xs ${isLight ? "text-slate-400" : "text-white/40"}`}
+                              style={{ fontFamily: "var(--font-button)" }}
+                            >
+                              {formatDate(application.created_at)}
+                            </span>
+                          </div>
                         </div>
 
                         {/* Rejection comment */}

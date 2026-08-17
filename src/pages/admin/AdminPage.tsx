@@ -29,6 +29,7 @@ import logoWhite from "../../assets/logos/white full.png";
 import logoBlue from "../../assets/logos/blue-full.png";
 import HeroImage from "../../assets/img/hero-image.png";
 import HeroLightImage from "../../assets/imglight/herolight.png";
+import { formatDateTime, formatUserCode } from "../../lib/formatUtils";
 
 /* ─── Status Types & Configurations ───────────────────────────── */
 
@@ -362,11 +363,7 @@ export default function AdminPage() {
           const birthYear = item.age ? 2026 - item.age : 1995;
           const birthDate = `15.06.${birthYear}`;
 
-          const createdDate = item.created_at
-            ? new Date(item.created_at).toLocaleDateString("ru-RU") +
-              " " +
-              new Date(item.created_at).toLocaleTimeString("ru-RU").slice(0, 5)
-            : "07.08.2026 14:00";
+          const createdDate = item.created_at ? formatDateTime(item.created_at) : "07.08.2026 14:00";
 
           let galleryImages: string[] = [];
           if (Array.isArray(item.product_image_urls)) {
@@ -380,7 +377,7 @@ export default function AdminPage() {
           }
 
           return {
-            id: item.id.slice(0, 8),
+            id: formatUserCode(item.id, true),
             fullId: item.id,
             userId: item.user_id,
             numericId: idx + 1,
