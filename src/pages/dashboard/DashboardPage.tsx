@@ -17,6 +17,7 @@ import {
   AlertTriangle,
   Moon,
   Sun,
+  X,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -247,6 +248,7 @@ const DashboardPage = () => {
   const [application, setApplication] = useState<Application | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasPhase2App, setHasPhase2App] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -414,12 +416,22 @@ const DashboardPage = () => {
               }`}>
                 {/* Profile header */}
                 <div className={`p-6 border-b flex items-center gap-4 ${isLight ? "border-slate-100" : "border-white/8"}`}>
-                  <div
-                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center shrink-0 text-xl sm:text-2xl font-bold"
-                    style={{ background: "rgba(0,168,255,0.12)", color: "#00A8FF", fontFamily: "var(--font-zuume)" }}
-                  >
-                    {profile?.full_name?.charAt(0)?.toUpperCase() ?? "?"}
-                  </div>
+                  {application?.avatar_url ? (
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden shrink-0 border-2 border-[#00A8FF]/40 shadow-lg shadow-[#00A8FF]/10">
+                      <img
+                        src={application.avatar_url}
+                        alt={profile?.full_name || "Profile"}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div
+                      className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center shrink-0 text-xl sm:text-2xl font-bold border border-[#00A8FF]/20"
+                      style={{ background: "rgba(0,168,255,0.12)", color: "#00A8FF", fontFamily: "var(--font-zuume)" }}
+                    >
+                      {profile?.full_name?.charAt(0)?.toUpperCase() ?? "?"}
+                    </div>
+                  )}
                   <div>
                     <h2
                       className={`text-lg sm:text-xl font-bold mb-1 ${isLight ? "text-slate-900" : "text-white"}`}
@@ -457,6 +469,7 @@ const DashboardPage = () => {
                   <InfoRow
                     icon={CalendarDays}
                     label="Ro'yxatdan o'tgan sana"
+                    isLight={isLight}
                     value={
                       profile?.created_at
                         ? new Date(profile.created_at).toLocaleDateString("uz-UZ", {
@@ -470,6 +483,7 @@ const DashboardPage = () => {
                   <InfoRow
                     icon={Shield}
                     label="Rol"
+                    isLight={isLight}
                     value={profile?.role === "admin" ? "Administrator" : "Ishtirokchi"}
                   />
                 </div>
@@ -841,54 +855,92 @@ const DashboardPage = () => {
                     </ul>
                   </div>
 
-                  {/* Avatar */}
-                  {application.avatar_url && (
-                    <div>
+                  {/* Media Section: Personal Avatar & Product Images */}
+                  {(application.avatar_url || (application.product_image_urls && application.product_image_urls.length > 0) || application.product_image_url) && (
+                    <div className={`rounded-2xl border p-5 transition-all ${
+                      isLight ? "bg-white/90 border-slate-200/90 shadow-xs" : "bg-white/3 border-white/8"
+                    }`}>
                       <p
-                        className="text-[10px] text-white/30 uppercase tracking-widest mb-2"
+                        className={`text-xs uppercase tracking-widest mb-4 font-bold ${
+                          isLight ? "text-slate-800" : "text-white/80"
+                        }`}
                         style={{ fontFamily: "var(--font-button)" }}
                       >
-                        Shaxsiy fotosurat
+                        Yuklangan fotosuratlar
                       </p>
-                      <div className="rounded-xl border border-white/8 overflow-hidden aspect-video bg-white/3">
-                        <img src={application.avatar_url} alt="Fotosurat" className="w-full h-full object-cover" />
+
+                      <div className="flex flex-col sm:flex-row gap-6 items-start">
+                        {/* Shaxsiy fotosurat */}
+                        {application.avatar_url && (
+                          <div className="flex flex-col gap-2">
+                            <span className={`text-[11px] font-semibold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/40"}`}>
+                              Shaxsiy fotosurat
+                            </span>
+                            <div
+                              onClick={() => setPreviewImage(application.avatar_url)}
+                              className={`relative w-28 h-36 sm:w-32 sm:h-40 rounded-2xl overflow-hidden border cursor-pointer group shadow-sm transition-transform hover:scale-[1.02] ${
+                                isLight ? "border-slate-200 bg-slate-50" : "border-white/15 bg-white/5"
+                              }`}
+                            >
+                              <img
+                                src={application.avatar_url}
+                                alt="Shaxsiy fotosurat"
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <span className="text-[10px] text-white font-bold bg-black/60 px-2 py-1 rounded-lg">Kattalashtirish</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Mahsulot / Biznes rasmlari */}
+                        {(() => {
+                          const rawUrls = application.product_image_urls;
+                          const parsedUrls: string[] = Array.isArray(rawUrls)
+                            ? rawUrls
+                            : typeof rawUrls === "string" && rawUrls.length > 2
+                            ? (() => { try { return JSON.parse(rawUrls); } catch { return []; } })()
+                            : [];
+
+                          const productImages: string[] =
+                            parsedUrls.length > 0
+                              ? parsedUrls
+                              : application.product_image_url ? [application.product_image_url] : [];
+
+                          if (productImages.length === 0) return null;
+
+                          return (
+                            <div className="flex-1 flex flex-col gap-2">
+                              <span className={`text-[11px] font-semibold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/40"}`}>
+                                Mahsulot rasmlari ({productImages.length} ta)
+                              </span>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                {productImages.map((url, i) => (
+                                  <div
+                                    key={i}
+                                    onClick={() => setPreviewImage(url)}
+                                    className={`relative aspect-square rounded-2xl overflow-hidden border cursor-pointer group shadow-sm transition-transform hover:scale-[1.02] ${
+                                      isLight ? "border-slate-200 bg-slate-50" : "border-white/15 bg-white/5"
+                                    }`}
+                                  >
+                                    <img
+                                      src={url}
+                                      alt={`Mahsulot ${i + 1}`}
+                                      className="w-full h-full object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                      <span className="text-[10px] text-white font-bold bg-black/60 px-2 py-1 rounded-lg">Kattalashtirish</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   )}
-
-                  {/* Product images */}
-                  {(() => {
-                    const rawUrls = application.product_image_urls;
-                    const parsedUrls: string[] = Array.isArray(rawUrls)
-                      ? rawUrls
-                      : typeof rawUrls === "string" && rawUrls.length > 2
-                      ? (() => { try { return JSON.parse(rawUrls); } catch { return []; } })()
-                      : [];
-
-                    const productImages: string[] =
-                      parsedUrls.length > 0
-                        ? parsedUrls
-                        : application.product_image_url ? [application.product_image_url] : [];
-
-                    if (productImages.length === 0) return null;
-                    return (
-                      <div>
-                        <p
-                          className="text-[10px] text-white/30 uppercase tracking-widest mb-2"
-                          style={{ fontFamily: "var(--font-button)" }}
-                        >
-                          Mahsulot rasmlari ({productImages.length} ta)
-                        </p>
-                        <div className={`grid gap-3 ${productImages.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
-                          {productImages.map((url, i) => (
-                            <div key={i} className="rounded-xl border border-white/8 overflow-hidden aspect-video bg-white/3">
-                              <img src={url} alt={`Mahsulot ${i + 1}`} className="w-full h-full object-cover" />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })()}
 
                   <p
                     className="text-center text-xs text-white/20"
@@ -902,6 +954,27 @@ const DashboardPage = () => {
           )}
         </div>
       </div>
+
+      {/* Fullscreen Image Preview Lightbox */}
+      {previewImage && (
+        <div
+          onClick={() => setPreviewImage(null)}
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 cursor-pointer animate-fade-in"
+        >
+          <button
+            onClick={() => setPreviewImage(null)}
+            className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-all cursor-pointer z-10"
+          >
+            <X size={20} />
+          </button>
+          <img
+            src={previewImage}
+            alt="Preview"
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-full max-h-[85vh] rounded-2xl object-contain shadow-2xl"
+          />
+        </div>
+      )}
     </div>
   );
 };
