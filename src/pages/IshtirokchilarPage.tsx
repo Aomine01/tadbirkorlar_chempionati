@@ -547,7 +547,24 @@ const IshtirokchilarPage = () => {
           const phoneMatch = rawDescription.match(/\[Phone:\s*([^\]]+)\]/i);
 
           const full_name = founderMatch ? founderMatch[1].trim() : (app.profiles?.full_name || app.brand_name);
-          const gender = genderMatch ? (genderMatch[1].toLowerCase() as "male" | "female") : (app.gender || "male");
+          
+          const isFemaleName = (name: string): boolean => {
+            if (!name) return false;
+            const parts = name.toLowerCase().split(/[\s'’‘`]+/);
+            return parts.some(part => 
+              part.endsWith("ova") || 
+              part.endsWith("eva") || 
+              part.endsWith("yeva") || 
+              part.endsWith("ina") || 
+              part.endsWith("qizi") || 
+              part.endsWith("kyzy") || 
+              part.endsWith("gizi")
+            );
+          };
+
+          const gender = genderMatch 
+            ? (genderMatch[1].toLowerCase() as "male" | "female") 
+            : (app.gender === "female" || isFemaleName(full_name) ? "female" : "male");
           const phone = phoneMatch ? phoneMatch[1].trim() : (app.profiles?.phone_number || app.phone || "");
 
           return {
