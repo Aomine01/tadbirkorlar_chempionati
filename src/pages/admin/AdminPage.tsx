@@ -121,6 +121,7 @@ export const STEPPER_STAGES = [
 export interface ApplicantItem {
   id: string;
   fullId: string;
+  userId: string;
   numericId: number;
   fio: string;
   brandName: string;
@@ -367,6 +368,7 @@ export default function AdminPage() {
           return {
             id: item.id.slice(0, 8),
             fullId: item.id,
+            userId: item.user_id,
             numericId: idx + 1,
             fio: founderName.toUpperCase(),
             brandName: item.brand_name || item.legal_name || "Brend",
@@ -465,6 +467,20 @@ export default function AdminPage() {
 
   const moderationApps = useMemo(() => applicants.filter((a) => a.status === "yangi_ariza"), [applicants]);
   const approvedApps = useMemo(() => applicants.filter((a) => a.status === "tasdiqlangan"), [applicants]);
+
+  const filteredPhase2Apps = useMemo(() => {
+    return phase2Apps.filter((item) => {
+      const matchingApp = applicants.find(
+        (a) =>
+          a.fullId === item.application_id ||
+          a.userId === item.user_id ||
+          (a.brandName &&
+            item.company_name &&
+            a.brandName.toLowerCase().trim() === item.company_name.toLowerCase().trim())
+      );
+      return !matchingApp || matchingApp.status !== "rad_etildi";
+    });
+  }, [phase2Apps, applicants]);
 
   const handleSelectApplicant = (app: ApplicantItem, initialTab?: "1-bosqich" | "2-bosqich") => {
     setSelectedApplicant(app);
@@ -710,7 +726,7 @@ export default function AdminPage() {
               </span>
             </div>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-              {phase2Apps.length} TA
+              {filteredPhase2Apps.length} TA
             </span>
           </button>
 
@@ -897,7 +913,7 @@ export default function AdminPage() {
               const matchingP2 = phase2Apps.find(
                 (p) =>
                   p.application_id === selectedApplicant.fullId ||
-                  p.user_id === selectedApplicant.fullId ||
+                  p.user_id === selectedApplicant.userId ||
                   (p.company_name &&
                     selectedApplicant.brandName &&
                     p.company_name.toLowerCase().trim() === selectedApplicant.brandName.toLowerCase().trim())
@@ -1484,7 +1500,7 @@ export default function AdminPage() {
                   className="px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#00A8FF]/15 text-[#00A8FF] border border-[#00A8FF]/30"
                   style={{ fontFamily: "var(--font-zuume)" }}
                 >
-                  Jami: {phase2Apps.length} ta
+                  Jami: {filteredPhase2Apps.length} ta
                 </span>
               </div>
 
@@ -1520,10 +1536,10 @@ export default function AdminPage() {
                       </tr>
                     </thead>
                     <tbody className={`divide-y text-xs ${isLight ? "divide-slate-200/60 text-slate-800" : "divide-white/5 text-white/90"}`}>
-                      {phase2Apps.length > 0 ? (
-                        phase2Apps.map((item, index) => {
+                      {filteredPhase2Apps.length > 0 ? (
+                        filteredPhase2Apps.map((item, index) => {
                           const matchingApp = applicants.find(
-                            (a) => a.fullId === item.application_id || a.fullId === item.user_id || a.brandName?.toLowerCase().trim() === item.company_name?.toLowerCase().trim()
+                            (a) => a.fullId === item.application_id || a.userId === item.user_id || a.brandName?.toLowerCase().trim() === item.company_name?.toLowerCase().trim()
                           );
 
                           return (
