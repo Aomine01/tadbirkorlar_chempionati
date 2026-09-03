@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, X, Search, MapPin, RotateCcw } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import { subscribeToParticipantChanges } from "../lib/realtimeSync";
 import { useTheme } from "../contexts/ThemeContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import type { Application } from "../types/database";
@@ -618,18 +619,13 @@ const IshtirokchilarPage = () => {
 
     fetchApps();
 
-    // Real-time subscription: auto-refresh when admin approves/changes application status
-    const channel = supabase
-      .channel("ishtirokchilar-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "applications" },
-        () => fetchApps()
-      )
-      .subscribe();
+    // Multi-device instant synchronization
+    const unsubscribe = subscribeToParticipantChanges(() => {
+      fetchApps();
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      unsubscribe();
     };
   }, []);
 

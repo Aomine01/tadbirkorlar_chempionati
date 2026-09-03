@@ -22,9 +22,16 @@ import {
   FileCheck,
   Download,
   Award,
+  UserPlus,
+  Trash2,
 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { useTheme } from "../../contexts/ThemeContext";
+import AddParticipantModal from "../../components/admin/AddParticipantModal";
+import {
+  broadcastParticipantChange,
+  subscribeToParticipantChanges,
+} from "../../lib/realtimeSync";
 import logoWhite from "../../assets/logos/white full.png";
 import logoBlue from "../../assets/logos/blue-full.png";
 import HeroImage from "../../assets/img/hero-image.png";
@@ -256,6 +263,15 @@ export default function AdminPage() {
   const [rejectError, setRejectError] = useState("");
   const [allowReapply, setAllowReapply] = useState(true);
 
+  // Delete Confirmation State
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [targetToDelete, setTargetToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Add Participant Modal State
+  const [addModalOpen, setAddModalOpen] = useState(false);
+
   // Bulk Selection & Phase 2 Migration State
   const [selectedAppIds, setSelectedAppIds] = useState<string[]>([]);
   const [isBulkProcessing, setIsBulkProcessing] = useState(false);
@@ -301,6 +317,64 @@ export default function AdminPage() {
       console.error("Bulk migration failed:", err);
     } finally {
       setIsBulkProcessing(false);
+    }
+  };
+
+  const handleOpenDeleteSingle = (id: string, name: string) => {
+    setTargetToDelete({ id, name });
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDeleteSingle = async () => {
+    if (!targetToDelete) return;
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("applications")
+        .update({ is_deleted: true } as any)
+        .eq("id", targetToDelete.id);
+
+      if (error) throw error;
+
+      await broadcastParticipantChange("deleted", { id: targetToDelete.id, name: targetToDelete.name });
+
+      setApplicants((prev) => prev.filter((a) => a.fullId !== targetToDelete.id));
+      setSelectedAppIds((prev) => prev.filter((id) => id !== targetToDelete.id));
+      if (selectedApplicant?.fullId === targetToDelete.id) {
+        setSelectedApplicant(null);
+      }
+      setDeleteModalOpen(false);
+      setTargetToDelete(null);
+    } catch (err: any) {
+      alert("Ishtirokchini o'chirishda xatolik yuz berdi: " + err.message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleConfirmBulkDelete = async () => {
+    if (selectedAppIds.length === 0) return;
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("applications")
+        .update({ is_deleted: true } as any)
+        .in("id", selectedAppIds);
+
+      if (error) throw error;
+
+      await broadcastParticipantChange("deleted", { ids: selectedAppIds });
+
+      setApplicants((prev) => prev.filter((a) => !selectedAppIds.includes(a.fullId)));
+      if (selectedApplicant && selectedAppIds.includes(selectedApplicant.fullId)) {
+        setSelectedApplicant(null);
+      }
+      setSelectedAppIds([]);
+      setBulkDeleteModalOpen(false);
+    } catch (err: any) {
+      alert("O'chirishda xatolik yuz berdi: " + err.message);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -437,22 +511,13 @@ export default function AdminPage() {
     loadActualApplications();
     loadPhase2Applications();
 
-    const channel = supabase
-      .channel("admin-realtime-applications")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "applications" },
-        () => loadActualApplications()
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "phase2_applications" },
-        () => loadPhase2Applications()
-      )
-      .subscribe();
+    const unsubscribe = subscribeToParticipantChanges(() => {
+      loadActualApplications();
+      loadPhase2Applications();
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      unsubscribe();
     };
   }, [loadActualApplications, loadPhase2Applications]);
 
@@ -587,6 +652,32 @@ export default function AdminPage() {
         </div>
 
         <nav className="flex flex-col gap-3">
+          {/* ── ISHTIROKCHI QO'SHISH (Action) ── */}
+          <button
+            onClick={() => {
+              setAddModalOpen(true);
+              setMobileDrawerOpen(false);
+            }}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer shadow-md active:scale-95 ${
+              isLight
+                ? "bg-gradient-to-r from-[#00A8FF] to-blue-600 hover:from-[#0090FF] hover:to-blue-700 text-white shadow-blue-500/20"
+                : "bg-gradient-to-r from-[#00A8FF] to-blue-600 hover:from-[#0090FF] hover:to-blue-700 text-white shadow-[#00A8FF]/20"
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <UserPlus size={16} />
+              <span
+                className="font-bold tracking-wider uppercase"
+                style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
+              >
+                + Ishtirokchi Qo'shish
+              </span>
+            </div>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/20 text-white">
+              YANGI
+            </span>
+          </button>
+
           {/* ── MODERATSIYA (top-level) ── */}
           <button
             onClick={() => {
@@ -853,6 +944,18 @@ export default function AdminPage() {
         </div>
 
         <div className="flex items-center gap-2.5 sm:gap-3">
+          {/* ── Yangi Ishtirokchi Qo'shish (Header Action Button) ── */}
+          <button
+            onClick={() => setAddModalOpen(true)}
+            className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-[#00A8FF] to-blue-600 hover:from-[#0090FF] hover:to-blue-700 text-white font-bold text-xs uppercase tracking-wider shadow-md hover:shadow-lg active:scale-95 transition-all cursor-pointer border border-blue-400/30"
+            style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.04em" }}
+            title="Yangi ishtirokchini avtomatik yoki qo'lda qo'shish"
+          >
+            <UserPlus size={15} />
+            <span className="hidden sm:inline">+ Ishtirokchi Qo'shish</span>
+            <span className="sm:hidden">+ Qo'shish</span>
+          </button>
+
           <button
             onClick={toggleTheme}
             className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
@@ -1004,6 +1107,15 @@ export default function AdminPage() {
                       >
                         <XCircle size={14} />
                         <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>Rad etish</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleOpenDeleteSingle(selectedApplicant.fullId, selectedApplicant.fio)}
+                        className="px-4 py-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 hover:text-rose-300 font-semibold text-xs transition-all cursor-pointer active:scale-95 flex items-center gap-2 border border-rose-500/30"
+                        title="Ishtirokchini bazadan butunlay o'chirish"
+                      >
+                        <Trash2 size={14} />
+                        <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>O'chirish</span>
                       </button>
                     </div>
                   </div>
@@ -1489,6 +1601,13 @@ export default function AdminPage() {
                                   <X size={13} />
                                   Rad
                                 </button>
+                                <button
+                                  onClick={() => handleOpenDeleteSingle(item.fullId, item.fio)}
+                                  className="p-2 rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white transition-colors cursor-pointer"
+                                  title="Arizani o'chirish"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
                               </div>
                             </td>
                           </tr>
@@ -1853,6 +1972,13 @@ export default function AdminPage() {
                                     <span>Ishtirokchilarga o'tkazish</span>
                                   </button>
                                 )}
+                                <button
+                                  onClick={() => handleOpenDeleteSingle(item.fullId, item.fio)}
+                                  className="p-2 rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white transition-colors cursor-pointer"
+                                  title="Ishtirokchini o'chirish"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
                               </div>
                             </td>
                           </tr>
@@ -1982,7 +2108,7 @@ export default function AdminPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={handleBulkMigrateToPhase2}
-              disabled={isBulkProcessing}
+              disabled={isBulkProcessing || isDeleting}
               className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-xs shadow-lg transition-all active:scale-95 flex items-center gap-2 border border-emerald-300/30 cursor-pointer disabled:opacity-50"
               style={{ fontFamily: "var(--font-zuume)" }}
             >
@@ -1995,6 +2121,16 @@ export default function AdminPage() {
             </button>
 
             <button
+              onClick={() => setBulkDeleteModalOpen(true)}
+              disabled={isBulkProcessing || isDeleting}
+              className="px-4 py-2.5 rounded-xl bg-rose-600/30 hover:bg-rose-600 text-rose-200 hover:text-white font-bold text-xs shadow-lg transition-all active:scale-95 flex items-center gap-2 border border-rose-500/40 cursor-pointer disabled:opacity-50"
+              style={{ fontFamily: "var(--font-zuume)" }}
+            >
+              <Trash2 size={15} />
+              <span>O'CHIRISH ({selectedAppIds.length})</span>
+            </button>
+
+            <button
               onClick={() => setSelectedAppIds([])}
               className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 text-xs font-semibold transition-colors cursor-pointer"
             >
@@ -2003,6 +2139,133 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+
+      {/* ── Yagona Ishtirokchini O'chirish Tasdiqlash Modali ── */}
+      {deleteModalOpen && targetToDelete && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-fade-in">
+          <div
+            className={`rounded-3xl border max-w-md w-full p-6 shadow-2xl flex flex-col gap-5 ${
+              isLight ? "bg-white border-slate-200" : "bg-[#0b0e14] border-white/10 text-white"
+            }`}
+          >
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-500 flex items-center justify-center shrink-0">
+                <Trash2 size={24} />
+              </div>
+              <div>
+                <h3
+                  className="text-lg font-bold uppercase tracking-wider"
+                  style={{ fontFamily: "var(--font-zuume)" }}
+                >
+                  Ishtirokchini O'chirish
+                </h3>
+                <p className={`text-xs mt-1 leading-relaxed ${isLight ? "text-slate-600" : "text-white/60"}`}>
+                  Haqiqatan ham <strong className="text-rose-400 font-bold">"{targetToDelete.name}"</strong> nomzodini o'chirib tashlamoqchimisiz?
+                </p>
+                <p className="text-[11px] text-rose-500/80 mt-1">
+                  Ushbu ishtirokchi platformaning ommaviy sahifasidan va admin panelidan olib tashlanadi.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-white/5">
+              <button
+                onClick={() => {
+                  setDeleteModalOpen(false);
+                  setTargetToDelete(null);
+                }}
+                disabled={isDeleting}
+                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                  isLight ? "bg-slate-100 hover:bg-slate-200 text-slate-700" : "bg-white/10 hover:bg-white/15 text-white/80"
+                }`}
+                style={{ fontFamily: "var(--font-zuume)" }}
+              >
+                Bekor qilish
+              </button>
+              <button
+                onClick={handleConfirmDeleteSingle}
+                disabled={isDeleting}
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-rose-600/30 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                style={{ fontFamily: "var(--font-zuume)" }}
+              >
+                {isDeleting ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Trash2 size={14} />
+                )}
+                <span>O'chirish</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Ommaviy O'chirish Tasdiqlash Modali ── */}
+      {bulkDeleteModalOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-fade-in">
+          <div
+            className={`rounded-3xl border max-w-md w-full p-6 shadow-2xl flex flex-col gap-5 ${
+              isLight ? "bg-white border-slate-200" : "bg-[#0b0e14] border-white/10 text-white"
+            }`}
+          >
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-500 flex items-center justify-center shrink-0">
+                <Trash2 size={24} />
+              </div>
+              <div>
+                <h3
+                  className="text-lg font-bold uppercase tracking-wider text-rose-400"
+                  style={{ fontFamily: "var(--font-zuume)" }}
+                >
+                  {selectedAppIds.length} ta ishtirokchini o'chirish
+                </h3>
+                <p className={`text-xs mt-1 leading-relaxed ${isLight ? "text-slate-600" : "text-white/60"}`}>
+                  Tanlangan barcha <strong>{selectedAppIds.length} ta</strong> arizani butunlay o'chirib tashlamoqchimisiz?
+                </p>
+                <p className="text-[11px] text-rose-500/80 mt-1">
+                  Ushbu amal tanlangan barcha ishtirokchilarni platformadan darhol o'chiradi.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-white/5">
+              <button
+                onClick={() => setBulkDeleteModalOpen(false)}
+                disabled={isDeleting}
+                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                  isLight ? "bg-slate-100 hover:bg-slate-200 text-slate-700" : "bg-white/10 hover:bg-white/15 text-white/80"
+                }`}
+                style={{ fontFamily: "var(--font-zuume)" }}
+              >
+                Bekor qilish
+              </button>
+              <button
+                onClick={handleConfirmBulkDelete}
+                disabled={isDeleting}
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-rose-600/30 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                style={{ fontFamily: "var(--font-zuume)" }}
+              >
+                {isDeleting ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Trash2 size={14} />
+                )}
+                <span>Barchasini O'chirish</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Yangi Ishtirokchi Qo'shish Modali ── */}
+      <AddParticipantModal
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        onSuccess={() => {
+          loadActualApplications();
+          loadPhase2Applications();
+        }}
+      />
     </div>
   );
 }
