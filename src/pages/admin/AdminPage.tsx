@@ -24,6 +24,7 @@ import {
   Award,
   UserPlus,
   Trash2,
+  Search,
 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -272,6 +273,9 @@ export default function AdminPage() {
 
   // Add Participant Modal State
   const [addModalOpen, setAddModalOpen] = useState(false);
+
+  // Search Bar State
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Bulk Selection & Phase 2 Migration State
   const [selectedAppIds, setSelectedAppIds] = useState<string[]>([]);
@@ -538,15 +542,63 @@ export default function AdminPage() {
     return counts;
   }, [applicants]);
 
-  const filteredApplicants = useMemo(() => {
-    return applicants.filter((app) => app.status === selectedStatusKey);
-  }, [applicants, selectedStatusKey]);
+  // Search helper
+  const normalizeSearch = (text: string) =>
+    (text || "").toLowerCase().replace(/['`ʻʼ]/g, "'").trim();
 
-  const moderationApps = useMemo(() => applicants.filter((a) => a.status === "yangi_ariza"), [applicants]);
-  const approvedApps = useMemo(() => applicants.filter((a) => a.status === "tasdiqlangan"), [applicants]);
+  const matchesSearch = useCallback((app: ApplicantItem, q: string) => {
+    if (!q.trim()) return true;
+    const query = normalizeSearch(q);
+    const words = query.split(/\s+/).filter(Boolean);
+    const target = normalizeSearch(
+      `${app.fio} ${app.brandName} ${app.legalName} ${app.phone} ${app.region} ${app.categoryLabel} ${app.id} ${app.fullId} ${app.jshshir}`
+    );
+    return words.every((w) => target.includes(w));
+  }, []);
+
+  const matchesPhase2Search = useCallback(
+    (item: Phase2ApplicationItem, q: string) => {
+      if (!q.trim()) return true;
+      const query = normalizeSearch(q);
+      const words = query.split(/\s+/).filter(Boolean);
+      const matchingApp = applicants.find(
+        (a) =>
+          a.fullId === item.application_id ||
+          a.userId === item.user_id ||
+          (a.brandName &&
+            item.company_name &&
+            a.brandName.toLowerCase().trim() === item.company_name.toLowerCase().trim())
+      );
+      const target = normalizeSearch(
+        `${item.company_name} ${item.legal_structure || ""} ${item.category} ${
+          matchingApp ? `${matchingApp.fio} ${matchingApp.region} ${matchingApp.phone}` : ""
+        }`
+      );
+      return words.every((w) => target.includes(w));
+    },
+    [applicants]
+  );
+
+  const filteredApplicants = useMemo(() => {
+    const base = applicants.filter((app) => app.status === selectedStatusKey);
+    if (!searchQuery.trim()) return base;
+    return base.filter((app) => matchesSearch(app, searchQuery));
+  }, [applicants, selectedStatusKey, searchQuery, matchesSearch]);
+
+  const moderationApps = useMemo(() => {
+    const base = applicants.filter((a) => a.status === "yangi_ariza");
+    if (!searchQuery.trim()) return base;
+    return base.filter((a) => matchesSearch(a, searchQuery));
+  }, [applicants, searchQuery, matchesSearch]);
+
+  const approvedApps = useMemo(() => {
+    const base = applicants.filter((a) => a.status === "tasdiqlangan");
+    if (!searchQuery.trim()) return base;
+    return base.filter((a) => matchesSearch(a, searchQuery));
+  }, [applicants, searchQuery, matchesSearch]);
 
   const filteredPhase2Apps = useMemo(() => {
-    return phase2Apps.filter((item) => {
+    const base = phase2Apps.filter((item) => {
       const matchingApp = applicants.find(
         (a) =>
           a.fullId === item.application_id ||
@@ -557,7 +609,14 @@ export default function AdminPage() {
       );
       return !matchingApp || matchingApp.status !== "rad_etildi";
     });
-  }, [phase2Apps, applicants]);
+    if (!searchQuery.trim()) return base;
+    return base.filter((item) => matchesPhase2Search(item, searchQuery));
+  }, [phase2Apps, applicants, searchQuery, matchesPhase2Search]);
+
+  const totalSearchMatches = useMemo(() => {
+    if (!searchQuery.trim()) return 0;
+    return applicants.filter((a) => matchesSearch(a, searchQuery)).length;
+  }, [applicants, searchQuery, matchesSearch]);
 
   const handleSelectApplicant = (app: ApplicantItem, initialTab?: "1-bosqich" | "2-bosqich") => {
     setSelectedApplicant(app);
@@ -1494,7 +1553,92 @@ export default function AdminPage() {
                 </div>
               );
             })()
-          ) : activePhase === "moderation" ? (
+          ) : (
+            <div className="flex flex-col gap-6">
+              {/* Global Admin Search Bar */}
+              <div
+                className={`p-3.5 sm:p-4 rounded-2xl border backdrop-blur-md shadow-lg transition-all ${
+                  isLight
+                    ? "bg-white/90 border-slate-200/90 shadow-slate-200/50"
+                    : "bg-[#0a0c10]/90 border-white/10 shadow-black/40"
+                }`}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="relative flex-1">
+                    <Search
+                      size={18}
+                      className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors ${
+                        searchQuery
+                          ? "text-[#00A8FF]"
+                          : isLight
+                          ? "text-slate-400"
+                          : "text-white/40"
+                      }`}
+                    />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Ishtirokchi F.I.O, brend nomi, telefon raqami, hudud yoki ID bo'yicha qidirish..."
+                      className={`w-full pl-10 pr-10 py-2.5 rounded-xl text-sm outline-none border transition-all ${
+                        isLight
+                          ? "bg-slate-50/80 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-[#00A8FF] focus:bg-white focus:ring-2 focus:ring-[#00A8FF]/20"
+                          : "bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-[#00A8FF] focus:bg-white/10 focus:ring-2 focus:ring-[#00A8FF]/20"
+                      }`}
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg transition-colors cursor-pointer ${
+                          isLight
+                            ? "text-slate-400 hover:text-slate-700 hover:bg-slate-200/60"
+                            : "text-white/40 hover:text-white hover:bg-white/10"
+                        }`}
+                        title="Tozalash"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+
+                  {searchQuery.trim() && (
+                    <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                      <span
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${
+                          isLight
+                            ? "bg-[#00A8FF]/10 text-[#0088cc] border border-[#00A8FF]/20"
+                            : "bg-[#00A8FF]/15 text-[#00A8FF] border border-[#00A8FF]/30"
+                        }`}
+                        style={{ fontFamily: "var(--font-zuume)" }}
+                      >
+                        <span>Topildi:</span>
+                        <span className="font-mono text-sm font-black">
+                          {activePhase === "moderation"
+                            ? moderationApps.length
+                            : activePhase === "2-bosqich"
+                            ? filteredPhase2Apps.length
+                            : activePhase === "3-bosqich"
+                            ? approvedApps.length
+                            : filteredApplicants.length}
+                        </span>
+                        ta
+                      </span>
+
+                      {totalSearchMatches > 0 && (
+                        <span
+                          className={`text-[11px] font-medium hidden md:inline-block ${
+                            isLight ? "text-slate-500" : "text-white/50"
+                          }`}
+                        >
+                          (Jami: {totalSearchMatches} ta)
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {activePhase === "moderation" ? (
             /* ═══════════════════════════════════════════════════════════ */
             /* MODERATION VIEW — Yangi Arizalar (submitted)               */
             /* ═══════════════════════════════════════════════════════════ */
@@ -1523,7 +1667,7 @@ export default function AdminPage() {
                   }`}
                   style={{ fontFamily: "var(--font-zuume)" }}
                 >
-                  {statusCounts.yangi_ariza} ta yangi
+                  {searchQuery.trim() ? `${moderationApps.length} ta natija` : `${statusCounts.yangi_ariza} ta yangi`}
                 </span>
               </div>
 
@@ -1543,11 +1687,19 @@ export default function AdminPage() {
                   </div>
                   <div>
                     <p className={`text-sm font-bold ${isLight ? "text-slate-700" : "text-white/80"}`} style={{ fontFamily: "var(--font-zuume)" }}>
-                      Yangi arizalar yo'q
+                      {searchQuery.trim() ? "Qidiruv bo'yicha yangi ariza topilmadi" : "Yangi arizalar yo'q"}
                     </p>
                     <p className={`text-xs mt-1 ${isLight ? "text-slate-400" : "text-white/40"}`}>
-                      Hamma arizalar ko'rib chiqilgan
+                      {searchQuery.trim() ? `"${searchQuery}" bo'yicha moderatsiyada arizalar yo'q` : "Hamma arizalar ko'rib chiqilgan"}
                     </p>
+                    {searchQuery.trim() && (
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="mt-3 px-3.5 py-1.5 rounded-xl bg-[#00A8FF]/20 text-[#00A8FF] text-xs font-bold hover:bg-[#00A8FF]/30 transition-all cursor-pointer"
+                      >
+                        Qidiruvni tozalash
+                      </button>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -1608,7 +1760,18 @@ export default function AdminPage() {
                                   )}
                                 </div>
                                 <div className="flex flex-col gap-0.5">
-                                  <span className={`text-sm font-extrabold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>{item.fio}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`text-sm font-extrabold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>{item.fio}</span>
+                                    {item.userId && item.userId !== DEFAULT_IMPORTER_ID && (
+                                      <span
+                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0"
+                                        title={`Foydalanuvchi akkaunti mavjud (ID: ...${item.userId.slice(-6)})`}
+                                      >
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        Akkaunt mavjud
+                                      </span>
+                                    )}
+                                  </div>
                                   <span className={`text-xs font-semibold ${isLight ? "text-slate-500" : "text-violet-400/80"}`}>{item.brandName}</span>
                                 </div>
                               </div>
@@ -1744,7 +1907,20 @@ export default function AdminPage() {
                               }`}
                             >
                               <td className="py-4 px-4 text-center font-mono text-slate-400">{index + 1}</td>
-                              <td className="py-4 px-4 font-bold text-sm text-[#00A8FF]">{item.company_name}</td>
+                              <td className="py-4 px-4">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-sm text-[#00A8FF]">{item.company_name}</span>
+                                  {item.user_id && item.user_id !== DEFAULT_IMPORTER_ID && (
+                                    <span
+                                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0"
+                                      title={`Foydalanuvchi akkaunti mavjud (ID: ...${item.user_id.slice(-6)})`}
+                                    >
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                      Akkaunt mavjud
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
                               <td className="py-4 px-4">
                                 <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${
                                   item.category === "startup"
@@ -1781,7 +1957,19 @@ export default function AdminPage() {
                           <td colSpan={7} className="py-12 text-center text-slate-400">
                             <div className="flex flex-col items-center justify-center gap-2">
                               <FileText size={32} className="opacity-40" />
-                              <p className="text-sm font-medium">Hozircha 2-bosqich so'rovnomalari kelib tushmagan</p>
+                              <p className="text-sm font-medium">
+                                {searchQuery.trim()
+                                  ? `"${searchQuery}" bo'yicha 2-bosqich so'rovnomasi topilmadi`
+                                  : "Hozircha 2-bosqich so'rovnomalari kelib tushmagan"}
+                              </p>
+                              {searchQuery.trim() && (
+                                <button
+                                  onClick={() => setSearchQuery("")}
+                                  className="mt-1 px-3.5 py-1.5 rounded-xl bg-[#00A8FF]/20 text-[#00A8FF] text-xs font-bold hover:bg-[#00A8FF]/30 transition-all cursor-pointer"
+                                >
+                                  Qidiruvni tozalash
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -1858,7 +2046,18 @@ export default function AdminPage() {
                                   )}
                                 </div>
                                 <div className="flex flex-col gap-0.5">
-                                  <span className={`text-sm font-extrabold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>{item.fio}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`text-sm font-extrabold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>{item.fio}</span>
+                                    {item.userId && item.userId !== DEFAULT_IMPORTER_ID && (
+                                      <span
+                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0"
+                                        title={`Foydalanuvchi akkaunti mavjud (ID: ...${item.userId.slice(-6)})`}
+                                      >
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        Akkaunt mavjud
+                                      </span>
+                                    )}
+                                  </div>
                                   <span className="text-xs font-semibold text-emerald-400">{item.brandName}</span>
                                 </div>
                               </div>
@@ -1889,7 +2088,19 @@ export default function AdminPage() {
                           <td colSpan={6} className="py-12 text-center text-slate-400">
                             <div className="flex flex-col items-center justify-center gap-2">
                               <Award size={32} className="opacity-40 text-emerald-400" />
-                              <p className="text-sm font-medium">Hozircha 3-bosqich oflayn suhbatiga nomzodlar saralanmagan</p>
+                              <p className="text-sm font-medium">
+                                {searchQuery.trim()
+                                  ? `"${searchQuery}" bo'yicha 3-bosqich nomzodi topilmadi`
+                                  : "Hozircha 3-bosqich oflayn suhbatiga nomzodlar saralanmagan"}
+                              </p>
+                              {searchQuery.trim() && (
+                                <button
+                                  onClick={() => setSearchQuery("")}
+                                  className="mt-1 px-3.5 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-400 text-xs font-bold hover:bg-emerald-500/30 transition-all cursor-pointer"
+                                >
+                                  Qidiruvni tozalash
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -1988,7 +2199,18 @@ export default function AdminPage() {
                                   )}
                                 </div>
                                 <div className="flex flex-col gap-0.5">
-                                  <span className={`text-sm font-extrabold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>{item.fio}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`text-sm font-extrabold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>{item.fio}</span>
+                                    {item.userId && item.userId !== DEFAULT_IMPORTER_ID && (
+                                      <span
+                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0"
+                                        title={`Foydalanuvchi akkaunti mavjud (ID: ...${item.userId.slice(-6)})`}
+                                      >
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        Akkaunt mavjud
+                                      </span>
+                                    )}
+                                  </div>
                                   <span className="text-xs font-semibold text-[#00A8FF]">{item.brandName}</span>
                                 </div>
                               </div>
@@ -2036,7 +2258,19 @@ export default function AdminPage() {
                           <td colSpan={7} className={`py-12 text-center ${isLight ? "text-slate-400" : "text-white/40"}`}>
                             <div className="flex flex-col items-center justify-center gap-2">
                               <FileText size={32} className="opacity-40" />
-                              <p className="text-sm font-medium">Ushbu holatda arizalar topilmadi</p>
+                              <p className="text-sm font-medium">
+                                {searchQuery.trim()
+                                  ? `"${searchQuery}" bo'yicha arizalar topilmadi`
+                                  : "Ushbu holatda arizalar topilmadi"}
+                              </p>
+                              {searchQuery.trim() && (
+                                <button
+                                  onClick={() => setSearchQuery("")}
+                                  className="mt-1 px-3.5 py-1.5 rounded-xl bg-[#00A8FF]/20 text-[#00A8FF] text-xs font-bold hover:bg-[#00A8FF]/30 transition-all cursor-pointer"
+                                >
+                                  Qidiruvni tozalash
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -2047,6 +2281,8 @@ export default function AdminPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
         </main>
       </div>
 

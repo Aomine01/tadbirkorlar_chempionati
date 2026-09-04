@@ -4,7 +4,6 @@ import {
   Image as ImageIcon,
   CheckCircle2,
   AlertCircle,
-  AlertTriangle,
   Trash2,
   Plus,
   User,
@@ -540,7 +539,7 @@ export default function AddParticipantModal({
                   placeholder="Masalan: Abbasov Abdullo"
                   className={`w-full px-3.5 py-2.5 rounded-xl text-sm outline-none border transition-all ${
                     nameDuplicateMatch
-                      ? "border-amber-400 bg-amber-500/5 focus:border-amber-400"
+                      ? "border-emerald-500 bg-emerald-500/5 focus:border-emerald-500 text-emerald-600 dark:text-emerald-400 font-semibold"
                       : isLight
                       ? "bg-white border-slate-300 text-slate-900 focus:border-[#00A8FF]"
                       : "bg-white/5 border-white/15 text-white focus:border-[#00A8FF]"
@@ -548,21 +547,21 @@ export default function AddParticipantModal({
                 />
                 {nameDuplicateMatch && (
                   <div
-                    className={`mt-2 p-3 rounded-xl border flex items-start gap-2.5 transition-all ${
+                    className={`mt-2 p-3 rounded-xl border flex items-start gap-2.5 transition-all animate-fade-in ${
                       isLight
-                        ? "bg-amber-50 border-amber-300 text-amber-900"
-                        : "bg-amber-500/10 border-amber-500/30 text-amber-300"
+                        ? "bg-emerald-50 border-emerald-300 text-emerald-900"
+                        : "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
                     }`}
                   >
-                    <AlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" />
+                    <CheckCircle2 size={16} className="text-emerald-500 shrink-0 mt-0.5" />
                     <div className="text-xs flex-1">
-                      <p className="font-bold flex items-center justify-between">
-                        <span>Bu ismdagi ishtirokchi allaqachon mavjud!</span>
-                        <span className="text-[10px] font-normal px-2 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-300">
+                      <p className="font-bold flex items-center justify-between text-emerald-600 dark:text-emerald-400">
+                        <span>Ushbu ishtirokchi tizimda mavjud!</span>
+                        <span className="text-[10px] font-normal px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
                           ID: ...{nameDuplicateMatch.id.slice(-6)}
                         </span>
                       </p>
-                      <p className="mt-1 text-slate-700 dark:text-white/70">
+                      <p className="mt-1 text-slate-700 dark:text-white/80">
                         Ism: <strong className="text-slate-900 dark:text-white font-semibold">"{nameDuplicateMatch.founder}"</strong>
                         {nameDuplicateMatch.brand ? ` | Brend: "${nameDuplicateMatch.brand}"` : ""}
                         {nameDuplicateMatch.region ? ` | Hudud: ${nameDuplicateMatch.region}` : ""}
@@ -654,7 +653,7 @@ export default function AddParticipantModal({
                   placeholder="Masalan: BERT AGRO"
                   className={`w-full px-3.5 py-2.5 rounded-xl text-sm outline-none border transition-all ${
                     brandDuplicateMatch
-                      ? "border-amber-400 bg-amber-500/5 focus:border-amber-400"
+                      ? "border-emerald-500 bg-emerald-500/5 focus:border-emerald-500 text-emerald-600 dark:text-emerald-400 font-semibold"
                       : isLight
                       ? "bg-white border-slate-300 text-slate-900 focus:border-[#00A8FF]"
                       : "bg-white/5 border-white/15 text-white focus:border-[#00A8FF]"
@@ -662,21 +661,21 @@ export default function AddParticipantModal({
                 />
                 {brandDuplicateMatch && (
                   <div
-                    className={`mt-2 p-3 rounded-xl border flex items-start gap-2.5 transition-all ${
+                    className={`mt-2 p-3 rounded-xl border flex items-start gap-2.5 transition-all animate-fade-in ${
                       isLight
-                        ? "bg-amber-50 border-amber-300 text-amber-900"
-                        : "bg-amber-500/10 border-amber-500/30 text-amber-300"
+                        ? "bg-emerald-50 border-emerald-300 text-emerald-900"
+                        : "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
                     }`}
                   >
-                    <AlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" />
+                    <CheckCircle2 size={16} className="text-emerald-500 shrink-0 mt-0.5" />
                     <div className="text-xs flex-1">
-                      <p className="font-bold flex items-center justify-between">
-                        <span>Bu nomdagi brend allaqachon mavjud!</span>
-                        <span className="text-[10px] font-normal px-2 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-300">
+                      <p className="font-bold flex items-center justify-between text-emerald-600 dark:text-emerald-400">
+                        <span>Ushbu brend tizimda mavjud!</span>
+                        <span className="text-[10px] font-normal px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
                           ID: ...{brandDuplicateMatch.id.slice(-6)}
                         </span>
                       </p>
-                      <p className="mt-1 text-slate-700 dark:text-white/70">
+                      <p className="mt-1 text-slate-700 dark:text-white/80">
                         Brend: <strong className="text-slate-900 dark:text-white font-semibold">"{brandDuplicateMatch.brand}"</strong>
                         {brandDuplicateMatch.founder ? ` | Asoschi: "${brandDuplicateMatch.founder}"` : ""}
                         {brandDuplicateMatch.region ? ` | Hudud: ${brandDuplicateMatch.region}` : ""}
@@ -1059,12 +1058,12 @@ export default function AddParticipantModal({
         >
           <div className="flex items-center gap-3">
             {(nameDuplicateMatch || brandDuplicateMatch) && (
-              <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-amber-600 dark:text-amber-400 font-semibold">
+              <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
                 <input
                   type="checkbox"
                   checked={allowDuplicateOverride}
                   onChange={(e) => setAllowDuplicateOverride(e.target.checked)}
-                  className="w-4 h-4 rounded text-[#00A8FF] cursor-pointer accent-[#00A8FF]"
+                  className="w-4 h-4 rounded text-emerald-500 cursor-pointer accent-emerald-500"
                 />
                 <span>Baribir saqlash (boshqa shaxs)</span>
               </label>
