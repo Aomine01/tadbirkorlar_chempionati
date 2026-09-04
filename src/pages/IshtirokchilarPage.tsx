@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, X, Search, MapPin, RotateCcw } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { subscribeToParticipantChanges } from "../lib/realtimeSync";
+import { smartMatchesSearch } from "../lib/searchUtils";
 import { useTheme } from "../contexts/ThemeContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import type { Application } from "../types/database";
@@ -653,20 +654,41 @@ const IshtirokchilarPage = () => {
   }, {});
   const uniqueRegions = Object.entries(regionCounts).sort((a, b) => b[1] - a[1]).map(([r]) => r);
 
-  const filtered = applications.filter((a) => {
-    // Apply search query
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      const nameMatch = (a.full_name || "").toLowerCase().includes(q);
-      const brandMatch = (a.brand_name || "").toLowerCase().includes(q);
-      if (!nameMatch && !brandMatch) return false;
-    }
-    // Apply category filter
-    if (categoryFilter !== "all" && a.category !== categoryFilter) return false;
-    // Apply region filter
-    if (regionFilter !== "all" && a.region !== regionFilter) return false;
-    return true;
-  });
+  const getAppSearchTarget = (a: ExtendedApplication) => [
+    a.full_name,
+    a.brand_name,
+    a.legal_name,
+    a.region,
+    a.category === "startup" ? "startap startup innovatsiya" : "biznes an'anaviy business",
+    a.phone,
+    (a as any).phone_number,
+    a.id,
+    formatUserCode(a.id),
+    a.business_description,
+  ];
+
+  const filtered = useMemo(() => {
+    return applications.filter((a) => {
+      // Apply search query
+      if (searchQuery.trim()) {
+        const target = getAppSearchTarget(a);
+        if (!smartMatchesSearch(target, searchQuery)) return false;
+      }
+      // Apply category filter
+      if (categoryFilter !== "all" && a.category !== categoryFilter) return false;
+      // Apply region filter
+      if (regionFilter !== "all" && a.region !== regionFilter) return false;
+      return true;
+    });
+  }, [applications, searchQuery, categoryFilter, regionFilter]);
+
+  // Count matches across all regions/categories when current filters yield 0
+  const globalSearchMatchesCount = useMemo(() => {
+    if (!searchQuery.trim()) return 0;
+    return applications.filter((a) =>
+      smartMatchesSearch(getAppSearchTarget(a), searchQuery)
+    ).length;
+  }, [applications, searchQuery]);
 
   // Paginated/Sliced subset to display
   const displayed = filtered.slice(0, visibleCount);
@@ -898,13 +920,48 @@ const IshtirokchilarPage = () => {
               </button>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-32">
-              <p className={`text-4xl mb-4 font-bold ${isLight ? "text-slate-200" : "text-white/10"}`} style={{ fontFamily: "var(--font-zuume)" }}>
-                {t("participants.emptyTitle")}
+            <div className="text-center py-24 px-4 flex flex-col items-center justify-center animate-fade-in">
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 ${
+                isLight ? "bg-slate-100 text-slate-400" : "bg-white/5 text-white/40"
+              }`}>
+                <Search size={32} className="opacity-60" />
+              </div>
+              <p className={`text-2xl sm:text-3xl mb-2 font-bold ${isLight ? "text-slate-800" : "text-white"}`} style={{ fontFamily: "var(--font-zuume)" }}>
+                {searchQuery.trim() ? "Hech qanday ishtirokchi topilmadi" : t("participants.emptyTitle")}
               </p>
-              <p className={`text-sm ${isLight ? "text-slate-400" : "text-white/30"}`}>
-                {t("participants.emptyDesc")}
+              <p className={`text-xs sm:text-sm max-w-md mx-auto mb-6 ${isLight ? "text-slate-500" : "text-white/40"}`}>
+                {searchQuery.trim()
+                  ? `"${searchQuery}" so'rovi bo'yicha joriy filtrlarda natija topilmadi.`
+                  : t("participants.emptyDesc")}
               </p>
+
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                {globalSearchMatchesCount > 0 && (regionFilter !== "all" || categoryFilter !== "all") && (
+                  <button
+                    onClick={() => {
+                      setRegionFilter("all");
+                      setCategoryFilter("all");
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-bold shadow-md transition-all cursor-pointer"
+                  >
+                    Boshqa hududlardagi {globalSearchMatchesCount} ta natijani ko'rish
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setCategoryFilter("all");
+                    setRegionFilter("all");
+                  }}
+                  className={`px-5 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                    isLight
+                      ? "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                      : "border-white/10 bg-white/5 text-white hover:bg-white/10"
+                  }`}
+                >
+                  Barcha filtrlarni tozalash
+                </button>
+              </div>
             </div>
           ) : (
             <>

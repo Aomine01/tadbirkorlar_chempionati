@@ -39,6 +39,7 @@ import logoBlue from "../../assets/logos/blue-full.png";
 import HeroImage from "../../assets/img/hero-image.png";
 import HeroLightImage from "../../assets/imglight/herolight.png";
 import { formatDateTime, formatUserCode } from "../../lib/formatUtils";
+import { smartMatchesSearch } from "../../lib/searchUtils";
 
 /* ─── Status Types & Configurations ───────────────────────────── */
 
@@ -119,6 +120,10 @@ export const STATUS_LIST: StatusConfig[] = [
     stepIndex: 2,
   },
 ];
+
+export const STATUS_MAP: Record<StatusKey, StatusConfig> = Object.fromEntries(
+  STATUS_LIST.map((s) => [s.key, s])
+) as any;
 
 export const STEPPER_STAGES = [
   "1-bosqich: Umumiy ma'lumotlar",
@@ -276,6 +281,7 @@ export default function AdminPage() {
 
   // Search Bar State
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchStatusFilter, setSearchStatusFilter] = useState<"all" | StatusKey>("all");
 
   // Bulk Selection & Phase 2 Migration State
   const [selectedAppIds, setSelectedAppIds] = useState<string[]>([]);
@@ -542,25 +548,31 @@ export default function AdminPage() {
     return counts;
   }, [applicants]);
 
-  // Search helper
-  const normalizeSearch = (text: string) =>
-    (text || "").toLowerCase().replace(/['`ʻʼ]/g, "'").trim();
+  const getApplicantSearchTarget = useCallback((app: ApplicantItem) => [
+    app.fio,
+    app.brandName,
+    app.legalName,
+    app.phone,
+    app.region,
+    app.categoryLabel,
+    app.category === "startup" ? "startap startup innovatsiya" : "biznes an'anaviy business",
+    app.id,
+    app.fullId,
+    app.jshshir,
+    app.passport,
+    app.userId,
+    app.businessDescription,
+    STATUS_MAP[app.status]?.label,
+  ], []);
 
   const matchesSearch = useCallback((app: ApplicantItem, q: string) => {
     if (!q.trim()) return true;
-    const query = normalizeSearch(q);
-    const words = query.split(/\s+/).filter(Boolean);
-    const target = normalizeSearch(
-      `${app.fio} ${app.brandName} ${app.legalName} ${app.phone} ${app.region} ${app.categoryLabel} ${app.id} ${app.fullId} ${app.jshshir}`
-    );
-    return words.every((w) => target.includes(w));
-  }, []);
+    return smartMatchesSearch(getApplicantSearchTarget(app), q);
+  }, [getApplicantSearchTarget]);
 
   const matchesPhase2Search = useCallback(
     (item: Phase2ApplicationItem, q: string) => {
       if (!q.trim()) return true;
-      const query = normalizeSearch(q);
-      const words = query.split(/\s+/).filter(Boolean);
       const matchingApp = applicants.find(
         (a) =>
           a.fullId === item.application_id ||
@@ -569,15 +581,52 @@ export default function AdminPage() {
             item.company_name &&
             a.brandName.toLowerCase().trim() === item.company_name.toLowerCase().trim())
       );
-      const target = normalizeSearch(
-        `${item.company_name} ${item.legal_structure || ""} ${item.category} ${
-          matchingApp ? `${matchingApp.fio} ${matchingApp.region} ${matchingApp.phone}` : ""
-        }`
-      );
-      return words.every((w) => target.includes(w));
+      const target = [
+        item.company_name,
+        item.legal_structure,
+        item.category,
+        item.category === "startup" ? "startap startup innovatsiya" : "biznes an'anaviy business",
+        item.expected_outcomes,
+        matchingApp ? matchingApp.fio : "",
+        matchingApp ? matchingApp.brandName : "",
+        matchingApp ? matchingApp.region : "",
+        matchingApp ? matchingApp.phone : "",
+        matchingApp ? matchingApp.id : "",
+      ];
+      return smartMatchesSearch(target, q);
     },
     [applicants]
   );
+
+  // All applicants matching search query across all phases and statuses
+  const allSearchMatches = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    return applicants.filter((app) => matchesSearch(app, searchQuery));
+  }, [applicants, searchQuery, matchesSearch]);
+
+  // Search status counts for filtering within search results
+  const searchStatusCounts = useMemo(() => {
+    const counts: Record<string, number> = {
+      all: allSearchMatches.length,
+      yangi_ariza: 0,
+      korib_chiqilmoqda: 0,
+      qaytarildi: 0,
+      rad_etildi: 0,
+      tasdiqlangan: 0,
+    };
+    allSearchMatches.forEach((app) => {
+      if (counts[app.status] !== undefined) {
+        counts[app.status] += 1;
+      }
+    });
+    return counts;
+  }, [allSearchMatches]);
+
+  // Filtered search results based on active status filter in search mode
+  const filteredSearchResults = useMemo(() => {
+    if (searchStatusFilter === "all") return allSearchMatches;
+    return allSearchMatches.filter((app) => app.status === searchStatusFilter);
+  }, [allSearchMatches, searchStatusFilter]);
 
   const filteredApplicants = useMemo(() => {
     const base = applicants.filter((app) => app.status === selectedStatusKey);
@@ -615,8 +664,8 @@ export default function AdminPage() {
 
   const totalSearchMatches = useMemo(() => {
     if (!searchQuery.trim()) return 0;
-    return applicants.filter((a) => matchesSearch(a, searchQuery)).length;
-  }, [applicants, searchQuery, matchesSearch]);
+    return allSearchMatches.length;
+  }, [allSearchMatches, searchQuery]);
 
   const handleSelectApplicant = (app: ApplicantItem, initialTab?: "1-bosqich" | "2-bosqich") => {
     setSelectedApplicant(app);
@@ -1638,7 +1687,254 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {activePhase === "moderation" ? (
+              {searchQuery.trim() ? (
+                /* ═══════════════════════════════════════════════════════════ */
+                /* UNIFIED SEARCH RESULTS VIEW (Across all phases & statuses)  */
+                /* ═══════════════════════════════════════════════════════════ */
+                <div className="flex flex-col gap-6 animate-fade-in">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h2
+                        className={`text-2xl sm:text-4xl font-bold uppercase tracking-wider ${
+                          isLight ? "text-slate-900" : "text-white"
+                        }`}
+                        style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.03em" }}
+                      >
+                        Qidiruv natijalari
+                      </h2>
+                      <p className={`text-xs mt-1 ${isLight ? "text-slate-500" : "text-white/50"}`}>
+                        "{searchQuery}" so'rovi bo'yicha barcha arizalar orasidan topilgan natijalar
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2.5">
+                      <span
+                        className="px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#00A8FF]/15 text-[#00A8FF] border border-[#00A8FF]/30"
+                        style={{ fontFamily: "var(--font-zuume)" }}
+                      >
+                        Jami: {allSearchMatches.length} ta natija
+                      </span>
+                      <button
+                        onClick={() => {
+                          setSearchQuery("");
+                          setSearchStatusFilter("all");
+                        }}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold border cursor-pointer transition-colors ${
+                          isLight
+                            ? "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700"
+                            : "bg-white/5 hover:bg-white/10 border-white/10 text-white/70"
+                        }`}
+                      >
+                        Qidiruvni yopish
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Status Filter Tabs within Search Results */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() => setSearchStatusFilter("all")}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                        searchStatusFilter === "all"
+                          ? "bg-[#00A8FF] text-white border-[#00A8FF] shadow-sm"
+                          : isLight
+                          ? "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                          : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
+                      }`}
+                    >
+                      Barchasi ({searchStatusCounts.all})
+                    </button>
+                    {STATUS_LIST.map((st) => {
+                      const count = searchStatusCounts[st.key] || 0;
+                      if (count === 0 && searchStatusFilter !== st.key) return null;
+                      return (
+                        <button
+                          key={st.key}
+                          onClick={() => setSearchStatusFilter(st.key)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border flex items-center gap-1.5 ${
+                            searchStatusFilter === st.key
+                              ? `${st.darkBg} ${st.darkText} ${st.darkBorder}`
+                              : isLight
+                              ? "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                              : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
+                          }`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${st.dotColor}`} />
+                          <span>{st.label}</span>
+                          <span className="font-mono text-[11px] opacity-80">({count})</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Search Results Table */}
+                  <div
+                    className={`rounded-2xl border shadow-xl backdrop-blur-md overflow-hidden transition-colors ${
+                      isLight ? "bg-white/90 border-slate-200/90" : "bg-[#0a0c10]/95 border-white/10"
+                    }`}
+                  >
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse min-w-[700px]">
+                        <thead>
+                          <tr
+                            className={`border-b text-xs font-bold uppercase tracking-wider ${
+                              isLight ? "bg-slate-50/90 border-slate-200 text-slate-700" : "bg-white/5 border-white/10 text-white/70"
+                            }`}
+                            style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
+                          >
+                            <th className="py-4 px-4 w-12 text-center">#</th>
+                            <th className="py-4 px-4">Arizachi F.I.O & Brend</th>
+                            <th className="py-4 px-4">Kategoriya</th>
+                            <th className="py-4 px-4">Viloyat</th>
+                            <th className="py-4 px-4 text-center">Holati</th>
+                            <th className="py-4 px-4">Sana</th>
+                            <th className="py-4 px-4 text-center">Amallar</th>
+                          </tr>
+                        </thead>
+                        <tbody className={`divide-y text-xs ${isLight ? "divide-slate-200/60 text-slate-800" : "divide-white/5 text-white/90"}`}>
+                          {filteredSearchResults.length > 0 ? (
+                            filteredSearchResults.map((item, index) => {
+                              const statusCfg = STATUS_MAP[item.status] || STATUS_MAP["korib_chiqilmoqda"];
+                              return (
+                                <tr
+                                  key={item.id}
+                                  className={`transition-all ${
+                                    isLight ? "hover:bg-slate-50" : "hover:bg-white/5"
+                                  }`}
+                                >
+                                  <td className={`py-4 px-4 text-center font-mono text-xs font-semibold ${isLight ? "text-slate-400" : "text-white/40"}`}>
+                                    {index + 1}
+                                  </td>
+                                  <td className="py-4 px-4">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-900 shrink-0 border border-white/15">
+                                        {item.avatarUrl ? (
+                                          <img src={item.avatarUrl} alt={item.fio} className="w-full h-full object-cover" />
+                                        ) : (
+                                          <div className="w-full h-full flex items-center justify-center bg-[#00A8FF]/20 text-[#00A8FF] font-bold text-sm">
+                                            {item.fio.charAt(0)}
+                                          </div>
+                                        )}
+                                      </div>
+                                      <div className="flex flex-col gap-0.5">
+                                        <div className="flex items-center gap-2">
+                                          <span className={`text-sm font-extrabold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>
+                                            {item.fio}
+                                          </span>
+                                          {item.userId && item.userId !== DEFAULT_IMPORTER_ID && (
+                                            <span
+                                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0"
+                                              title={`Foydalanuvchi akkaunti mavjud (ID: ...${item.userId.slice(-6)})`}
+                                            >
+                                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                              Akkaunt mavjud
+                                            </span>
+                                          )}
+                                        </div>
+                                        <span className="text-xs font-semibold text-[#00A8FF]">{item.brandName}</span>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="py-4 px-4">
+                                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-[#00A8FF]/10 text-[#00A8FF] border border-[#00A8FF]/20">
+                                      {item.categoryLabel}
+                                    </span>
+                                  </td>
+                                  <td className={`py-4 px-4 font-semibold text-xs ${isLight ? "text-slate-700" : "text-white/80"}`}>
+                                    {item.region}
+                                  </td>
+                                  <td className="py-4 px-4 text-center">
+                                    <span
+                                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${
+                                        isLight
+                                          ? `${statusCfg.lightBg} ${statusCfg.lightText} ${statusCfg.lightBorder}`
+                                          : `${statusCfg.darkBg} ${statusCfg.darkText} ${statusCfg.darkBorder}`
+                                      }`}
+                                      style={{ fontFamily: "var(--font-zuume)" }}
+                                    >
+                                      <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dotColor}`} />
+                                      {statusCfg.label}
+                                    </span>
+                                  </td>
+                                  <td className={`py-4 px-4 font-mono text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>
+                                    {item.date}
+                                  </td>
+                                  <td className="py-4 px-4">
+                                    <div className="flex items-center gap-2 justify-center">
+                                      <button
+                                        onClick={() => handleSelectApplicant(item, "1-bosqich")}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
+                                          isLight
+                                            ? "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                                            : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
+                                        }`}
+                                      >
+                                        Ko'rish
+                                      </button>
+                                      {item.status === "yangi_ariza" && (
+                                        <button
+                                          onClick={() => handleApproveModeration(item.fullId)}
+                                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+                                          title="1-Bosqichga o'tkazish"
+                                        >
+                                          <CheckCircle2 size={13} />
+                                          <span>1-Bosqichga</span>
+                                        </button>
+                                      )}
+                                      {item.status !== "tasdiqlangan" && item.status !== "yangi_ariza" && (
+                                        <button
+                                          onClick={() => handleApprove(item.fullId)}
+                                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+                                          title="Tasdiqlash"
+                                        >
+                                          <UserCheck size={13} />
+                                          <span>Tasdiqlash</span>
+                                        </button>
+                                      )}
+                                      <button
+                                        onClick={() => handleOpenDeleteSingle(item.fullId, item.fio)}
+                                        className="p-2 rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white transition-colors cursor-pointer"
+                                        title="O'chirish"
+                                      >
+                                        <Trash2 size={13} />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          ) : (
+                            <tr>
+                              <td colSpan={7} className={`py-16 text-center ${isLight ? "text-slate-400" : "text-white/40"}`}>
+                                <div className="flex flex-col items-center justify-center gap-3">
+                                  <Search size={36} className="opacity-40" />
+                                  <div>
+                                    <p className="text-base font-bold" style={{ fontFamily: "var(--font-zuume)" }}>
+                                      "{searchQuery}" bo'yicha hech qanday ariza topilmadi
+                                    </p>
+                                    <p className="text-xs mt-1">
+                                      F.I.O, brend nomi, telefon raqami yoki ID to'g'ri kiritilganligini tekshiring
+                                    </p>
+                                  </div>
+                                  <button
+                                    onClick={() => {
+                                      setSearchQuery("");
+                                      setSearchStatusFilter("all");
+                                    }}
+                                    className="mt-2 px-4 py-2 rounded-xl bg-[#00A8FF]/20 text-[#00A8FF] text-xs font-bold hover:bg-[#00A8FF]/30 transition-all cursor-pointer"
+                                  >
+                                    Qidiruvni tozalash
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              ) : activePhase === "moderation" ? (
             /* ═══════════════════════════════════════════════════════════ */
             /* MODERATION VIEW — Yangi Arizalar (submitted)               */
             /* ═══════════════════════════════════════════════════════════ */
