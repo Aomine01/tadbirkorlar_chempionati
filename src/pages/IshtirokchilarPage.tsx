@@ -536,6 +536,7 @@ const IshtirokchilarPage = () => {
 
   const [applications, setApplications] = useState<ExtendedApplication[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [selectedApp, setSelectedApp] = useState<ExtendedApplication | null>(null);
 
   useEffect(() => {
@@ -550,6 +551,7 @@ const IshtirokchilarPage = () => {
 
         if (error) {
           console.error("Error fetching participants from Supabase:", error);
+          setFetchError(error.message || "Xatolik yuz berdi");
           setLoading(false);
           return;
         }
@@ -610,9 +612,11 @@ const IshtirokchilarPage = () => {
         
         // Combine static premium local participants with Supabase database applications
         setApplications([...LOCAL_PARTICIPANTS, ...dbApps]);
+        setFetchError(null);
         setLoading(false);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Unhandled error fetching participants:", err);
+        setFetchError(err?.message || "Xatolik yuz berdi");
         setLoading(false);
       }
     };
@@ -669,22 +673,25 @@ const IshtirokchilarPage = () => {
 
   return (
     <div
-      className={`min-h-screen relative overflow-hidden transition-colors duration-300`}
+      className="min-h-screen relative transition-colors duration-300"
       style={{ background: isLight ? "#f8fafc" : "#000001" }}
-      data-lenis-prevent
     >
       {/* Background Image overlay matching the Hero page style */}
-      <div
-        className="absolute inset-0 bg-cover bg-center opacity-35 pointer-events-none scale-105"
-        style={{
-          backgroundImage: `url(${isLight ? HeroLightImage : HeroImage})`,
-        }}
-      />
-      <div className={`absolute inset-0 bg-gradient-to-b ${
-        isLight
-          ? "from-slate-50/10 via-slate-50/50 to-slate-50"
-          : "from-[#000001]/10 via-[#000001]/50 to-[#000001]"
-      } pointer-events-none`} />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-35 scale-105"
+          style={{
+            backgroundImage: `url(${isLight ? HeroLightImage : HeroImage})`,
+          }}
+        />
+        <div
+          className={`absolute inset-0 bg-gradient-to-b ${
+            isLight
+              ? "from-slate-50/10 via-slate-50/50 to-slate-50"
+              : "from-[#000001]/10 via-[#000001]/50 to-[#000001]"
+          }`}
+        />
+      </div>
 
       {/* Content wrapper */}
       <div className="relative z-10">
@@ -870,6 +877,25 @@ const IshtirokchilarPage = () => {
               <div className={`w-8 h-8 border-2 rounded-full animate-spin ${
                 isLight ? "border-slate-200 border-t-[#00A8FF]" : "border-white/20 border-t-[#00A8FF]"
               }`} />
+            </div>
+          ) : fetchError && applications.length === 0 ? (
+            <div className="text-center py-32">
+              <p className="text-3xl mb-3 font-bold text-rose-500" style={{ fontFamily: "var(--font-zuume)" }}>
+                Xatolik yuz berdi
+              </p>
+              <p className={`text-sm mb-6 max-w-md mx-auto ${isLight ? "text-slate-500" : "text-white/40"}`}>
+                {fetchError}
+              </p>
+              <button
+                onClick={() => {
+                  setLoading(true);
+                  setFetchError(null);
+                  window.location.reload();
+                }}
+                className="px-6 py-2.5 rounded-xl bg-[#00A8FF] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#0090dd] transition-all cursor-pointer shadow-lg shadow-blue-500/20"
+              >
+                Qayta yuklash
+              </button>
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-32">

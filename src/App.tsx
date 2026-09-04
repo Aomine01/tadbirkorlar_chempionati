@@ -23,6 +23,7 @@ const App = () => {
           <Route path="/forms/:type" element={<FormPage />} />
           <Route path="/auth/login" element={<LoginPage />} />
           <Route path="/ishtirokchilar" element={<IshtirokchilarPage />} />
+          <Route path="/ishtrokchilar" element={<IshtirokchilarPage />} />
 
           <Route
             path="/phase2-form"
@@ -58,6 +59,8 @@ const App = () => {
               </AdminRoute>
             }
           />
+          {/* ── Fallback route ────────────────────────────── */}
+          <Route path="*" element={<HomePage />} />
         </Routes>
       </BrowserRouter>
     </>

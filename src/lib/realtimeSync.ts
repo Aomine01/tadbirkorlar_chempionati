@@ -2,13 +2,41 @@ import { supabase } from "./supabase";
 
 const SYNC_CHANNEL_NAME = "participants-realtime-sync";
 
+type ParticipantChangeCallback = (payload?: any) => void;
+
+const listeners = new Set<ParticipantChangeCallback>();
 let syncChannel: ReturnType<typeof supabase.channel> | null = null;
+
+function notifyListeners(payload?: any) {
+  listeners.forEach((cb) => {
+    try {
+      cb(payload);
+    } catch (e) {
+      console.error("Error in participant sync listener:", e);
+    }
+  });
+}
 
 function getSyncChannel() {
   if (!syncChannel) {
     syncChannel = supabase.channel(SYNC_CHANNEL_NAME, {
       config: { broadcast: { self: false } },
     });
+
+    // Register all callbacks BEFORE calling subscribe()!
+    // Calling channel.on() after channel.subscribe() throws an error in Supabase JS.
+    syncChannel
+      .on("broadcast", { event: "participant-change" }, (payload) => {
+        notifyListeners(payload);
+      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "applications" },
+        (payload) => {
+          notifyListeners(payload);
+        }
+      );
+
     syncChannel.subscribe((status) => {
       if (status === "CHANNEL_ERROR") {
         console.warn("Realtime sync channel error, will auto-reconnect.");
@@ -45,19 +73,11 @@ export async function broadcastParticipantChange(
  * 3. User switches back to the tab / device wakes up.
  */
 export function subscribeToParticipantChanges(onUpdate: () => void) {
-  const channel = getSyncChannel();
+  // Ensure the singleton channel is initialized with event listeners attached prior to subscription
+  getSyncChannel();
 
-  channel.on("broadcast", { event: "participant-change" }, () => {
-    onUpdate();
-  });
-
-  channel.on(
-    "postgres_changes",
-    { event: "*", schema: "public", table: "applications" },
-    () => {
-      onUpdate();
-    }
-  );
+  // Register the callback
+  listeners.add(onUpdate);
 
   // Auto-refresh when device wakes up or user focuses tab
   const handleVisibilityOrFocus = () => {
@@ -70,6 +90,7 @@ export function subscribeToParticipantChanges(onUpdate: () => void) {
   document.addEventListener("visibilitychange", handleVisibilityOrFocus);
 
   return () => {
+    listeners.delete(onUpdate);
     window.removeEventListener("focus", handleVisibilityOrFocus);
     document.removeEventListener("visibilitychange", handleVisibilityOrFocus);
   };
