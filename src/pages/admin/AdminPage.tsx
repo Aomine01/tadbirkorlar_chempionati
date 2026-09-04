@@ -32,6 +32,7 @@ import {
   broadcastParticipantChange,
   subscribeToParticipantChanges,
 } from "../../lib/realtimeSync";
+import { DEFAULT_IMPORTER_ID } from "../../lib/applicationLinker";
 import logoWhite from "../../assets/logos/white full.png";
 import logoBlue from "../../assets/logos/blue-full.png";
 import HeroImage from "../../assets/img/hero-image.png";
@@ -1204,6 +1205,53 @@ export default function AdminPage() {
                           <span className={`font-bold text-right ${isLight ? "text-slate-900" : "text-white"}`}>{val}</span>
                         </div>
                       ))}
+
+                      {/* Account Linkage Status */}
+                      <div className="col-span-2 py-2">
+                        {selectedApplicant.userId === DEFAULT_IMPORTER_ID ? (
+                          <div className={`p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                            isLight ? "bg-amber-500/10 border-amber-500/20 text-slate-800" : "bg-amber-500/10 border-amber-500/30 text-white"
+                          }`}>
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-500 flex items-center justify-center shrink-0">
+                                <AlertCircle size={17} />
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-amber-500 uppercase tracking-wide">
+                                  Akkaunt biriktirilmagan (Import)
+                                </p>
+                                <p className={`text-[11px] ${isLight ? "text-slate-600" : "text-white/60"}`}>
+                                  Ishtirokchi tizimga kirganda avtomatik biriktiriladi yoki provision skripti orqali login/parol beriladi.
+                                </p>
+                              </div>
+                            </div>
+                            <span className="text-[11px] px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-500 font-semibold self-start sm:self-center shrink-0">
+                              Import ID: ...{selectedApplicant.userId.slice(-6)}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className={`p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                            isLight ? "bg-emerald-500/10 border-emerald-500/20 text-slate-800" : "bg-emerald-500/10 border-emerald-500/30 text-white"
+                          }`}>
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0">
+                                <CheckCircle2 size={17} />
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-emerald-500 uppercase tracking-wide">
+                                  Shaxsiy akkaunt biriktirilgan
+                                </p>
+                                <p className={`text-[11px] ${isLight ? "text-slate-600" : "text-white/60"}`}>
+                                  Ishtirokchi shaxsiy hisobiga ega va 2-bosqich so'rovnomasini to'ldirishi mumkin.
+                                </p>
+                              </div>
+                            </div>
+                            <span className="text-[11px] px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-500 font-mono font-semibold self-start sm:self-center shrink-0">
+                              User ID: ...{selectedApplicant.userId.slice(-6)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
 
                       <div className={`col-span-2 flex flex-col gap-1.5 py-3 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
                         <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-500" : "text-white/50"}`}>Biznes Tavsifi</span>

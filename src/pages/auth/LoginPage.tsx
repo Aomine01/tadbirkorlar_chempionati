@@ -16,7 +16,18 @@ import signupLight from "../../assets/imglight/signuplight.png";
 /* ─── Schemas ──────────────────────────────────────── */
 
 const loginSchema = z.object({
-  email: z.string().email("Noto'g'ri email format"),
+  email: z
+    .string()
+    .min(3, "Login yoki telefon raqamingizni kiriting")
+    .refine(
+      (val) => {
+        const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+        const digits = val.replace(/\D/g, "");
+        const isPhone = digits.length >= 9;
+        return isEmail || isPhone;
+      },
+      { message: "Noto'g'ri email yoki telefon raqami formati" }
+    ),
   password: z.string().min(6, "Parol kamida 6 ta belgidan iborat bo'lishi kerak"),
 });
 
@@ -282,9 +293,9 @@ const LoginPage = () => {
               {mode === "login" && (
                 <form onSubmit={loginForm.handleSubmit(handleLogin)} className="flex flex-col gap-4">
                   <InputField
-                    label="Email"
-                    type="email"
-                    placeholder="email@example.com"
+                    label="Email yoki Telefon raqam"
+                    type="text"
+                    placeholder="masalan: +998901234567 yoki email@example.com"
                     isLight={isLight}
                     error={loginForm.formState.errors.email?.message}
                     {...loginForm.register("email")}

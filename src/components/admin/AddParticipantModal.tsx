@@ -1,9 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
   X,
   Image as ImageIcon,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
   Trash2,
   Plus,
   User,
@@ -22,6 +23,64 @@ import {
 } from "../../lib/participantParser";
 import { optimizeImageForUpload } from "../../lib/imageOptimizer";
 import { broadcastParticipantChange } from "../../lib/realtimeSync";
+
+interface ExistingParticipant {
+  id: string;
+  founder: string;
+  brand: string;
+  region: string;
+}
+
+function normalizeName(str: string): string {
+  return str
+    .toLowerCase()
+    .replace(/[’‘`´]/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getWordTokens(str: string): string[] {
+  return normalizeName(str)
+    .replace(/[^a-z0-9'а-яёўқғҳ]/gi, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 1)
+    .sort();
+}
+
+function isNameDuplicate(input: string, existing: string): boolean {
+  const normInput = normalizeName(input);
+  const normExisting = normalizeName(existing);
+  if (!normInput || !normExisting) return false;
+
+  if (normInput === normExisting) return true;
+
+  const tokensInput = getWordTokens(input);
+  const tokensExisting = getWordTokens(existing);
+  if (
+    tokensInput.length > 1 &&
+    tokensExisting.length > 1 &&
+    tokensInput.join(" ") === tokensExisting.join(" ")
+  ) {
+    return true;
+  }
+
+  if (
+    tokensInput.length >= 2 &&
+    tokensExisting.length >= 2 &&
+    tokensInput.every((t) => tokensExisting.includes(t))
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+function isBrandDuplicate(input: string, existing: string): boolean {
+  const normInput = input.toLowerCase().replace(/[^a-z0-9а-яёўқғҳ]/gi, "").trim();
+  const normExisting = existing.toLowerCase().replace(/[^a-z0-9а-яёўқғҳ]/gi, "").trim();
+  if (!normInput || !normExisting) return false;
+  return normInput === normExisting;
+}
 
 interface AddParticipantModalProps {
   isOpen: boolean;
@@ -73,12 +132,68 @@ export default function AddParticipantModal({
   const portraitInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
+  const [existingParticipants, setExistingParticipants] = useState<ExistingParticipant[]>([]);
+  const [allowDuplicateOverride, setAllowDuplicateOverride] = useState(false);
+
+  // Load existing participants on open to detect duplicates
+  useEffect(() => {
+    if (!isOpen) return;
+
+    let isMounted = true;
+    async function loadExisting() {
+      const { data } = await supabase
+        .from("applications")
+        .select("id, brand_name, legal_name, business_description, region")
+        .eq("is_deleted", false);
+
+      if (!isMounted || !data) return;
+
+      const list: ExistingParticipant[] = data.map((app) => {
+        const founderMatch = app.business_description?.match(/\[Founder:\s*([^\]]+)\]/i);
+        const founder = founderMatch
+          ? founderMatch[1].trim()
+          : app.legal_name?.trim() || app.brand_name?.trim() || "";
+        return {
+          id: app.id,
+          founder,
+          brand: app.brand_name?.trim() || "",
+          region: app.region || "",
+        };
+      });
+
+      setExistingParticipants(list);
+    }
+
+    loadExisting();
+    setAllowDuplicateOverride(false);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
+
+  // Memoized duplicate checks
+  const nameDuplicateMatch = useMemo(() => {
+    if (!founderName.trim() || founderName.trim().length < 3) return null;
+    return (
+      existingParticipants.find((p) => isNameDuplicate(founderName, p.founder)) || null
+    );
+  }, [founderName, existingParticipants]);
+
+  const brandDuplicateMatch = useMemo(() => {
+    if (!brandName.trim() || brandName.trim().length < 2) return null;
+    return (
+      existingParticipants.find((p) => isBrandDuplicate(brandName, p.brand)) || null
+    );
+  }, [brandName, existingParticipants]);
+
   // Reset state on close
   useEffect(() => {
     if (!isOpen) {
       setErrorMessage(null);
       setSuccessMessage(null);
       setIsSubmitting(false);
+      setAllowDuplicateOverride(false);
     }
   }, [isOpen]);
 
@@ -186,6 +301,18 @@ export default function AddParticipantModal({
     }
     if (!portraitFile && !portraitPreview) {
       setErrorMessage("Iltimos, ishtirokchining asosiy fotosuratini (portret) yuklang.");
+      return;
+    }
+
+    // Name & Brand duplicate safeguard
+    if ((nameDuplicateMatch || brandDuplicateMatch) && !allowDuplicateOverride) {
+      const dupReason = nameDuplicateMatch
+        ? `Ism: "${nameDuplicateMatch.founder}" (Brend: ${nameDuplicateMatch.brand || "N/A"})`
+        : `Brend: "${brandDuplicateMatch?.brand}" (Asoschi: ${brandDuplicateMatch?.founder || "N/A"})`;
+
+      setErrorMessage(
+        `⚠️ Takroriy ishtirokchi aniqlandi! ${dupReason} allaqachon mavjud. Takroriy qo'shishning oldi olindi. Agar bu boshqa shaxs bo'lsa, pastdagi tasdiqlash katakchasini belgilang.`
+      );
       return;
     }
 
@@ -406,14 +533,43 @@ export default function AddParticipantModal({
                 <input
                   type="text"
                   value={founderName}
-                  onChange={(e) => setFounderName(e.target.value)}
+                  onChange={(e) => {
+                    setFounderName(e.target.value);
+                    setAllowDuplicateOverride(false);
+                  }}
                   placeholder="Masalan: Abbasov Abdullo"
                   className={`w-full px-3.5 py-2.5 rounded-xl text-sm outline-none border transition-all ${
-                    isLight
+                    nameDuplicateMatch
+                      ? "border-amber-400 bg-amber-500/5 focus:border-amber-400"
+                      : isLight
                       ? "bg-white border-slate-300 text-slate-900 focus:border-[#00A8FF]"
                       : "bg-white/5 border-white/15 text-white focus:border-[#00A8FF]"
                   }`}
                 />
+                {nameDuplicateMatch && (
+                  <div
+                    className={`mt-2 p-3 rounded-xl border flex items-start gap-2.5 transition-all ${
+                      isLight
+                        ? "bg-amber-50 border-amber-300 text-amber-900"
+                        : "bg-amber-500/10 border-amber-500/30 text-amber-300"
+                    }`}
+                  >
+                    <AlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" />
+                    <div className="text-xs flex-1">
+                      <p className="font-bold flex items-center justify-between">
+                        <span>Bu ismdagi ishtirokchi allaqachon mavjud!</span>
+                        <span className="text-[10px] font-normal px-2 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-300">
+                          ID: ...{nameDuplicateMatch.id.slice(-6)}
+                        </span>
+                      </p>
+                      <p className="mt-1 text-slate-700 dark:text-white/70">
+                        Ism: <strong className="text-slate-900 dark:text-white font-semibold">"{nameDuplicateMatch.founder}"</strong>
+                        {nameDuplicateMatch.brand ? ` | Brend: "${nameDuplicateMatch.brand}"` : ""}
+                        {nameDuplicateMatch.region ? ` | Hudud: ${nameDuplicateMatch.region}` : ""}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Viloyat (Dropdown) */}
@@ -491,14 +647,43 @@ export default function AddParticipantModal({
                 <input
                   type="text"
                   value={brandName}
-                  onChange={(e) => setBrandName(e.target.value)}
+                  onChange={(e) => {
+                    setBrandName(e.target.value);
+                    setAllowDuplicateOverride(false);
+                  }}
                   placeholder="Masalan: BERT AGRO"
                   className={`w-full px-3.5 py-2.5 rounded-xl text-sm outline-none border transition-all ${
-                    isLight
+                    brandDuplicateMatch
+                      ? "border-amber-400 bg-amber-500/5 focus:border-amber-400"
+                      : isLight
                       ? "bg-white border-slate-300 text-slate-900 focus:border-[#00A8FF]"
                       : "bg-white/5 border-white/15 text-white focus:border-[#00A8FF]"
                   }`}
                 />
+                {brandDuplicateMatch && (
+                  <div
+                    className={`mt-2 p-3 rounded-xl border flex items-start gap-2.5 transition-all ${
+                      isLight
+                        ? "bg-amber-50 border-amber-300 text-amber-900"
+                        : "bg-amber-500/10 border-amber-500/30 text-amber-300"
+                    }`}
+                  >
+                    <AlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" />
+                    <div className="text-xs flex-1">
+                      <p className="font-bold flex items-center justify-between">
+                        <span>Bu nomdagi brend allaqachon mavjud!</span>
+                        <span className="text-[10px] font-normal px-2 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-300">
+                          ID: ...{brandDuplicateMatch.id.slice(-6)}
+                        </span>
+                      </p>
+                      <p className="mt-1 text-slate-700 dark:text-white/70">
+                        Brend: <strong className="text-slate-900 dark:text-white font-semibold">"{brandDuplicateMatch.brand}"</strong>
+                        {brandDuplicateMatch.founder ? ` | Asoschi: "${brandDuplicateMatch.founder}"` : ""}
+                        {brandDuplicateMatch.region ? ` | Hudud: ${brandDuplicateMatch.region}` : ""}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Yuridik nomi */}
@@ -872,9 +1057,22 @@ export default function AddParticipantModal({
             isLight ? "border-slate-100 bg-slate-50/80" : "border-white/5 bg-white/[0.02]"
           }`}
         >
-          <span className={`text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>
-            Barcha maydonlar to'g'riligini tasdiqlang
-          </span>
+          <div className="flex items-center gap-3">
+            {(nameDuplicateMatch || brandDuplicateMatch) && (
+              <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-amber-600 dark:text-amber-400 font-semibold">
+                <input
+                  type="checkbox"
+                  checked={allowDuplicateOverride}
+                  onChange={(e) => setAllowDuplicateOverride(e.target.checked)}
+                  className="w-4 h-4 rounded text-[#00A8FF] cursor-pointer accent-[#00A8FF]"
+                />
+                <span>Baribir saqlash (boshqa shaxs)</span>
+              </label>
+            )}
+            <span className={`text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>
+              Barcha maydonlar to'g'riligini tasdiqlang
+            </span>
+          </div>
 
           <div className="flex items-center gap-3">
             <button

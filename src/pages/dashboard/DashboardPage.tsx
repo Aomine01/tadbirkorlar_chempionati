@@ -22,6 +22,7 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { supabase } from "../../lib/supabase";
+import { getOrLinkUserApplication } from "../../lib/applicationLinker";
 import type { Application } from "../../types/database";
 import HeroImage from "../../assets/img/hero-image.png";
 import HeroLightImage from "../../assets/imglight/herolight.png";
@@ -256,16 +257,16 @@ const DashboardPage = () => {
 
     let isMounted = true;
 
-    // 1. Fetch Phase 1 application
-    supabase
-      .from("applications")
-      .select("*")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data, error }) => {
+    // 1. Fetch Phase 1 application (with automatic linking for imported participants)
+    getOrLinkUserApplication(user, profile)
+      .then((app) => {
         if (!isMounted) return;
-        if (!error && data) setApplication(data);
+        if (app) setApplication(app);
         setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error loading application:", err);
+        if (isMounted) setLoading(false);
       });
 
     // 2. Fetch Phase 2 application state

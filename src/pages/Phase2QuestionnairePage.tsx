@@ -18,6 +18,7 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import { getOrLinkUserApplication } from "../lib/applicationLinker";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import logoWhite from "../assets/logos/white full.png";
@@ -88,7 +89,7 @@ Maxfiylik majburiyati Kelishuv qabul qilingan paytdan e'tiboran hamda Tomonlar o
 /* ─── Main Component ─────────────────────────────────────────── */
 
 export default function Phase2QuestionnairePage() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
   const isLight = theme === "light";
@@ -284,19 +285,13 @@ export default function Phase2QuestionnairePage() {
     additionalNotes,
   ]);
 
-  // Fetch applicant's Phase 1 app data and pre-fill category
+  // Fetch applicant's Phase 1 app data and pre-fill category (with auto-linking for imported participants)
   useEffect(() => {
     if (!user) return;
     async function loadApplicantData() {
-      const { data } = await supabase
-        .from("applications")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(1);
+      const app = await getOrLinkUserApplication(user, profile);
 
-      if (data && data.length > 0) {
-        const app = data[0];
+      if (app) {
         setApplicationId(app.id);
         if (!companyName) setCompanyName(app.brand_name || app.legal_name || "");
         // Pre-fill category from Phase 1 (ideas → business)
@@ -305,7 +300,7 @@ export default function Phase2QuestionnairePage() {
       }
     }
     loadApplicantData();
-  }, [user]);
+  }, [user, profile]);
 
   // Helper: Format number string with spaces (e.g., 180000000 -> 180 000 000)
   const formatNumberWithSpaces = (val: string): string => {

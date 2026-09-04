@@ -106,17 +106,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signIn = async (
-    email: string,
+    emailOrPhone: string,
     password: string
   ): Promise<{ error: string | null }> => {
+    let cleanEmail = emailOrPhone.trim();
+    if (!cleanEmail.includes("@")) {
+      let digits = cleanEmail.replace(/\D/g, "");
+      if (!digits.startsWith("998") && digits.length === 9) {
+        digits = "998" + digits;
+      }
+      cleanEmail = `${digits}@chempionat.uz`;
+    }
+
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: cleanEmail,
       password,
     });
     if (error) {
       const msg =
         error.message === "Invalid login credentials"
-          ? "Email yoki parol noto'g'ri"
+          ? "Login yoki parol noto'g'ri"
           : error.message;
       return { error: msg };
     }
