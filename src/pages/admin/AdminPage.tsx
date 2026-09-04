@@ -23,6 +23,7 @@ import {
   Download,
   Award,
   UserPlus,
+  UserX,
   Trash2,
   Search,
 } from "lucide-react";
@@ -278,6 +279,7 @@ export default function AdminPage() {
 
   // Add Participant Modal State
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [addModalInitialName, setAddModalInitialName] = useState("");
 
   // Search Bar State
   const [searchQuery, setSearchQuery] = useState("");
@@ -764,6 +766,7 @@ export default function AdminPage() {
           {/* ── ISHTIROKCHI QO'SHISH (Action) ── */}
           <button
             onClick={() => {
+              setAddModalInitialName("");
               setAddModalOpen(true);
               setMobileDrawerOpen(false);
             }}
@@ -1055,7 +1058,10 @@ export default function AdminPage() {
         <div className="flex items-center gap-2.5 sm:gap-3">
           {/* ── Yangi Ishtirokchi Qo'shish (Header Action Button) ── */}
           <button
-            onClick={() => setAddModalOpen(true)}
+            onClick={() => {
+              setAddModalInitialName("");
+              setAddModalOpen(true);
+            }}
             className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-[#00A8FF] to-blue-600 hover:from-[#0090FF] hover:to-blue-700 text-white font-bold text-xs uppercase tracking-wider shadow-md hover:shadow-lg active:scale-95 transition-all cursor-pointer border border-blue-400/30"
             style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.04em" }}
             title="Yangi ishtirokchini avtomatik yoki qo'lda qo'shish"
@@ -1821,13 +1827,24 @@ export default function AdminPage() {
                                           <span className={`text-sm font-extrabold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>
                                             {item.fio}
                                           </span>
-                                          {item.userId && item.userId !== DEFAULT_IMPORTER_ID && (
+                                          {item.userId && item.userId !== DEFAULT_IMPORTER_ID ? (
                                             <span
                                               className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0"
                                               title={`Foydalanuvchi akkaunti mavjud (ID: ...${item.userId.slice(-6)})`}
                                             >
                                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                                               Akkaunt mavjud
+                                            </span>
+                                          ) : (
+                                            <span
+                                              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border shrink-0 ${
+                                                isLight
+                                                  ? "bg-slate-100 text-slate-500 border-slate-200"
+                                                  : "bg-white/5 text-white/40 border-white/10"
+                                              }`}
+                                              title="Foydalanuvchi akkaunti hali ochilmagan (Import)"
+                                            >
+                                              Akkaunt yo'q
                                             </span>
                                           )}
                                         </div>
@@ -1905,26 +1922,49 @@ export default function AdminPage() {
                             })
                           ) : (
                             <tr>
-                              <td colSpan={7} className={`py-16 text-center ${isLight ? "text-slate-400" : "text-white/40"}`}>
-                                <div className="flex flex-col items-center justify-center gap-3">
-                                  <Search size={36} className="opacity-40" />
+                              <td colSpan={7} className="py-16 px-4 text-center">
+                                <div className="max-w-md mx-auto flex flex-col items-center justify-center gap-4 animate-fade-in">
+                                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${
+                                    isLight ? "bg-rose-50 text-rose-500 border border-rose-200" : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                                  }`}>
+                                    <UserX size={32} />
+                                  </div>
                                   <div>
-                                    <p className="text-base font-bold" style={{ fontFamily: "var(--font-zuume)" }}>
-                                      "{searchQuery}" bo'yicha hech qanday ariza topilmadi
+                                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-500 border border-rose-500/20 mb-2">
+                                      <span>Tizimda mavjud emas</span>
+                                    </div>
+                                    <p className={`text-xl font-bold ${isLight ? "text-slate-900" : "text-white"}`} style={{ fontFamily: "var(--font-zuume)" }}>
+                                      "{searchQuery}" ismli ishtirokchi tizimda mavjud emas
                                     </p>
-                                    <p className="text-xs mt-1">
-                                      F.I.O, brend nomi, telefon raqami yoki ID to'g'ri kiritilganligini tekshiring
+                                    <p className={`text-xs mt-1.5 leading-relaxed ${isLight ? "text-slate-500" : "text-white/50"}`}>
+                                      Bazada bunday ism, brend yoki ID bo'yicha hech qanday ma'lumot topilmadi. Uni yangi ishtirokchi sifatida hoziroq tizimga qo'shishingiz mumkin.
                                     </p>
                                   </div>
-                                  <button
-                                    onClick={() => {
-                                      setSearchQuery("");
-                                      setSearchStatusFilter("all");
-                                    }}
-                                    className="mt-2 px-4 py-2 rounded-xl bg-[#00A8FF]/20 text-[#00A8FF] text-xs font-bold hover:bg-[#00A8FF]/30 transition-all cursor-pointer"
-                                  >
-                                    Qidiruvni tozalash
-                                  </button>
+                                  <div className="flex flex-wrap items-center justify-center gap-3 mt-1">
+                                    <button
+                                      onClick={() => {
+                                        setAddModalInitialName(searchQuery.trim());
+                                        setAddModalOpen(true);
+                                      }}
+                                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#00A8FF] to-[#0077FF] hover:from-[#0096e6] hover:to-[#0066dd] text-white text-xs font-bold shadow-lg shadow-[#00A8FF]/25 hover:shadow-[#00A8FF]/40 active:scale-95 transition-all cursor-pointer"
+                                    >
+                                      <UserPlus size={15} />
+                                      <span>"{searchQuery.trim()}" ni tizimga qo'shish</span>
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setSearchQuery("");
+                                        setSearchStatusFilter("all");
+                                      }}
+                                      className={`px-4 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                                        isLight
+                                          ? "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                                          : "border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
+                                      }`}
+                                    >
+                                      Qidiruvni tozalash
+                                    </button>
+                                  </div>
                                 </div>
                               </td>
                             </tr>
@@ -2840,10 +2880,15 @@ export default function AdminPage() {
       {/* ── Yangi Ishtirokchi Qo'shish Modali ── */}
       <AddParticipantModal
         isOpen={addModalOpen}
-        onClose={() => setAddModalOpen(false)}
+        initialName={addModalInitialName}
+        onClose={() => {
+          setAddModalOpen(false);
+          setAddModalInitialName("");
+        }}
         onSuccess={() => {
           loadActualApplications();
           loadPhase2Applications();
+          setAddModalInitialName("");
         }}
       />
     </div>

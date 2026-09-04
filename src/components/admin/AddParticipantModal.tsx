@@ -7,6 +7,7 @@ import {
   Trash2,
   Plus,
   User,
+  UserPlus,
   Building2,
   RefreshCw,
   Upload,
@@ -85,6 +86,7 @@ interface AddParticipantModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  initialName?: string;
 }
 
 const DEFAULT_USER_ID = "f8fdd430-05f6-4fd9-b662-bb40c7dfaf6a";
@@ -94,6 +96,7 @@ export default function AddParticipantModal({
   isOpen,
   onClose,
   onSuccess,
+  initialName = "",
 }: AddParticipantModalProps) {
   const { theme } = useTheme();
   const { user } = useAuth();
@@ -165,11 +168,14 @@ export default function AddParticipantModal({
 
     loadExisting();
     setAllowDuplicateOverride(false);
+    if (initialName && initialName.trim()) {
+      setFounderName(initialName.trim());
+    }
 
     return () => {
       isMounted = false;
     };
-  }, [isOpen]);
+  }, [isOpen, initialName]);
 
   // Memoized duplicate checks
   const nameDuplicateMatch = useMemo(() => {
@@ -540,6 +546,8 @@ export default function AddParticipantModal({
                   className={`w-full px-3.5 py-2.5 rounded-xl text-sm outline-none border transition-all ${
                     nameDuplicateMatch
                       ? "border-emerald-500 bg-emerald-500/5 focus:border-emerald-500 text-emerald-600 dark:text-emerald-400 font-semibold"
+                      : founderName.trim().length >= 3
+                      ? "border-[#00A8FF]/50 bg-[#00A8FF]/5 text-slate-900 dark:text-white focus:border-[#00A8FF]"
                       : isLight
                       ? "bg-white border-slate-300 text-slate-900 focus:border-[#00A8FF]"
                       : "bg-white/5 border-white/15 text-white focus:border-[#00A8FF]"
@@ -565,6 +573,28 @@ export default function AddParticipantModal({
                         Ism: <strong className="text-slate-900 dark:text-white font-semibold">"{nameDuplicateMatch.founder}"</strong>
                         {nameDuplicateMatch.brand ? ` | Brend: "${nameDuplicateMatch.brand}"` : ""}
                         {nameDuplicateMatch.region ? ` | Hudud: ${nameDuplicateMatch.region}` : ""}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {!nameDuplicateMatch && founderName.trim().length >= 3 && (
+                  <div
+                    className={`mt-2 p-3 rounded-xl border flex items-start gap-2.5 transition-all animate-fade-in ${
+                      isLight
+                        ? "bg-sky-50 border-sky-200 text-sky-950"
+                        : "bg-sky-500/10 border-sky-500/30 text-sky-200"
+                    }`}
+                  >
+                    <UserPlus size={16} className="text-[#00A8FF] shrink-0 mt-0.5" />
+                    <div className="text-xs flex-1">
+                      <p className="font-bold flex items-center justify-between text-[#00A8FF]">
+                        <span>Tizimda mavjud emas — erkin qo'shishingiz mumkin</span>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[#00A8FF]/20 text-[#00A8FF]">
+                          Yangi nomzod
+                        </span>
+                      </p>
+                      <p className="mt-1 text-slate-600 dark:text-white/70">
+                        "{founderName.trim()}" ismli ishtirokchi tizimda topilmadi. Uni yangi ishtirokchi sifatida qo'shishingiz mumkin.
                       </p>
                     </div>
                   </div>
@@ -604,19 +634,39 @@ export default function AddParticipantModal({
                 />
               </div>
 
-              {/* Jinsi (Dropdown) */}
+              {/* Jinsi (Buttons) */}
               <div className="sm:col-span-2">
                 <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-slate-400">
                   Jinsi
                 </label>
-                <CustomSelect
-                  value={gender}
-                  onChange={(v) => setGender(v as "male" | "female")}
-                  options={[
-                    { value: "male", label: "Erkak" },
-                    { value: "female", label: "Ayol" },
-                  ]}
-                />
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setGender("male")}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                      gender === "male"
+                        ? "bg-[#00A8FF] text-white border-[#00A8FF] shadow-sm shadow-[#00A8FF]/30"
+                        : isLight
+                        ? "bg-white border-slate-300 text-slate-600 hover:bg-slate-100"
+                        : "bg-white/5 border-white/15 text-white/70 hover:bg-white/10"
+                    }`}
+                  >
+                    Erkak
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGender("female")}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                      gender === "female"
+                        ? "bg-[#00A8FF] text-white border-[#00A8FF] shadow-sm shadow-[#00A8FF]/30"
+                        : isLight
+                        ? "bg-white border-slate-300 text-slate-600 hover:bg-slate-100"
+                        : "bg-white/5 border-white/15 text-white/70 hover:bg-white/10"
+                    }`}
+                  >
+                    Ayol
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -654,6 +704,8 @@ export default function AddParticipantModal({
                   className={`w-full px-3.5 py-2.5 rounded-xl text-sm outline-none border transition-all ${
                     brandDuplicateMatch
                       ? "border-emerald-500 bg-emerald-500/5 focus:border-emerald-500 text-emerald-600 dark:text-emerald-400 font-semibold"
+                      : brandName.trim().length >= 3
+                      ? "border-[#00A8FF]/50 bg-[#00A8FF]/5 text-slate-900 dark:text-white focus:border-[#00A8FF]"
                       : isLight
                       ? "bg-white border-slate-300 text-slate-900 focus:border-[#00A8FF]"
                       : "bg-white/5 border-white/15 text-white focus:border-[#00A8FF]"
@@ -679,6 +731,28 @@ export default function AddParticipantModal({
                         Brend: <strong className="text-slate-900 dark:text-white font-semibold">"{brandDuplicateMatch.brand}"</strong>
                         {brandDuplicateMatch.founder ? ` | Asoschi: "${brandDuplicateMatch.founder}"` : ""}
                         {brandDuplicateMatch.region ? ` | Hudud: ${brandDuplicateMatch.region}` : ""}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {!brandDuplicateMatch && brandName.trim().length >= 3 && (
+                  <div
+                    className={`mt-2 p-3 rounded-xl border flex items-start gap-2.5 transition-all animate-fade-in ${
+                      isLight
+                        ? "bg-sky-50 border-sky-200 text-sky-950"
+                        : "bg-sky-500/10 border-sky-500/30 text-sky-200"
+                    }`}
+                  >
+                    <CheckCircle2 size={16} className="text-[#00A8FF] shrink-0 mt-0.5" />
+                    <div className="text-xs flex-1">
+                      <p className="font-bold flex items-center justify-between text-[#00A8FF]">
+                        <span>Tizimda mavjud emas — erkin qo'shish mumkin</span>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[#00A8FF]/20 text-[#00A8FF]">
+                          Yangi brend
+                        </span>
+                      </p>
+                      <p className="mt-1 text-slate-600 dark:text-white/70">
+                        "{brandName.trim()}" brendi bo'yicha tizimda takrorlanish yo'q.
                       </p>
                     </div>
                   </div>

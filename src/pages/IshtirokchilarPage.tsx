@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, X, Search, MapPin, RotateCcw } from "lucide-react";
+import { ArrowRight, X, Search, MapPin, RotateCcw, UserPlus, UserX } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { subscribeToParticipantChanges } from "../lib/realtimeSync";
 import { smartMatchesSearch } from "../lib/searchUtils";
@@ -922,16 +922,28 @@ const IshtirokchilarPage = () => {
           ) : filtered.length === 0 ? (
             <div className="text-center py-24 px-4 flex flex-col items-center justify-center animate-fade-in">
               <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 ${
-                isLight ? "bg-slate-100 text-slate-400" : "bg-white/5 text-white/40"
+                searchQuery.trim() && globalSearchMatchesCount === 0
+                  ? isLight ? "bg-rose-50 text-rose-500 border border-rose-200" : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                  : isLight ? "bg-slate-100 text-slate-400" : "bg-white/5 text-white/40"
               }`}>
-                <Search size={32} className="opacity-60" />
+                {searchQuery.trim() && globalSearchMatchesCount === 0 ? (
+                  <UserX size={32} />
+                ) : (
+                  <Search size={32} className="opacity-60" />
+                )}
               </div>
               <p className={`text-2xl sm:text-3xl mb-2 font-bold ${isLight ? "text-slate-800" : "text-white"}`} style={{ fontFamily: "var(--font-zuume)" }}>
-                {searchQuery.trim() ? "Hech qanday ishtirokchi topilmadi" : t("participants.emptyTitle")}
-              </p>
-              <p className={`text-xs sm:text-sm max-w-md mx-auto mb-6 ${isLight ? "text-slate-500" : "text-white/40"}`}>
                 {searchQuery.trim()
-                  ? `"${searchQuery}" so'rovi bo'yicha joriy filtrlarda natija topilmadi.`
+                  ? globalSearchMatchesCount === 0
+                    ? `"${searchQuery}" ismli ishtirokchi ro'yxatda mavjud emas`
+                    : "Hech qanday ishtirokchi topilmadi"
+                  : t("participants.emptyTitle")}
+              </p>
+              <p className={`text-xs sm:text-sm max-w-md mx-auto mb-6 leading-relaxed ${isLight ? "text-slate-500" : "text-white/40"}`}>
+                {searchQuery.trim()
+                  ? globalSearchMatchesCount === 0
+                    ? "Ushbu nomzod hali tizimdan ro'yxatdan o'tmagan. Siz ham chempionatda qatnashib, o'z loyihangizni taqdim qilmoqchimisiz? Hoziroq ariza topshiring!"
+                    : `"${searchQuery}" so'rovi bo'yicha joriy filtrlarda natija topilmadi.`
                   : t("participants.emptyDesc")}
               </p>
 
@@ -946,6 +958,15 @@ const IshtirokchilarPage = () => {
                   >
                     Boshqa hududlardagi {globalSearchMatchesCount} ta natijani ko'rish
                   </button>
+                )}
+                {searchQuery.trim() && globalSearchMatchesCount === 0 && (
+                  <Link
+                    to="/register"
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#00A8FF] to-[#0077FF] hover:from-[#0096e6] hover:to-[#0066dd] text-white text-xs font-bold shadow-lg shadow-[#00A8FF]/25 flex items-center gap-2 transition-all cursor-pointer"
+                  >
+                    <UserPlus size={15} />
+                    <span>Ariza topshirish (Ro'yxatdan o'tish)</span>
+                  </Link>
                 )}
                 <button
                   onClick={() => {
