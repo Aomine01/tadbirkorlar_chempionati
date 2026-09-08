@@ -85,24 +85,36 @@ function isBrandDuplicate(input: string, existing: string): boolean {
 interface AddParticipantModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (newApp?: any) => void;
   initialName?: string;
+  defaultStatus?: "under_review" | "submitted";
 }
 
 const DEFAULT_USER_ID = "f8fdd430-05f6-4fd9-b662-bb40c7dfaf6a";
 const BUCKET = "participant-media";
+
+const fileToBase64 = (file: Blob | File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
 
 export default function AddParticipantModal({
   isOpen,
   onClose,
   onSuccess,
   initialName = "",
+  defaultStatus = "under_review",
 }: AddParticipantModalProps) {
   const { theme } = useTheme();
   const { user } = useAuth();
   const isLight = theme === "light";
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [targetStatus, setTargetStatus] = useState<"under_review" | "submitted">(defaultStatus);
   const [uploadStatus, setUploadStatus] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -304,10 +316,6 @@ export default function AddParticipantModal({
       setErrorMessage("Brend yoki loyiha nomini kiriting.");
       return;
     }
-    if (!portraitFile && !portraitPreview) {
-      setErrorMessage("Iltimos, ishtirokchining asosiy fotosuratini (portret) yuklang.");
-      return;
-    }
 
     // Name & Brand duplicate safeguard
     if ((nameDuplicateMatch || brandDuplicateMatch) && !allowDuplicateOverride) {
@@ -326,7 +334,7 @@ export default function AddParticipantModal({
     setSuccessMessage(null);
 
     try {
-      setUploadStatus("Rasmlar optimizatsiya qilinmoqda...");
+      setUploadStatus("Rasmlar tayyorlanmoqda...");
       const safeFolder = sanitizePath(founderName) || `participant_${Date.now()}`;
 
       // 1. Parallel Client-side Image Optimization
@@ -343,84 +351,153 @@ export default function AddParticipantModal({
         ...optGalleryPromises,
       ]);
 
-      setUploadStatus("Rasmlar yuklanmoqda (parallel)...");
-      let portraitUrl: string | null = null;
-      const galleryUrls: string[] = [];
-      const uploadTasks: Promise<any>[] = [];
-
-      // 2. Parallel upload for portrait
+      // Convert images to base64 for reliable transfer to admin API (bypasses RLS)
+      let portraitBase64: string | undefined;
       if (optPortrait) {
-        const ext = optPortrait.name.split(".").pop()?.toLowerCase() || "webp";
-        const portraitPath = `${safeFolder}/portrait_${Date.now()}.${ext}`;
-        uploadTasks.push(
-          uploadToStorage(optPortrait, portraitPath).then((url) => {
-            portraitUrl = url;
-          })
-        );
+        try {
+          portraitBase64 = await fileToBase64(optPortrait);
+        } catch (e) {
+          console.warn("Base64 conversion failed for portrait:", e);
+        }
       }
 
-      // 3. Parallel upload for gallery slides
-      optGallery.forEach((gf, i) => {
-        const safeName =
-          sanitizePath(gf.name.replace(/\.[^/.]+$/, "")) +
-          `_${Date.now()}_${i}.` +
-          (gf.name.split(".").pop() || "webp");
-        const galleryPath = `${safeFolder}/gallery/${safeName}`;
-        uploadTasks.push(
-          uploadToStorage(gf, galleryPath)
-            .then((url) => {
-              galleryUrls.push(url);
-            })
-            .catch((err) => {
-              console.warn("Galereya rasmi yuklanmadi:", err);
-            })
-        );
-      });
+      const galleryBase64: { name: string; data: string }[] = [];
+      for (let i = 0; i < optGallery.length; i++) {
+        const gf = optGallery[i];
+        if (gf) {
+          try {
+            const data = await fileToBase64(gf);
+            galleryBase64.push({ name: gf.name, data });
+          } catch (e) {
+            console.warn("Base64 conversion failed for gallery item:", e);
+          }
+        }
+      }
 
-      await Promise.all(uploadTasks);
-
-      // 4. Format payload & Database insert
-      setUploadStatus("Ma'lumotlar saqlanmoqda...");
       const cleanGoals = goals.filter((g) => g.trim().length > 0);
       const cleanImpacts = impacts.filter((i) => i.trim().length > 0);
 
-      const descriptionWithTags = `${aboutBusiness.trim() || "Loyiha bo'yicha ma'lumotlar taqdim etilgan."} [Founder: ${founderName.trim()}] [Gender: ${gender}]`;
-
-      const newApp = {
-        user_id: user?.id || DEFAULT_USER_ID,
-        category,
+      const apiPayload = {
+        userId: user?.id || DEFAULT_USER_ID,
+        founderName: founderName.trim(),
+        brandName: brandName.trim(),
+        legalName: legalName.trim() || brandName.trim(),
         age: Number(age) || 25,
         region: region.trim(),
-        brand_name: brandName.trim(),
-        legal_name: legalName.trim() || brandName.trim(),
-        business_description: descriptionWithTags,
+        category,
+        gender,
+        description: aboutBusiness.trim() || "Loyiha bo'yicha ma'lumotlar taqdim etilgan.",
         goals: cleanGoals.length > 0 ? cleanGoals : ["Biznesni rivojlantirish va yangi bosqichga olib chiqish."],
         potential_impact: cleanImpacts,
-        product_image_url: portraitUrl,
-        product_image_urls: galleryUrls,
-        avatar_url: portraitUrl,
-        status: "under_review",
-        gender,
-        is_deleted: false,
+        status: targetStatus,
+        portraitBase64,
+        galleryBase64,
       };
 
-      const { data: insertedData, error: insertErr } = await supabase
-        .from("applications")
-        .insert(newApp as any)
-        .select();
+      let insertedApp: any = null;
 
-      if (insertErr) {
-        throw new Error(`Ma'lumotlar bazasiga saqlashda xatolik: ${insertErr.message}`);
+      // 2. First attempt: call admin API endpoint (bypasses client-side RLS)
+      setUploadStatus("Ma'lumotlar saqlanmoqda...");
+      try {
+        const res = await fetch("/api/admin/add-participant", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(apiPayload),
+        });
+
+        if (res.ok) {
+          const resData = await res.json();
+          if (resData.success && resData.application) {
+            insertedApp = resData.application;
+          }
+        } else {
+          const resData = await res.json().catch(() => ({}));
+          console.warn("API /api/admin/add-participant returned error:", res.status, resData);
+        }
+      } catch (apiErr) {
+        console.warn("Failed to reach /api/admin/add-participant, will attempt direct Supabase fallback:", apiErr);
       }
 
-      // 5. Broadcast change instantly to ALL connected devices (phones, laptops, tabs)
+      // 3. Fallback attempt: Direct client Supabase upload & insert
+      if (!insertedApp) {
+        let portraitUrl: string | null = null;
+        const galleryUrls: string[] = [];
+        const uploadTasks: Promise<any>[] = [];
+
+        if (optPortrait) {
+          const ext = optPortrait.name.split(".").pop()?.toLowerCase() || "webp";
+          const portraitPath = `${safeFolder}/portrait_${Date.now()}.${ext}`;
+          uploadTasks.push(
+            uploadToStorage(optPortrait, portraitPath).then((url) => {
+              portraitUrl = url;
+            }).catch((err) => {
+              console.warn("Portrait storage upload error in fallback:", err);
+            })
+          );
+        }
+
+        optGallery.forEach((gf, i) => {
+          const safeName =
+            sanitizePath(gf.name.replace(/\.[^/.]+$/, "")) +
+            `_${Date.now()}_${i}.` +
+            (gf.name.split(".").pop() || "webp");
+          const galleryPath = `${safeFolder}/gallery/${safeName}`;
+          uploadTasks.push(
+            uploadToStorage(gf, galleryPath)
+              .then((url) => {
+                galleryUrls.push(url);
+              })
+              .catch((err) => {
+                console.warn("Galereya rasmi yuklanmadi:", err);
+              })
+          );
+        });
+
+        await Promise.all(uploadTasks);
+
+        const descriptionWithTags = `${aboutBusiness.trim() || "Loyiha bo'yicha ma'lumotlar taqdim etilgan."} [Founder: ${founderName.trim()}] [Gender: ${gender}]`;
+
+        const newApp = {
+          user_id: user?.id || DEFAULT_USER_ID,
+          category,
+          age: Number(age) || 25,
+          region: region.trim(),
+          brand_name: brandName.trim(),
+          legal_name: legalName.trim() || brandName.trim(),
+          business_description: descriptionWithTags,
+          goals: cleanGoals.length > 0 ? cleanGoals : ["Biznesni rivojlantirish va yangi bosqichga olib chiqish."],
+          potential_impact: cleanImpacts,
+          product_image_url: portraitUrl,
+          product_image_urls: galleryUrls,
+          avatar_url: portraitUrl,
+          status: targetStatus,
+          gender,
+          is_deleted: false,
+        };
+
+        const { data: insertedData, error: insertErr } = await supabase
+          .from("applications")
+          .insert(newApp as any)
+          .select();
+
+        if (insertErr) {
+          throw new Error(`Ma'lumotlar bazasiga saqlashda xatolik: ${insertErr.message}`);
+        }
+
+        insertedApp = insertedData?.[0] || newApp;
+      }
+
+      // 4. Broadcast change instantly to ALL connected tabs/windows/devices
       await broadcastParticipantChange("added", {
-        id: insertedData?.[0]?.id,
+        id: insertedApp?.id,
         name: founderName.trim(),
         brand: brandName.trim(),
+        status: targetStatus,
       });
 
-      // 6. Reset form fields
+      // 5. Reset form fields
       setFounderName("");
       setBrandName("");
       setLegalName("");
@@ -432,9 +509,11 @@ export default function AddParticipantModal({
       setGoals(["Biznesni kengaytirish va yangi bosqichga olib chiqish."]);
       setImpacts([]);
 
-      setSuccessMessage(`"${founderName}" (${brandName}) muvaffaqiyatli qo'shildi!`);
+      const targetLabel = targetStatus === "under_review" ? "1-Bosqich" : "Moderatsiya";
+      setSuccessMessage(`"${founderName}" (${brandName}) muvaffaqiyatli qo'shildi (${targetLabel})!`);
+
       setTimeout(() => {
-        onSuccess();
+        onSuccess(insertedApp);
         onClose();
       }, 700);
     } catch (err: any) {
@@ -778,7 +857,7 @@ export default function AddParticipantModal({
               </div>
 
               {/* Yo'nalish (Dropdown) */}
-              <div className="sm:col-span-2 md:col-span-4">
+              <div className="sm:col-span-2 md:col-span-2">
                 <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-slate-400">
                   Yo'nalish (Kategoriya)
                 </label>
@@ -788,6 +867,21 @@ export default function AddParticipantModal({
                   options={[
                     { value: "business", label: "An'anaviy Biznes" },
                     { value: "startup", label: "Startap" },
+                  ]}
+                />
+              </div>
+
+              {/* Ariza Joylashuvi / Bosqich */}
+              <div className="sm:col-span-2 md:col-span-2">
+                <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-slate-400">
+                  Ariza Joylashuvi (Bosqich)
+                </label>
+                <CustomSelect
+                  value={targetStatus}
+                  onChange={(v) => setTargetStatus(v as any)}
+                  options={[
+                    { value: "under_review", label: "1-Bosqich (Ko'rib chiqilmoqda)" },
+                    { value: "submitted", label: "Moderatsiya (Yangi ariza)" },
                   ]}
                 />
               </div>
@@ -1126,7 +1220,7 @@ export default function AddParticipantModal({
 
         {/* Footer */}
         <div
-          className={`px-6 py-4 border-t flex items-center justify-between shrink-0 ${
+          className={`px-4 sm:px-6 py-3.5 sm:py-4 border-t flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0 ${
             isLight ? "border-slate-100 bg-slate-50/80" : "border-white/5 bg-white/[0.02]"
           }`}
         >
@@ -1137,22 +1231,24 @@ export default function AddParticipantModal({
                   type="checkbox"
                   checked={allowDuplicateOverride}
                   onChange={(e) => setAllowDuplicateOverride(e.target.checked)}
-                  className="w-4 h-4 rounded text-emerald-500 cursor-pointer accent-emerald-500"
+                  className="w-4 h-4 rounded text-emerald-500 cursor-pointer accent-emerald-500 shrink-0"
                 />
                 <span>Baribir saqlash (boshqa shaxs)</span>
               </label>
             )}
-            <span className={`text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>
-              Barcha maydonlar to'g'riligini tasdiqlang
-            </span>
+            {!nameDuplicateMatch && !brandDuplicateMatch && (
+              <span className={`text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>
+                Barcha maydonlar to'g'riligini tasdiqlang
+              </span>
+            )}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 justify-end">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className={`px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer ${
+              className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer text-center ${
                 isLight
                   ? "bg-slate-200 text-slate-700 hover:bg-slate-300"
                   : "bg-white/10 text-white/80 hover:bg-white/15"
@@ -1166,17 +1262,17 @@ export default function AddParticipantModal({
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#00A8FF] to-blue-600 hover:from-[#0090FF] hover:to-blue-700 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-[#00A8FF]/25 hover:shadow-xl transition-all disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+              className="flex-1 sm:flex-none px-5 sm:px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#00A8FF] to-blue-600 hover:from-[#0090FF] hover:to-blue-700 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-[#00A8FF]/25 hover:shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer text-center"
               style={{ fontFamily: "var(--font-zuume)" }}
             >
               {isSubmitting ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
                   <span>{uploadStatus || "Saqlanmoqda..."}</span>
                 </>
               ) : (
                 <>
-                  <CheckCircle2 size={16} />
+                  <CheckCircle2 size={16} className="shrink-0" />
                   <span>Ishtirokchini Saqlash</span>
                 </>
               )}

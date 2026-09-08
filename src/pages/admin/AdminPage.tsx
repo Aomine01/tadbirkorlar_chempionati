@@ -26,9 +26,13 @@ import {
   UserX,
   Trash2,
   Search,
+  ExternalLink,
+  Users,
 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useAuth } from "../../contexts/AuthContext";
+import { useLanguage } from "../../contexts/LanguageContext";
 import AddParticipantModal from "../../components/admin/AddParticipantModal";
 import {
   broadcastParticipantChange,
@@ -245,6 +249,8 @@ const CATEGORY_MAP: Record<string, string> = {
 
 export default function AdminPage() {
   const { theme, toggleTheme } = useTheme();
+  const { lang, setLang, t } = useLanguage();
+  const { profile, signOut } = useAuth();
   const isLight = theme === "light";
 
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
@@ -322,6 +328,7 @@ export default function AdminPage() {
               : app
           )
         );
+        await broadcastParticipantChange("updated", { ids: selectedAppIds, status: "approved" });
         setSelectedAppIds([]);
       } else {
         console.error("Error bulk migrating:", error);
@@ -711,6 +718,12 @@ export default function AdminPage() {
           rejection_comment: comment || null,
         } as any)
         .eq("id", targetApp.fullId);
+
+      await broadcastParticipantChange("updated", {
+        id: targetApp.fullId,
+        status: dbStatusMap[newStatus],
+        statusKey: newStatus,
+      });
     }
   };
 
@@ -754,15 +767,15 @@ export default function AdminPage() {
       <div className="flex flex-col gap-6">
         <div className={`pb-3 border-b flex items-center justify-between ${isLight ? "border-slate-100" : "border-white/10"}`}>
           <span
-            className={`text-xs font-bold uppercase tracking-widest ${isLight ? "text-slate-400" : "text-white/40"}`}
+            className={`text-xs font-bold uppercase tracking-widest leading-none ${isLight ? "text-slate-400" : "text-white/40"}`}
             style={{ fontFamily: "var(--font-zuume)" }}
           >
             BOSHQARUV MENUSI
           </span>
-          <span className="w-2 h-2 rounded-full bg-[#00A8FF] animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-[#00A8FF] animate-pulse shrink-0" />
         </div>
 
-        <nav className="flex flex-col gap-3">
+        <nav className="flex flex-col gap-2.5">
           {/* ── ISHTIROKCHI QO'SHISH (Action) ── */}
           <button
             onClick={() => {
@@ -770,22 +783,22 @@ export default function AdminPage() {
               setAddModalOpen(true);
               setMobileDrawerOpen(false);
             }}
-            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer shadow-md active:scale-95 ${
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer shadow-md active:scale-95 leading-none ${
               isLight
                 ? "bg-gradient-to-r from-[#00A8FF] to-blue-600 hover:from-[#0090FF] hover:to-blue-700 text-white shadow-blue-500/20"
                 : "bg-gradient-to-r from-[#00A8FF] to-blue-600 hover:from-[#0090FF] hover:to-blue-700 text-white shadow-[#00A8FF]/20"
             }`}
           >
-            <div className="flex items-center gap-2.5">
-              <UserPlus size={16} />
+            <div className="flex items-center gap-2.5 leading-none">
+              <UserPlus size={16} className="shrink-0" />
               <span
-                className="font-bold tracking-wider uppercase"
+                className="font-bold tracking-wider uppercase leading-none"
                 style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
               >
                 + Ishtirokchi Qo'shish
               </span>
             </div>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/20 text-white">
+            <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/20 text-white leading-none">
               YANGI
             </span>
           </button>
@@ -797,7 +810,7 @@ export default function AdminPage() {
               setSelectedApplicant(null);
               setMobileDrawerOpen(false);
             }}
-            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer leading-none ${
               activePhase === "moderation"
                 ? isLight
                   ? "bg-violet-50 text-violet-700 shadow-xs border border-violet-200"
@@ -807,22 +820,21 @@ export default function AdminPage() {
                 : "text-white/70 hover:bg-white/5"
             }`}
           >
-            <div className="flex items-center gap-2.5">
-              <Inbox size={16} className={activePhase === "moderation" ? "text-violet-400" : isLight ? "text-slate-400" : "text-white/40"} />
+            <div className="flex items-center gap-2.5 leading-none">
+              <Inbox size={16} className={`shrink-0 ${activePhase === "moderation" ? "text-violet-400" : isLight ? "text-slate-400" : "text-white/40"}`} />
               <span
-                className="font-bold tracking-wider uppercase"
+                className="font-bold tracking-wider uppercase leading-none"
                 style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
               >
                 Moderatsiya
               </span>
             </div>
-            {statusCounts.yangi_ariza > 0 && (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-violet-500/20 text-violet-400 border border-violet-500/30 animate-pulse">
+            {statusCounts.yangi_ariza > 0 ? (
+              <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-violet-500/20 text-violet-400 border border-violet-500/30 animate-pulse leading-none">
                 {statusCounts.yangi_ariza} YANGI
               </span>
-            )}
-            {statusCounts.yangi_ariza === 0 && (
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isLight ? "bg-slate-100 text-slate-400" : "bg-white/5 text-white/30"}`}>
+            ) : (
+              <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold leading-none ${isLight ? "bg-slate-100 text-slate-400" : "bg-white/5 text-white/30"}`}>
                 {statusCounts.yangi_ariza}
               </span>
             )}
@@ -835,7 +847,7 @@ export default function AdminPage() {
                 setActivePhase("1-bosqich");
                 setArizalarOpen(!arizalarOpen);
               }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer leading-none ${
                 activePhase === "1-bosqich"
                   ? isLight
                     ? "bg-blue-50 text-[#00A8FF] shadow-xs"
@@ -845,22 +857,22 @@ export default function AdminPage() {
                   : "text-white/70 hover:bg-white/5"
               }`}
             >
-              <div className="flex items-center gap-2.5">
-                <Layers size={16} className="text-[#00A8FF]" />
+              <div className="flex items-center gap-2.5 leading-none">
+                <Layers size={16} className="text-[#00A8FF] shrink-0" />
                 <span
-                  className="font-bold tracking-wider uppercase"
+                  className="font-bold tracking-wider uppercase leading-none"
                   style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
                 >
                   1-Bosqich
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#00A8FF]/15 text-[#00A8FF] border border-[#00A8FF]/30">
+              <div className="flex items-center gap-2 leading-none">
+                <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#00A8FF]/15 text-[#00A8FF] border border-[#00A8FF]/30 leading-none">
                   {statusCounts["korib_chiqilmoqda"] || 0} TA
                 </span>
                 <ChevronDown
                   size={15}
-                  className={`transition-transform duration-200 ${
+                  className={`transition-transform duration-200 shrink-0 ${
                     arizalarOpen ? "rotate-180 text-[#00A8FF]" : isLight ? "text-slate-400" : "text-white/40"
                   }`}
                 />
@@ -882,7 +894,7 @@ export default function AdminPage() {
                         setSelectedApplicant(null);
                         setMobileDrawerOpen(false);
                       }}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer leading-none ${
                         isSelected
                           ? isLight
                             ? "bg-slate-100 text-[#00A8FF] font-bold shadow-2xs"
@@ -893,13 +905,13 @@ export default function AdminPage() {
                       }`}
                     >
                       <span
-                        className="truncate pr-2 uppercase tracking-wide"
+                        className="truncate pr-2 uppercase tracking-wide leading-none text-left"
                         style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.03em" }}
                       >
                         {statusItem.label}
                       </span>
                       <span
-                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                        className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-[11px] font-bold leading-none min-w-[22px] text-center ${
                           isSelected
                             ? statusItem.key === "tasdiqlangan"
                               ? "bg-emerald-500 text-white shadow-2xs"
@@ -929,7 +941,7 @@ export default function AdminPage() {
               setSelectedApplicant(null);
               setMobileDrawerOpen(false);
             }}
-            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer leading-none ${
               activePhase === "2-bosqich"
                 ? isLight
                   ? "bg-blue-50 text-[#00A8FF] shadow-xs"
@@ -939,16 +951,16 @@ export default function AdminPage() {
                 : "text-white/70 hover:bg-white/5"
             }`}
           >
-            <div className="flex items-center gap-2.5">
-              <Sparkles size={16} className={activePhase === "2-bosqich" ? "text-[#00A8FF]" : isLight ? "text-slate-400" : "text-white/40"} />
+            <div className="flex items-center gap-2.5 leading-none">
+              <Sparkles size={16} className={`shrink-0 ${activePhase === "2-bosqich" ? "text-[#00A8FF]" : isLight ? "text-slate-400" : "text-white/40"}`} />
               <span
-                className="font-bold tracking-wider uppercase"
+                className="font-bold tracking-wider uppercase leading-none"
                 style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
               >
                 2-Bosqich (Moliyaviy)
               </span>
             </div>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+            <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 leading-none">
               {filteredPhase2Apps.length} TA
             </span>
           </button>
@@ -960,7 +972,7 @@ export default function AdminPage() {
               setSelectedApplicant(null);
               setMobileDrawerOpen(false);
             }}
-            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer leading-none ${
               activePhase === "3-bosqich"
                 ? isLight
                   ? "bg-emerald-50 text-emerald-600 shadow-xs"
@@ -970,32 +982,52 @@ export default function AdminPage() {
                 : "text-white/70 hover:bg-white/5"
             }`}
           >
-            <div className="flex items-center gap-2.5">
-              <Award size={16} className={activePhase === "3-bosqich" ? "text-emerald-400" : isLight ? "text-slate-400" : "text-white/40"} />
+            <div className="flex items-center gap-2.5 leading-none">
+              <Award size={16} className={`shrink-0 ${activePhase === "3-bosqich" ? "text-emerald-400" : isLight ? "text-slate-400" : "text-white/40"}`} />
               <span
-                className="font-bold tracking-wider uppercase"
+                className="font-bold tracking-wider uppercase leading-none"
                 style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
               >
                 3-Bosqich (Oflayn suhbat)
               </span>
             </div>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+            <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 leading-none">
               {approvedApps.length} TA
             </span>
           </button>
         </nav>
       </div>
 
-      <div className={`pt-4 border-t ${isLight ? "border-slate-100" : "border-white/10"}`}>
+      <div className={`pt-4 border-t flex flex-col gap-1.5 ${isLight ? "border-slate-100" : "border-white/10"}`}>
         <Link
-          to="/"
-          className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
-            isLight ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100" : "text-white/60 hover:text-white hover:bg-white/5"
+          to="/ishtirokchilar"
+          className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer leading-none ${
+            isLight ? "text-slate-600 hover:text-[#00A8FF] hover:bg-blue-50/50" : "text-white/70 hover:text-[#00A8FF] hover:bg-white/5"
           }`}
         >
-          <LogOut size={16} className={isLight ? "text-slate-400" : "text-white/40"} />
-          <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>Chiqish</span>
+          <div className="flex items-center gap-2.5 leading-none">
+            <Users size={16} className="text-[#00A8FF] shrink-0" />
+            <span className="uppercase tracking-wider leading-none" style={{ fontFamily: "var(--font-zuume)" }}>{t("nav.participants")}</span>
+          </div>
+          <ExternalLink size={13} className="opacity-60 shrink-0" />
         </Link>
+
+        <button
+          onClick={async () => {
+            try {
+              await signOut();
+            } catch (e) {
+              console.error(e);
+            }
+            window.location.href = "/";
+          }}
+          className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer text-left leading-none ${
+            isLight ? "text-rose-600 hover:text-rose-700 hover:bg-rose-50" : "text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
+          }`}
+        >
+          <LogOut size={16} className="shrink-0" />
+          <span className="uppercase tracking-wider leading-none" style={{ fontFamily: "var(--font-zuume)" }}>Chiqish</span>
+        </button>
       </div>
     </div>
   );
@@ -1020,88 +1052,153 @@ export default function AdminPage() {
       />
 
       <header
-        className={`h-16 border-b sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between transition-colors backdrop-blur-md ${
+        className={`h-16 sm:h-18 border-b sticky top-0 z-40 px-3 sm:px-6 flex items-center justify-between transition-colors backdrop-blur-md ${
           isLight ? "bg-white/90 border-slate-200/80 shadow-xs" : "bg-[#0a0c10]/95 border-white/10 shadow-lg"
         }`}
       >
-        <div className="flex items-center gap-3 sm:gap-4">
+        {/* Left: Mobile Menu + Logo + Admin Badge + Live Participants Link */}
+        <div className="flex items-center gap-2.5 sm:gap-4">
           <button
             onClick={() => setMobileDrawerOpen(true)}
-            className={`p-2 rounded-xl border md:hidden transition-colors cursor-pointer ${
+            className={`p-2 rounded-xl border md:hidden transition-colors cursor-pointer flex items-center justify-center shrink-0 ${
               isLight
                 ? "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200"
                 : "bg-white/5 border-white/10 text-white hover:bg-white/10"
             }`}
             title="Menu"
+            aria-label="Open navigation menu"
           >
             <Menu size={18} />
           </button>
 
-          <Link to="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
+          <Link
+            to="/"
+            className="flex items-center gap-2.5 hover:opacity-90 transition-opacity shrink-0"
+            title="Bosh sahifaga o'tish"
+          >
             <img
               src={isLight ? logoBlue : logoWhite}
               alt="Logo"
               className="h-7 sm:h-8 w-auto object-contain"
             />
           </Link>
-          <div className={`hidden sm:flex items-center gap-2 text-xs pl-4 border-l ${isLight ? "border-slate-200 text-slate-400" : "border-white/10 text-white/40"}`}>
-            <Shield size={16} className="text-[#00A8FF]" />
+
+          <div
+            className={`hidden sm:flex items-center gap-2 text-xs pl-3.5 border-l leading-none ${
+              isLight ? "border-slate-200 text-slate-400" : "border-white/10 text-white/40"
+            }`}
+          >
+            <Shield size={16} className="text-[#00A8FF] shrink-0" />
             <span
-              className={`text-xs font-bold uppercase tracking-wider ${isLight ? "text-slate-700" : "text-white/80"}`}
+              className={`text-xs font-bold uppercase tracking-wider leading-none ${
+                isLight ? "text-slate-700" : "text-white/80"
+              }`}
               style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
             >
-              Boshqaruv Paneli
+              {t("nav.adminPanel")}
             </span>
           </div>
+
+          {/* Quick link to live participants page */}
+          <Link
+            to="/ishtirokchilar"
+            className={`hidden lg:inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold leading-none border transition-all ${
+              isLight
+                ? "bg-blue-50/80 text-[#00A8FF] border-blue-200/80 hover:bg-blue-100/80"
+                : "bg-white/5 text-[#00A8FF] border-[#00A8FF]/20 hover:bg-[#00A8FF]/10"
+            }`}
+            title="Ommaviy ishtirokchilar sahifasini ko'rish"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00A8FF] animate-pulse shrink-0" />
+            <span className="uppercase tracking-wider leading-none" style={{ fontFamily: "var(--font-zuume)" }}>
+              {t("nav.participants")}
+            </span>
+            <ExternalLink size={12} className="opacity-70 shrink-0" />
+          </Link>
         </div>
 
-        <div className="flex items-center gap-2.5 sm:gap-3">
+        {/* Right: Add Participant Button + Language Switcher + Theme Toggle + User Info */}
+        <div className="flex items-center gap-2 sm:gap-2.5">
           {/* ── Yangi Ishtirokchi Qo'shish (Header Action Button) ── */}
           <button
             onClick={() => {
               setAddModalInitialName("");
               setAddModalOpen(true);
             }}
-            className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-[#00A8FF] to-blue-600 hover:from-[#0090FF] hover:to-blue-700 text-white font-bold text-xs uppercase tracking-wider shadow-md hover:shadow-lg active:scale-95 transition-all cursor-pointer border border-blue-400/30"
+            className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-[#00A8FF] to-blue-600 hover:from-[#0090FF] hover:to-blue-700 text-white font-bold text-xs uppercase tracking-wider shadow-md hover:shadow-lg active:scale-95 transition-all cursor-pointer border border-blue-400/30 leading-none shrink-0"
             style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.04em" }}
             title="Yangi ishtirokchini avtomatik yoki qo'lda qo'shish"
           >
-            <UserPlus size={15} />
-            <span className="hidden sm:inline">+ Ishtirokchi Qo'shish</span>
-            <span className="sm:hidden">+ Qo'shish</span>
+            <UserPlus size={15} className="shrink-0" />
+            <span className="hidden sm:inline leading-none">+ Ishtirokchi Qo'shish</span>
+            <span className="sm:hidden leading-none">+ Qo'shish</span>
           </button>
 
+          {/* Language Segmented Toggle Switcher */}
+          <div
+            className={`p-0.5 sm:p-1 rounded-xl border flex items-center gap-0.5 transition-all shrink-0 ${
+              isLight
+                ? "bg-slate-100/90 border-slate-200/80"
+                : "bg-white/5 border-white/10"
+            }`}
+          >
+            {(["uz", "ru", "en"] as const).map((l) => {
+              const active = lang === l;
+              return (
+                <button
+                  key={l}
+                  onClick={() => setLang(l)}
+                  aria-label={`Switch to ${l.toUpperCase()}`}
+                  className={`px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs font-bold tracking-wide rounded-lg transition-all cursor-pointer uppercase leading-none ${
+                    active
+                      ? "bg-[#00A8FF] text-white shadow-sm shadow-blue-500/30"
+                      : isLight
+                      ? "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+                      : "text-white/60 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  {l}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Theme Switcher Button */}
           <button
             onClick={toggleTheme}
-            className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
+            aria-label="Toggle theme"
+            title={isLight ? t("theme.toDark") : t("theme.toLight")}
+            className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all cursor-pointer shrink-0 ${
               isLight
-                ? "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200 shadow-2xs"
-                : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10 shadow-2xs"
+                ? "bg-slate-100 border-slate-200 text-amber-600 hover:bg-slate-200 shadow-2xs"
+                : "bg-white/5 border-white/10 text-amber-400 hover:bg-white/10 shadow-2xs"
             }`}
           >
             {isLight ? <Moon size={16} /> : <Sun size={16} />}
           </button>
 
+          {/* Administrator Profile Pill */}
           <div
-            className={`flex items-center gap-2.5 px-3 sm:px-3.5 py-1.5 rounded-xl border transition-colors ${
+            className={`flex items-center gap-2 sm:gap-2.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl border transition-colors shrink-0 ${
               isLight
                 ? "bg-slate-50 border-slate-200/80 text-slate-700"
                 : "bg-white/5 border-white/10 text-white"
             }`}
           >
-            <div className="w-6 h-6 rounded-lg bg-[#00A8FF] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+            <div className="w-6 h-6 rounded-lg bg-[#00A8FF] text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0">
               <UserCheck size={14} />
             </div>
             <span
-              className="text-xs font-bold uppercase tracking-wider hidden sm:inline"
+              className="text-xs font-bold uppercase tracking-wider hidden sm:inline leading-none"
               style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.04em" }}
             >
-              Administrator
+              {profile?.full_name ? profile.full_name.split(" ")[0] : "Administrator"}
             </span>
           </div>
         </div>
       </header>
 
+      {/* ── MOBILE DRAWER ── */}
       {mobileDrawerOpen && (
         <div className="fixed inset-0 z-[9999] md:hidden flex">
           <div
@@ -1109,23 +1206,72 @@ export default function AdminPage() {
             className="fixed inset-0 bg-black/70 backdrop-blur-xs animate-fade-in"
           />
           <div
-            className={`relative w-72 max-w-[80vw] h-full shadow-2xl flex flex-col z-10 animate-slide-in ${
+            className={`relative w-80 max-w-[85vw] h-full shadow-2xl flex flex-col z-10 animate-slide-in ${
               isLight ? "bg-white text-slate-800" : "bg-[#0a0c10] text-white border-r border-white/10"
             }`}
           >
+            {/* Drawer Header */}
             <div className={`p-4 border-b flex items-center justify-between ${isLight ? "border-slate-100" : "border-white/10"}`}>
-              <img
-                src={isLight ? logoBlue : logoWhite}
-                alt="Logo"
-                className="h-7 w-auto object-contain"
-              />
+              <div className="flex items-center gap-2.5">
+                <img
+                  src={isLight ? logoBlue : logoWhite}
+                  alt="Logo"
+                  className="h-7 w-auto object-contain"
+                />
+                <span
+                  className="text-xs font-bold uppercase tracking-wider text-[#00A8FF] leading-none"
+                  style={{ fontFamily: "var(--font-zuume)" }}
+                >
+                  Admin
+                </span>
+              </div>
               <button
                 onClick={() => setMobileDrawerOpen(false)}
-                className={`p-1.5 rounded-lg border ${isLight ? "border-slate-200 text-slate-500" : "border-white/10 text-white/60"}`}
+                className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                  isLight ? "border-slate-200 text-slate-500 hover:bg-slate-100" : "border-white/10 text-white/60 hover:bg-white/10"
+                }`}
               >
                 <X size={18} />
               </button>
             </div>
+
+            {/* Mobile Drawer Quick Controls: Language + Theme */}
+            <div className={`p-3 border-b flex items-center justify-between gap-2 ${isLight ? "border-slate-100 bg-slate-50/80" : "border-white/10 bg-white/5"}`}>
+              {/* Segmented language selector */}
+              <div
+                className={`p-0.5 rounded-xl border flex items-center gap-0.5 ${
+                  isLight ? "bg-white border-slate-200" : "bg-black/30 border-white/10"
+                }`}
+              >
+                {(["uz", "ru", "en"] as const).map((l) => (
+                  <button
+                    key={l}
+                    onClick={() => setLang(l)}
+                    className={`px-2 py-1 text-xs font-bold rounded-lg uppercase cursor-pointer transition-all ${
+                      lang === l
+                        ? "bg-[#00A8FF] text-white shadow-xs"
+                        : isLight ? "text-slate-600 hover:text-slate-900" : "text-white/60 hover:text-white"
+                    }`}
+                  >
+                    {l}
+                  </button>
+                ))}
+              </div>
+
+              {/* Theme Toggle Button */}
+              <button
+                onClick={toggleTheme}
+                className={`p-1.5 px-2.5 rounded-xl border flex items-center gap-1.5 text-xs font-bold cursor-pointer transition-all ${
+                  isLight
+                    ? "bg-white border-slate-200 text-amber-600 hover:bg-slate-100"
+                    : "bg-black/30 border-white/10 text-amber-400 hover:bg-white/10"
+                }`}
+              >
+                {isLight ? <Moon size={15} /> : <Sun size={15} />}
+                <span className="text-[11px] uppercase tracking-wider">{isLight ? "Dark" : "Light"}</span>
+              </button>
+            </div>
+
             <div className="flex-1 overflow-y-auto">
               <SidebarContent />
             </div>
@@ -1168,22 +1314,22 @@ export default function AdminPage() {
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => setSelectedApplicant(null)}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#00A8FF] text-white text-xs font-bold shadow-md uppercase tracking-wider cursor-pointer hover:bg-[#0090FF]"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#00A8FF] text-white text-xs font-bold shadow-md uppercase tracking-wider cursor-pointer hover:bg-[#0090FF] leading-none shrink-0"
                         style={{ fontFamily: "var(--font-zuume)" }}
                       >
-                        <ArrowLeft size={15} />
+                        <ArrowLeft size={15} className="shrink-0" />
                         <span>Orqaga</span>
                       </button>
                       <div>
                         <h2
-                          className={`text-xl sm:text-2xl font-bold uppercase tracking-wider ${
+                          className={`text-xl sm:text-2xl font-bold uppercase tracking-wider leading-tight ${
                             isLight ? "text-slate-900" : "text-white"
                           }`}
                           style={{ fontFamily: "var(--font-zuume)" }}
                         >
                           {selectedApplicant.fio}
                         </h2>
-                        <p className={`text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>{selectedApplicant.brandName}</p>
+                        <p className={`text-xs leading-normal mt-0.5 ${isLight ? "text-slate-500" : "text-white/50"}`}>{selectedApplicant.brandName}</p>
                       </div>
                     </div>
 
@@ -1191,24 +1337,24 @@ export default function AdminPage() {
                       {selectedApplicant.status === "yangi_ariza" ? (
                         <button
                           onClick={() => handleApproveModeration(selectedApplicant.fullId)}
-                          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold text-xs shadow-md transition-all cursor-pointer hover:shadow-lg active:scale-95 flex items-center gap-2 border border-emerald-400/30"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold text-xs shadow-md transition-all cursor-pointer hover:shadow-lg active:scale-95 border border-emerald-400/30 leading-none"
                           title="1-Bosqichga o'tkazish va Ishtirokchilar ro'yxatiga qo'shish"
                         >
-                          <CheckCircle2 size={15} />
+                          <CheckCircle2 size={15} className="shrink-0" />
                           <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>1-Bosqichga o'tkazish</span>
                         </button>
                       ) : selectedApplicant.status === "tasdiqlangan" ? (
-                        <span className="px-4 py-2.5 rounded-xl bg-emerald-500/20 text-emerald-400 font-bold text-xs border border-emerald-500/30 flex items-center gap-2">
-                          <Award size={16} />
+                        <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/20 text-emerald-400 font-bold text-xs border border-emerald-500/30 leading-none">
+                          <Award size={16} className="shrink-0" />
                           <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>3-Bosqich Ishtirokchisi</span>
                         </span>
                       ) : (
                         <button
                           onClick={() => handleApprovePhase2ToPhase3(selectedApplicant.fullId)}
-                          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold text-xs shadow-md transition-all cursor-pointer hover:shadow-lg active:scale-95 flex items-center gap-2 border border-emerald-400/30"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold text-xs shadow-md transition-all cursor-pointer hover:shadow-lg active:scale-95 border border-emerald-400/30 leading-none"
                           title="3-Bosqich Oflayn suhbatiga o'tkazish"
                         >
-                          <Sparkles size={15} />
+                          <Sparkles size={15} className="shrink-0" />
                           <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>3-Bosqichga o'tkazish</span>
                         </button>
                       )}
@@ -1218,51 +1364,53 @@ export default function AdminPage() {
                           setRejectModalOpen(true);
                           setRejectReason(selectedApplicant.rejectionComment || "");
                         }}
-                        className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white font-semibold text-xs shadow-md transition-all cursor-pointer hover:shadow-lg active:scale-95 flex items-center gap-2 border border-rose-400/30"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white font-semibold text-xs shadow-md transition-all cursor-pointer hover:shadow-lg active:scale-95 border border-rose-400/30 leading-none"
                       >
-                        <XCircle size={14} />
+                        <XCircle size={14} className="shrink-0" />
                         <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>Rad etish</span>
                       </button>
 
                       <button
                         onClick={() => handleOpenDeleteSingle(selectedApplicant.fullId, selectedApplicant.fio)}
-                        className="px-4 py-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 hover:text-rose-300 font-semibold text-xs transition-all cursor-pointer active:scale-95 flex items-center gap-2 border border-rose-500/30"
+                        className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 hover:text-rose-300 font-semibold text-xs transition-all cursor-pointer active:scale-95 border border-rose-500/30 leading-none"
                         title="Ishtirokchini bazadan butunlay o'chirish"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={14} className="shrink-0" />
                         <span className="uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>O'chirish</span>
                       </button>
                     </div>
                   </div>
 
                   {/* ── 2 SWITCHER BUTTONS FOR 1-BOSQICH AND 2-BOSQICH MA'LUMOTLARI ── */}
-                  <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/5 border border-white/10 w-fit">
+                  <div className={`flex flex-wrap items-center gap-2 p-1.5 rounded-2xl border w-fit ${
+                    isLight ? "bg-slate-100/80 border-slate-200" : "bg-white/5 border-white/10"
+                  }`}>
                     <button
                       onClick={() => setDetailTab("1-bosqich")}
-                      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      className={`inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer leading-none ${
                         detailTab === "1-bosqich"
-                          ? "bg-[#00A8FF] text-white shadow-lg shadow-[#00A8FF]/30"
-                          : isLight ? "text-slate-600 hover:bg-slate-100" : "text-white/60 hover:text-white hover:bg-white/5"
+                          ? "bg-[#00A8FF] text-white shadow-md shadow-[#00A8FF]/30"
+                          : isLight ? "text-slate-600 hover:bg-white" : "text-white/60 hover:text-white hover:bg-white/5"
                       }`}
                       style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.03em" }}
                     >
-                      <FileText size={15} />
+                      <FileText size={15} className="shrink-0" />
                       <span>1-BOSQICH MA'LUMOTLARI (UMUMIY)</span>
                     </button>
 
                     <button
                       onClick={() => setDetailTab("2-bosqich")}
-                      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      className={`inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer leading-none ${
                         detailTab === "2-bosqich"
-                          ? "bg-[#00A8FF] text-white shadow-lg shadow-[#00A8FF]/30"
-                          : isLight ? "text-slate-600 hover:bg-slate-100" : "text-white/60 hover:text-white hover:bg-white/5"
+                          ? "bg-[#00A8FF] text-white shadow-md shadow-[#00A8FF]/30"
+                          : isLight ? "text-slate-600 hover:bg-white" : "text-white/60 hover:text-white hover:bg-white/5"
                       }`}
                       style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.03em" }}
                     >
-                      <Sparkles size={15} />
+                      <Sparkles size={15} className="shrink-0" />
                       <span>2-BOSQICH MA'LUMOTLARI (MOLIYAVIY)</span>
                       {matchingP2 && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500 text-white font-mono font-bold">
+                        <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] bg-emerald-500 text-white font-mono font-bold leading-none">
                           TO'LDIRILGAN
                         </span>
                       )}
@@ -1788,13 +1936,13 @@ export default function AdminPage() {
                             }`}
                             style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
                           >
-                            <th className="py-4 px-4 w-12 text-center">#</th>
-                            <th className="py-4 px-4">Arizachi F.I.O & Brend</th>
-                            <th className="py-4 px-4">Kategoriya</th>
-                            <th className="py-4 px-4">Viloyat</th>
-                            <th className="py-4 px-4 text-center">Holati</th>
-                            <th className="py-4 px-4">Sana</th>
-                            <th className="py-4 px-4 text-center">Amallar</th>
+                            <th className="py-3.5 px-3 w-12 text-center align-middle">#</th>
+                            <th className="py-3.5 px-4 text-left align-middle">Arizachi F.I.O & Brend</th>
+                            <th className="py-3.5 px-4 text-left align-middle">Kategoriya</th>
+                            <th className="py-3.5 px-4 text-left align-middle">Viloyat</th>
+                            <th className="py-3.5 px-4 text-center align-middle">Holati</th>
+                            <th className="py-3.5 px-4 text-center align-middle">Sana</th>
+                            <th className="py-3.5 px-4 text-center align-middle">Amallar</th>
                           </tr>
                         </thead>
                         <tbody className={`divide-y text-xs ${isLight ? "divide-slate-200/60 text-slate-800" : "divide-white/5 text-white/90"}`}>
@@ -1808,36 +1956,36 @@ export default function AdminPage() {
                                     isLight ? "hover:bg-slate-50" : "hover:bg-white/5"
                                   }`}
                                 >
-                                  <td className={`py-4 px-4 text-center font-mono text-xs font-semibold ${isLight ? "text-slate-400" : "text-white/40"}`}>
+                                  <td className={`py-3.5 px-3 text-center align-middle font-mono text-xs font-semibold ${isLight ? "text-slate-400" : "text-white/40"}`}>
                                     {index + 1}
                                   </td>
-                                  <td className="py-4 px-4">
+                                  <td className="py-3.5 px-4 text-left align-middle">
                                     <div className="flex items-center gap-3">
-                                      <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-900 shrink-0 border border-white/15">
+                                      <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-900 shrink-0 border border-white/15 flex items-center justify-center">
                                         {item.avatarUrl ? (
                                           <img src={item.avatarUrl} alt={item.fio} className="w-full h-full object-cover" />
                                         ) : (
-                                          <div className="w-full h-full flex items-center justify-center bg-[#00A8FF]/20 text-[#00A8FF] font-bold text-sm">
+                                          <div className="w-full h-full flex items-center justify-center bg-[#00A8FF]/20 text-[#00A8FF] font-bold text-sm leading-none">
                                             {item.fio.charAt(0)}
                                           </div>
                                         )}
                                       </div>
-                                      <div className="flex flex-col gap-0.5">
-                                        <div className="flex items-center gap-2">
+                                      <div className="flex flex-col gap-0.5 justify-center">
+                                        <div className="flex items-center gap-2 leading-snug">
                                           <span className={`text-sm font-extrabold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>
                                             {item.fio}
                                           </span>
                                           {item.userId && item.userId !== DEFAULT_IMPORTER_ID ? (
                                             <span
-                                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0"
+                                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0 leading-none"
                                               title={`Foydalanuvchi akkaunti mavjud (ID: ...${item.userId.slice(-6)})`}
                                             >
-                                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
                                               Akkaunt mavjud
                                             </span>
                                           ) : (
                                             <span
-                                              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border shrink-0 ${
+                                              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border shrink-0 leading-none ${
                                                 isLight
                                                   ? "bg-slate-100 text-slate-500 border-slate-200"
                                                   : "bg-white/5 text-white/40 border-white/10"
@@ -1848,39 +1996,39 @@ export default function AdminPage() {
                                             </span>
                                           )}
                                         </div>
-                                        <span className="text-xs font-semibold text-[#00A8FF]">{item.brandName}</span>
+                                        <span className="text-xs font-semibold text-[#00A8FF] leading-normal">{item.brandName}</span>
                                       </div>
                                     </div>
                                   </td>
-                                  <td className="py-4 px-4">
-                                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-[#00A8FF]/10 text-[#00A8FF] border border-[#00A8FF]/20">
+                                  <td className="py-3.5 px-4 text-left align-middle">
+                                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-[#00A8FF]/10 text-[#00A8FF] border border-[#00A8FF]/20 leading-none">
                                       {item.categoryLabel}
                                     </span>
                                   </td>
-                                  <td className={`py-4 px-4 font-semibold text-xs ${isLight ? "text-slate-700" : "text-white/80"}`}>
+                                  <td className={`py-3.5 px-4 text-left align-middle font-semibold text-xs leading-normal ${isLight ? "text-slate-700" : "text-white/80"}`}>
                                     {item.region}
                                   </td>
-                                  <td className="py-4 px-4 text-center">
+                                  <td className="py-3.5 px-4 text-center align-middle">
                                     <span
-                                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${
+                                      className={`inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border leading-none ${
                                         isLight
                                           ? `${statusCfg.lightBg} ${statusCfg.lightText} ${statusCfg.lightBorder}`
                                           : `${statusCfg.darkBg} ${statusCfg.darkText} ${statusCfg.darkBorder}`
                                       }`}
                                       style={{ fontFamily: "var(--font-zuume)" }}
                                     >
-                                      <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dotColor}`} />
-                                      {statusCfg.label}
+                                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusCfg.dotColor}`} />
+                                      <span>{statusCfg.label}</span>
                                     </span>
                                   </td>
-                                  <td className={`py-4 px-4 font-mono text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>
+                                  <td className={`py-3.5 px-4 text-center align-middle font-mono text-xs whitespace-nowrap leading-none ${isLight ? "text-slate-500" : "text-white/50"}`}>
                                     {item.date}
                                   </td>
-                                  <td className="py-4 px-4">
-                                    <div className="flex items-center gap-2 justify-center">
+                                  <td className="py-3.5 px-4 text-center align-middle">
+                                    <div className="inline-flex items-center justify-center gap-1.5">
                                       <button
                                         onClick={() => handleSelectApplicant(item, "1-bosqich")}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
+                                        className={`inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border leading-none ${
                                           isLight
                                             ? "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
                                             : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
@@ -1891,26 +2039,26 @@ export default function AdminPage() {
                                       {item.status === "yangi_ariza" && (
                                         <button
                                           onClick={() => handleApproveModeration(item.fullId)}
-                                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+                                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer shadow-sm leading-none"
                                           title="1-Bosqichga o'tkazish"
                                         >
-                                          <CheckCircle2 size={13} />
+                                          <CheckCircle2 size={13} className="shrink-0" />
                                           <span>1-Bosqichga</span>
                                         </button>
                                       )}
                                       {item.status !== "tasdiqlangan" && item.status !== "yangi_ariza" && (
                                         <button
                                           onClick={() => handleApprove(item.fullId)}
-                                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+                                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer shadow-sm leading-none"
                                           title="Tasdiqlash"
                                         >
-                                          <UserCheck size={13} />
+                                          <UserCheck size={13} className="shrink-0" />
                                           <span>Tasdiqlash</span>
                                         </button>
                                       )}
                                       <button
                                         onClick={() => handleOpenDeleteSingle(item.fullId, item.fio)}
-                                        className="p-2 rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white transition-colors cursor-pointer"
+                                        className="p-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white transition-colors cursor-pointer inline-flex items-center justify-center"
                                         title="O'chirish"
                                       >
                                         <Trash2 size={13} />
@@ -2053,7 +2201,7 @@ export default function AdminPage() {
                           }`}
                           style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
                         >
-                          <th className="py-4 px-3 w-10 text-center">
+                          <th className="py-3.5 px-3 w-12 text-center align-middle">
                             <input
                               type="checkbox"
                               checked={
@@ -2061,69 +2209,69 @@ export default function AdminPage() {
                                 moderationApps.every((a) => selectedAppIds.includes(a.fullId))
                               }
                               onChange={() => handleToggleSelectAll(moderationApps)}
-                              className="w-4 h-4 rounded accent-[#00A8FF] cursor-pointer"
+                              className="w-4 h-4 rounded accent-[#00A8FF] cursor-pointer align-middle"
                             />
                           </th>
-                          <th className="py-4 px-4 w-12 text-center">#</th>
-                          <th className="py-4 px-4">Arizachi F.I.O & Brend</th>
-                          <th className="py-4 px-4">Kategoriya</th>
-                          <th className="py-4 px-4">Viloyat</th>
-                          <th className="py-4 px-4">Sana</th>
-                          <th className="py-4 px-4 text-center">Amallar</th>
+                          <th className="py-3.5 px-3 w-12 text-center align-middle">#</th>
+                          <th className="py-3.5 px-4 text-left align-middle">Arizachi F.I.O & Brend</th>
+                          <th className="py-3.5 px-4 text-left align-middle">Kategoriya</th>
+                          <th className="py-3.5 px-4 text-left align-middle">Viloyat</th>
+                          <th className="py-3.5 px-4 text-center align-middle">Sana</th>
+                          <th className="py-3.5 px-4 text-center align-middle">Amallar</th>
                         </tr>
                       </thead>
                       <tbody className={`divide-y text-xs ${isLight ? "divide-slate-200/60 text-slate-800" : "divide-white/5 text-white/90"}`}>
                         {moderationApps.map((item, index) => (
                           <tr key={item.id} className={`transition-all ${selectedAppIds.includes(item.fullId) ? (isLight ? "bg-sky-50" : "bg-[#00A8FF]/10") : (isLight ? "hover:bg-violet-50/60" : "hover:bg-violet-500/5")}`}>
-                            <td className="py-4 px-3 text-center">
+                            <td className="py-3.5 px-3 text-center align-middle">
                               <input
                                 type="checkbox"
                                 checked={selectedAppIds.includes(item.fullId)}
                                 onChange={() => handleToggleSelectApp(item.fullId)}
-                                className="w-4 h-4 rounded accent-[#00A8FF] cursor-pointer"
+                                className="w-4 h-4 rounded accent-[#00A8FF] cursor-pointer align-middle"
                               />
                             </td>
-                            <td className={`py-4 px-4 text-center font-mono text-xs font-semibold ${isLight ? "text-slate-400" : "text-white/40"}`}>{index + 1}</td>
-                            <td className="py-4 px-4">
+                            <td className={`py-3.5 px-3 text-center align-middle font-mono text-xs font-semibold ${isLight ? "text-slate-400" : "text-white/40"}`}>{index + 1}</td>
+                            <td className="py-3.5 px-4 text-left align-middle">
                               <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-900 shrink-0 border border-white/15">
+                                <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-900 shrink-0 border border-white/15 flex items-center justify-center">
                                   {item.avatarUrl ? (
                                     <img src={item.avatarUrl} alt={item.fio} className="w-full h-full object-cover" />
                                   ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-violet-500/20 text-violet-400 font-bold text-sm">
+                                    <div className="w-full h-full flex items-center justify-center bg-violet-500/20 text-violet-400 font-bold text-sm leading-none">
                                       {item.fio.charAt(0)}
                                     </div>
                                   )}
                                 </div>
-                                <div className="flex flex-col gap-0.5">
-                                  <div className="flex items-center gap-2">
+                                <div className="flex flex-col gap-0.5 justify-center">
+                                  <div className="flex items-center gap-2 leading-snug">
                                     <span className={`text-sm font-extrabold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>{item.fio}</span>
                                     {item.userId && item.userId !== DEFAULT_IMPORTER_ID && (
                                       <span
-                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0"
+                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0 leading-none"
                                         title={`Foydalanuvchi akkaunti mavjud (ID: ...${item.userId.slice(-6)})`}
                                       >
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
                                         Akkaunt mavjud
                                       </span>
                                     )}
                                   </div>
-                                  <span className={`text-xs font-semibold ${isLight ? "text-slate-500" : "text-violet-400/80"}`}>{item.brandName}</span>
+                                  <span className={`text-xs font-semibold leading-normal ${isLight ? "text-slate-500" : "text-violet-400/80"}`}>{item.brandName}</span>
                                 </div>
                               </div>
                             </td>
-                            <td className="py-4 px-4">
-                              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-[#00A8FF]/10 text-[#00A8FF] border border-[#00A8FF]/20">
+                            <td className="py-3.5 px-4 text-left align-middle">
+                              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-[#00A8FF]/10 text-[#00A8FF] border border-[#00A8FF]/20 leading-none">
                                 {item.categoryLabel}
                               </span>
                             </td>
-                            <td className={`py-4 px-4 font-semibold text-xs ${isLight ? "text-slate-700" : "text-white/80"}`}>{item.region}</td>
-                            <td className={`py-4 px-4 font-mono text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>{item.date}</td>
-                            <td className="py-4 px-4">
-                              <div className="flex items-center gap-2 justify-center">
+                            <td className={`py-3.5 px-4 text-left align-middle font-semibold text-xs leading-normal ${isLight ? "text-slate-700" : "text-white/80"}`}>{item.region}</td>
+                            <td className={`py-3.5 px-4 text-center align-middle font-mono text-xs whitespace-nowrap leading-none ${isLight ? "text-slate-500" : "text-white/50"}`}>{item.date}</td>
+                            <td className="py-3.5 px-4 text-center align-middle">
+                              <div className="inline-flex items-center justify-center gap-1.5">
                                 <button
                                   onClick={() => handleSelectApplicant(item, "1-bosqich")}
-                                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
+                                  className={`inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border leading-none ${
                                     isLight ? "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100" : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
                                   }`}
                                 >
@@ -2131,11 +2279,11 @@ export default function AdminPage() {
                                 </button>
                                 <button
                                   onClick={() => handleApproveModeration(item.fullId)}
-                                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+                                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer shadow-sm leading-none"
                                   title="1-Bosqichga o'tkazish va Ishtirokchilar ro'yxatiga qo'shish"
                                 >
-                                  <CheckCircle2 size={13} />
-                                  <span>1-Bosqichga o'tkazish</span>
+                                  <CheckCircle2 size={13} className="shrink-0" />
+                                  <span>1-Bosqichga</span>
                                 </button>
                                 <button
                                   onClick={() => {
@@ -2143,14 +2291,14 @@ export default function AdminPage() {
                                     setRejectModalOpen(true);
                                     setRejectReason("");
                                   }}
-                                  className="px-3 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 text-xs font-bold transition-all cursor-pointer border border-rose-500/30 flex items-center gap-1.5"
+                                  className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 text-xs font-bold transition-all cursor-pointer border border-rose-500/30 leading-none"
                                 >
-                                  <X size={13} />
-                                  Rad
+                                  <X size={13} className="shrink-0" />
+                                  <span>Rad</span>
                                 </button>
                                 <button
                                   onClick={() => handleOpenDeleteSingle(item.fullId, item.fio)}
-                                  className="p-2 rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white transition-colors cursor-pointer"
+                                  className="p-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white transition-colors cursor-pointer inline-flex items-center justify-center"
                                   title="Arizani o'chirish"
                                 >
                                   <Trash2 size={13} />
@@ -2214,13 +2362,13 @@ export default function AdminPage() {
                         }`}
                         style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
                       >
-                        <th className="py-4 px-4 w-12 text-center">#</th>
-                        <th className="py-4 px-4">Korxona / Ishtirokchi Nomi</th>
-                        <th className="py-4 px-4">Toifasi</th>
-                        <th className="py-4 px-4">So'ralgan Investitsiya</th>
-                        <th className="py-4 px-4 text-center">Hujjatlar</th>
-                        <th className="py-4 px-4 text-center">NDA Tasdiq</th>
-                        <th className="py-4 px-4 text-center">Batafsil</th>
+                        <th className="py-3.5 px-3 w-12 text-center align-middle">#</th>
+                        <th className="py-3.5 px-4 text-left align-middle">Korxona / Ishtirokchi Nomi</th>
+                        <th className="py-3.5 px-4 text-left align-middle">Toifasi</th>
+                        <th className="py-3.5 px-4 text-left align-middle">So'ralgan Investitsiya</th>
+                        <th className="py-3.5 px-4 text-center align-middle">Hujjatlar</th>
+                        <th className="py-3.5 px-4 text-center align-middle">NDA Tasdiq</th>
+                        <th className="py-3.5 px-4 text-center align-middle">Batafsil</th>
                       </tr>
                     </thead>
                     <tbody className={`divide-y text-xs ${isLight ? "divide-slate-200/60 text-slate-800" : "divide-white/5 text-white/90"}`}>
@@ -2242,23 +2390,23 @@ export default function AdminPage() {
                                 isLight ? "hover:bg-blue-50/60" : "hover:bg-[#00A8FF]/10"
                               }`}
                             >
-                              <td className="py-4 px-4 text-center font-mono text-slate-400">{index + 1}</td>
-                              <td className="py-4 px-4">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-bold text-sm text-[#00A8FF]">{item.company_name}</span>
+                              <td className={`py-3.5 px-3 text-center align-middle font-mono text-xs font-semibold ${isLight ? "text-slate-400" : "text-white/40"}`}>{index + 1}</td>
+                              <td className="py-3.5 px-4 text-left align-middle">
+                                <div className="flex items-center gap-2 leading-snug">
+                                  <span className="font-bold text-sm text-[#00A8FF] leading-none">{item.company_name}</span>
                                   {item.user_id && item.user_id !== DEFAULT_IMPORTER_ID && (
                                     <span
-                                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0"
+                                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0 leading-none"
                                       title={`Foydalanuvchi akkaunti mavjud (ID: ...${item.user_id.slice(-6)})`}
                                     >
-                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
                                       Akkaunt mavjud
                                     </span>
                                   )}
                                 </div>
                               </td>
-                              <td className="py-4 px-4">
-                                <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${
+                              <td className="py-3.5 px-4 text-left align-middle">
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold border leading-none ${
                                   item.category === "startup"
                                     ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
                                     : "bg-[#00A8FF]/15 text-[#00A8FF] border-[#00A8FF]/30"
@@ -2266,24 +2414,24 @@ export default function AdminPage() {
                                   {item.category === "startup" ? "Startap / Innovatsiya" : "An'anaviy Biznes"}
                                 </span>
                               </td>
-                              <td className="py-4 px-4 font-mono font-bold text-emerald-400">
-                                {item.requested_investment_amount?.toLocaleString("ru-RU")} UZS
+                              <td className="py-3.5 px-4 text-left align-middle font-mono font-bold text-xs text-emerald-500 dark:text-emerald-400 leading-none">
+                                {item.requested_investment_amount ? `${item.requested_investment_amount.toLocaleString("ru-RU")} UZS` : "N/A"}
                               </td>
-                              <td className="py-4 px-4 text-center">
-                                <span className="px-2 py-0.5 rounded-full bg-white/10 font-bold text-[11px]">
+                              <td className="py-3.5 px-4 text-center align-middle">
+                                <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-white/10 font-bold text-[11px] leading-none">
                                   {item.uploaded_documents?.length || 0} ta fayl
                                 </span>
                               </td>
-                              <td className="py-4 px-4 text-center">
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-bold text-[10px] border border-emerald-500/30">
-                                  <Shield size={12} />
+                              <td className="py-3.5 px-4 text-center align-middle">
+                                <span className="inline-flex items-center justify-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-500 dark:text-emerald-400 font-bold text-[10px] border border-emerald-500/30 leading-none">
+                                  <Shield size={12} className="shrink-0" />
                                   <span>IMZOLANGAN</span>
                                 </span>
                               </td>
-                              <td className="py-4 px-4 text-center">
-                                <button className="px-3.5 py-1.5 rounded-lg bg-[#00A8FF] text-white font-bold text-xs hover:bg-[#0090FF]">
+                              <td className="py-3.5 px-4 text-center align-middle">
+                                <span className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-lg bg-[#00A8FF] text-white font-bold text-xs hover:bg-[#0090FF] leading-none shadow-xs">
                                   Ko'rish
-                                </button>
+                                </span>
                               </td>
                             </tr>
                           );
@@ -2357,62 +2505,62 @@ export default function AdminPage() {
                         }`}
                         style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
                       >
-                        <th className="py-4 px-4 w-12 text-center">#</th>
-                        <th className="py-4 px-4">Ishtirokchi F.I.O & Brend</th>
-                        <th className="py-4 px-4">Kategoriya</th>
-                        <th className="py-4 px-4">Viloyat</th>
-                        <th className="py-4 px-4 text-center">Status</th>
-                        <th className="py-4 px-4 text-center">Batafsil</th>
+                        <th className="py-3.5 px-3 w-12 text-center align-middle">#</th>
+                        <th className="py-3.5 px-4 text-left align-middle">Ishtirokchi F.I.O & Brend</th>
+                        <th className="py-3.5 px-4 text-left align-middle">Kategoriya</th>
+                        <th className="py-3.5 px-4 text-left align-middle">Viloyat</th>
+                        <th className="py-3.5 px-4 text-center align-middle">Status</th>
+                        <th className="py-3.5 px-4 text-center align-middle">Batafsil</th>
                       </tr>
                     </thead>
                     <tbody className={`divide-y text-xs ${isLight ? "divide-slate-200/60 text-slate-800" : "divide-white/5 text-white/90"}`}>
                       {approvedApps.length > 0 ? (
                         approvedApps.map((item, index) => (
                           <tr key={item.id} className={`transition-all ${isLight ? "hover:bg-emerald-50/60" : "hover:bg-emerald-500/10"}`}>
-                            <td className="py-4 px-4 text-center font-mono text-slate-400">{index + 1}</td>
-                            <td className="py-4 px-4">
+                            <td className={`py-3.5 px-3 text-center align-middle font-mono text-xs font-semibold ${isLight ? "text-slate-400" : "text-white/40"}`}>{index + 1}</td>
+                            <td className="py-3.5 px-4 text-left align-middle">
                               <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-900 shrink-0 border border-white/15">
+                                <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-900 shrink-0 border border-white/15 flex items-center justify-center">
                                   {item.avatarUrl ? (
                                     <img src={item.avatarUrl} alt={item.fio} className="w-full h-full object-cover" />
                                   ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-emerald-500/20 text-emerald-400 font-bold text-sm">
+                                    <div className="w-full h-full flex items-center justify-center bg-emerald-500/20 text-emerald-400 font-bold text-sm leading-none">
                                       {item.fio.charAt(0)}
                                     </div>
                                   )}
                                 </div>
-                                <div className="flex flex-col gap-0.5">
-                                  <div className="flex items-center gap-2">
+                                <div className="flex flex-col gap-0.5 justify-center">
+                                  <div className="flex items-center gap-2 leading-snug">
                                     <span className={`text-sm font-extrabold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>{item.fio}</span>
                                     {item.userId && item.userId !== DEFAULT_IMPORTER_ID && (
                                       <span
-                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0"
+                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0 leading-none"
                                         title={`Foydalanuvchi akkaunti mavjud (ID: ...${item.userId.slice(-6)})`}
                                       >
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
                                         Akkaunt mavjud
                                       </span>
                                     )}
                                   </div>
-                                  <span className="text-xs font-semibold text-emerald-400">{item.brandName}</span>
+                                  <span className="text-xs font-semibold text-emerald-500 dark:text-emerald-400 leading-normal">{item.brandName}</span>
                                 </div>
                               </div>
                             </td>
-                            <td className="py-4 px-4">
-                              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-[#00A8FF]/10 text-[#00A8FF] border border-[#00A8FF]/20">
+                            <td className="py-3.5 px-4 text-left align-middle">
+                              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-[#00A8FF]/10 text-[#00A8FF] border border-[#00A8FF]/20 leading-none">
                                 {item.categoryLabel}
                               </span>
                             </td>
-                            <td className="py-4 px-4 font-semibold">{item.region}</td>
-                            <td className="py-4 px-4 text-center">
-                              <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[10px] border border-emerald-500/30 uppercase">
+                            <td className={`py-3.5 px-4 text-left align-middle font-semibold text-xs leading-normal ${isLight ? "text-slate-700" : "text-white/80"}`}>{item.region}</td>
+                            <td className="py-3.5 px-4 text-center align-middle">
+                              <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-500 dark:text-emerald-400 font-bold text-[10px] border border-emerald-500/30 uppercase leading-none">
                                 3-BOSQICH (OFLAYN)
                               </span>
                             </td>
-                            <td className="py-4 px-4 text-center">
+                            <td className="py-3.5 px-4 text-center align-middle">
                               <button
                                 onClick={() => handleSelectApplicant(item, "2-bosqich")}
-                                className="px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-500 shadow-sm cursor-pointer"
+                                className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-500 shadow-sm cursor-pointer leading-none"
                               >
                                 Ko'rish
                               </button>
@@ -2491,7 +2639,7 @@ export default function AdminPage() {
                         }`}
                         style={{ fontFamily: "var(--font-zuume)", letterSpacing: "0.05em" }}
                       >
-                        <th className="py-4 px-3 w-10 text-center">
+                        <th className="py-3.5 px-3 w-12 text-center align-middle">
                           <input
                             type="checkbox"
                             checked={
@@ -2499,70 +2647,70 @@ export default function AdminPage() {
                               filteredApplicants.every((a) => selectedAppIds.includes(a.fullId))
                             }
                             onChange={() => handleToggleSelectAll(filteredApplicants)}
-                            className="w-4 h-4 rounded accent-[#00A8FF] cursor-pointer"
+                            className="w-4 h-4 rounded accent-[#00A8FF] cursor-pointer align-middle"
                           />
                         </th>
-                        <th className="py-4 px-4 w-12 text-center">#</th>
-                        <th className="py-4 px-4">Arizachi F.I.O & Brend</th>
-                        <th className="py-4 px-4">Kategoriya</th>
-                        <th className="py-4 px-4">Viloyat</th>
-                        <th className="py-4 px-4">Sana</th>
-                        <th className="py-4 px-4 text-center">Amallar</th>
+                        <th className="py-3.5 px-3 w-12 text-center align-middle">#</th>
+                        <th className="py-3.5 px-4 text-left align-middle">Arizachi F.I.O & Brend</th>
+                        <th className="py-3.5 px-4 text-left align-middle">Kategoriya</th>
+                        <th className="py-3.5 px-4 text-left align-middle">Viloyat</th>
+                        <th className="py-3.5 px-4 text-center align-middle">Sana</th>
+                        <th className="py-3.5 px-4 text-center align-middle">Amallar</th>
                       </tr>
                     </thead>
                     <tbody className={`divide-y text-xs ${isLight ? "divide-slate-200/60 text-slate-800" : "divide-white/5 text-white/90"}`}>
                       {filteredApplicants.length > 0 ? (
                         filteredApplicants.map((item, index) => (
                           <tr key={item.id} className={`transition-all ${selectedAppIds.includes(item.fullId) ? (isLight ? "bg-sky-50" : "bg-[#00A8FF]/10") : (isLight ? "hover:bg-slate-50" : "hover:bg-white/5")}`}>
-                            <td className="py-4 px-3 text-center">
+                            <td className="py-3.5 px-3 text-center align-middle">
                               <input
                                 type="checkbox"
                                 checked={selectedAppIds.includes(item.fullId)}
                                 onChange={() => handleToggleSelectApp(item.fullId)}
-                                className="w-4 h-4 rounded accent-[#00A8FF] cursor-pointer"
+                                className="w-4 h-4 rounded accent-[#00A8FF] cursor-pointer align-middle"
                               />
                             </td>
-                            <td className={`py-4 px-4 text-center font-mono text-xs font-semibold ${isLight ? "text-slate-400" : "text-white/40"}`}>{index + 1}</td>
-                            <td className="py-4 px-4">
+                            <td className={`py-3.5 px-3 text-center align-middle font-mono text-xs font-semibold ${isLight ? "text-slate-400" : "text-white/40"}`}>{index + 1}</td>
+                            <td className="py-3.5 px-4 text-left align-middle">
                               <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-900 shrink-0 border border-white/15">
+                                <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-900 shrink-0 border border-white/15 flex items-center justify-center">
                                   {item.avatarUrl ? (
                                     <img src={item.avatarUrl} alt={item.fio} className="w-full h-full object-cover" />
                                   ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-[#00A8FF]/20 text-[#00A8FF] font-bold text-sm">
+                                    <div className="w-full h-full flex items-center justify-center bg-[#00A8FF]/20 text-[#00A8FF] font-bold text-sm leading-none">
                                       {item.fio.charAt(0)}
                                     </div>
                                   )}
                                 </div>
-                                <div className="flex flex-col gap-0.5">
-                                  <div className="flex items-center gap-2">
+                                <div className="flex flex-col gap-0.5 justify-center">
+                                  <div className="flex items-center gap-2 leading-snug">
                                     <span className={`text-sm font-extrabold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>{item.fio}</span>
                                     {item.userId && item.userId !== DEFAULT_IMPORTER_ID && (
                                       <span
-                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0"
+                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0 leading-none"
                                         title={`Foydalanuvchi akkaunti mavjud (ID: ...${item.userId.slice(-6)})`}
                                       >
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
                                         Akkaunt mavjud
                                       </span>
                                     )}
                                   </div>
-                                  <span className="text-xs font-semibold text-[#00A8FF]">{item.brandName}</span>
+                                  <span className="text-xs font-semibold text-[#00A8FF] leading-normal">{item.brandName}</span>
                                 </div>
                               </div>
                             </td>
-                            <td className="py-4 px-4">
-                              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-[#00A8FF]/10 text-[#00A8FF] border border-[#00A8FF]/20">
+                            <td className="py-3.5 px-4 text-left align-middle">
+                              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-[#00A8FF]/10 text-[#00A8FF] border border-[#00A8FF]/20 leading-none">
                                 {item.categoryLabel}
                               </span>
                             </td>
-                            <td className={`py-4 px-4 font-semibold text-xs ${isLight ? "text-slate-700" : "text-white/80"}`}>{item.region}</td>
-                            <td className={`py-4 px-4 font-mono text-xs ${isLight ? "text-slate-500" : "text-white/50"}`}>{item.date}</td>
-                            <td className="py-4 px-4">
-                              <div className="flex items-center gap-2 justify-center">
+                            <td className={`py-3.5 px-4 text-left align-middle font-semibold text-xs leading-normal ${isLight ? "text-slate-700" : "text-white/80"}`}>{item.region}</td>
+                            <td className={`py-3.5 px-4 text-center align-middle font-mono text-xs whitespace-nowrap leading-none ${isLight ? "text-slate-500" : "text-white/50"}`}>{item.date}</td>
+                            <td className="py-3.5 px-4 text-center align-middle">
+                              <div className="inline-flex items-center justify-center gap-1.5">
                                 <button
                                   onClick={() => handleSelectApplicant(item, "1-bosqich")}
-                                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
+                                  className={`inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border leading-none ${
                                     isLight ? "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100" : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
                                   }`}
                                 >
@@ -2571,16 +2719,16 @@ export default function AdminPage() {
                                 {item.status !== "tasdiqlangan" && (
                                   <button
                                     onClick={() => handleApprove(item.fullId)}
-                                    className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+                                    className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer shadow-sm leading-none"
                                     title="Ishtirokchilar bo'limiga o'tkazish (Tasdiqlash)"
                                   >
-                                    <UserCheck size={13} />
-                                    <span>Ishtirokchilarga o'tkazish</span>
+                                    <UserCheck size={13} className="shrink-0" />
+                                    <span>Ishtirokchilarga</span>
                                   </button>
                                 )}
                                 <button
                                   onClick={() => handleOpenDeleteSingle(item.fullId, item.fio)}
-                                  className="p-2 rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white transition-colors cursor-pointer"
+                                  className="p-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white transition-colors cursor-pointer inline-flex items-center justify-center"
                                   title="Ishtirokchini o'chirish"
                                 >
                                   <Trash2 size={13} />
@@ -2695,16 +2843,20 @@ export default function AdminPage() {
 
             {rejectError && <p className="text-xs text-rose-500 font-semibold">{rejectError}</p>}
 
-            <div className="flex items-center justify-end gap-2.5 pt-2">
+            <div className={`flex items-center justify-end gap-2.5 pt-3 border-t ${isLight ? "border-slate-100" : "border-white/5"}`}>
               <button
                 onClick={() => setRejectModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-white/10 text-xs font-semibold cursor-pointer"
+                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                  isLight ? "bg-slate-100 hover:bg-slate-200 text-slate-700" : "bg-white/10 hover:bg-white/15 text-white/80"
+                }`}
+                style={{ fontFamily: "var(--font-zuume)" }}
               >
                 Bekor qilish
               </button>
               <button
                 onClick={handleConfirmReject}
-                className="px-4 py-2 rounded-xl bg-rose-600 text-white font-semibold text-xs shadow-2xs cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase tracking-wider shadow-sm transition-colors cursor-pointer"
+                style={{ fontFamily: "var(--font-zuume)" }}
               >
                 Tasdiqlash va Rad etish
               </button>
@@ -2715,44 +2867,44 @@ export default function AdminPage() {
 
       {/* ── FLOATING BULK MIGRATION ACTION TOOLBAR ───────────────── */}
       {selectedAppIds.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9990] bg-[#0a0f2c]/95 border border-[#00A8FF]/40 backdrop-blur-xl shadow-2xl rounded-2xl px-6 py-3.5 flex items-center gap-6 text-white animate-slide-up">
-          <div className="flex items-center gap-2.5">
-            <span className="w-7 h-7 rounded-full bg-[#00A8FF] text-white flex items-center justify-center font-bold text-xs shadow-md">
+        <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-[9990] w-[95vw] sm:w-auto max-w-2xl bg-[#0a0f2c]/95 border border-[#00A8FF]/40 backdrop-blur-xl shadow-2xl rounded-2xl p-3 sm:px-6 sm:py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-6 text-white animate-slide-up">
+          <div className="flex items-center gap-2.5 self-start sm:self-auto">
+            <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#00A8FF] text-white flex items-center justify-center font-bold text-xs shadow-md shrink-0">
               {selectedAppIds.length}
             </span>
-            <span className="text-xs font-bold uppercase tracking-wider" style={{ fontFamily: "var(--font-zuume)" }}>
+            <span className="text-xs font-bold uppercase tracking-wider leading-none" style={{ fontFamily: "var(--font-zuume)" }}>
               ta ariza tanlandi
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
             <button
               onClick={handleBulkMigrateToPhase2}
               disabled={isBulkProcessing || isDeleting}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-xs shadow-lg transition-all active:scale-95 flex items-center gap-2 border border-emerald-300/30 cursor-pointer disabled:opacity-50"
+              className="flex-1 sm:flex-none px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-xs shadow-lg transition-all active:scale-95 flex items-center justify-center gap-1.5 sm:gap-2 border border-emerald-300/30 cursor-pointer disabled:opacity-50 leading-none"
               style={{ fontFamily: "var(--font-zuume)" }}
             >
               {isBulkProcessing ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
-                <UserCheck size={16} />
+                <UserCheck size={15} className="shrink-0" />
               )}
-              <span>ISHTIROKCHILARGA O'TKAZISH (TASDIQLASH)</span>
+              <span className="uppercase tracking-wider">Tasdiqlash</span>
             </button>
 
             <button
               onClick={() => setBulkDeleteModalOpen(true)}
               disabled={isBulkProcessing || isDeleting}
-              className="px-4 py-2.5 rounded-xl bg-rose-600/30 hover:bg-rose-600 text-rose-200 hover:text-white font-bold text-xs shadow-lg transition-all active:scale-95 flex items-center gap-2 border border-rose-500/40 cursor-pointer disabled:opacity-50"
+              className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-rose-600/30 hover:bg-rose-600 text-rose-200 hover:text-white font-bold text-xs shadow-lg transition-all active:scale-95 flex items-center justify-center gap-1.5 border border-rose-500/40 cursor-pointer disabled:opacity-50 leading-none"
               style={{ fontFamily: "var(--font-zuume)" }}
             >
-              <Trash2 size={15} />
-              <span>O'CHIRISH ({selectedAppIds.length})</span>
+              <Trash2 size={14} className="shrink-0" />
+              <span className="uppercase tracking-wider">O'chirish</span>
             </button>
 
             <button
               onClick={() => setSelectedAppIds([])}
-              className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 text-xs font-semibold transition-colors cursor-pointer"
+              className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 text-xs font-semibold transition-colors cursor-pointer leading-none"
             >
               Bekor qilish
             </button>
@@ -2881,14 +3033,27 @@ export default function AdminPage() {
       <AddParticipantModal
         isOpen={addModalOpen}
         initialName={addModalInitialName}
+        defaultStatus={activePhase === "moderation" ? "submitted" : "under_review"}
         onClose={() => {
           setAddModalOpen(false);
           setAddModalInitialName("");
         }}
-        onSuccess={() => {
+        onSuccess={(createdApp) => {
           loadActualApplications();
           loadPhase2Applications();
           setAddModalInitialName("");
+          if (createdApp) {
+            if (createdApp.status === "submitted") {
+              setActivePhase("moderation");
+              setSelectedStatusKey("yangi_ariza");
+            } else {
+              setActivePhase("1-bosqich");
+              setSelectedStatusKey("korib_chiqilmoqda");
+            }
+            if (createdApp.brand_name) {
+              setSearchQuery(createdApp.brand_name);
+            }
+          }
         }}
       />
     </div>
